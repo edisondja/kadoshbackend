@@ -50,6 +50,11 @@ class ControllerProcedimiento extends Controller
             
     }
 
+    public function buscarProcedimiento($buscar){
+    
+        $data = DB::table("procedimientos")->where("nombre","like","%$buscar%")->get();
+        return $data;
+    }
     /**
      * Remove the specified resource from storage.
      *

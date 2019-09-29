@@ -38,7 +38,11 @@
 
 
 	///API CITAS
-
+	Route::get('api/cargar_citas','ControllerCita@index');
+	Route::get('api/guardar_cita/{hora}/{dia}/{id_paciente}','ControllerCita@create');
+	Route::get('api/actualizar_cita','ControllerCita@update');
+	Route::get('api/eliminar_cita/{id_cita}','ControllerCita@destroy');
+	Route::get('api/buscar_cita/{fecha}','ControllerCita@BuscarCita');
 
 
 	///API FACTURAS
@@ -51,8 +55,5 @@
 	Route::get('/api/update/{nombre}/{precio}/{id}','ControllerProcedimiento@update');
 	Route::get('/api/eliminar/{id}','ControllerProcedimiento@destroy');
 	Route::get('/api/buscar_procedimiento/{buscar}','ControllerProcedimiento@buscarProcedimiento');
-
-
-
 
 	///REPORTES

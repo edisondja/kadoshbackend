@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use DB;
+use App;
 
 class ControllerCita extends Controller
 {
@@ -14,6 +16,8 @@ class ControllerCita extends Controller
     public function index()
     {
         //
+        $data = DB::table("citas")->take(20)->get();
+        return $data;
     }
 
     /**
@@ -21,20 +25,26 @@ class ControllerCita extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create($id_paciente,$hora,$dia)
     {
-        //
-    }
+        $cita =new App\Cita();
+        $cita->id_paciente = $id_paciente;
+        $cita->hora= $horal;
+        $cita->dia= $dia;
+        $cita->save();
 
+    }
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-        //
+    public function BuscarCita($fecha)
+    {   
+        $citas = DB::table('citas')->where('dia','=',$fecha)->get();
+        return $citas;
+        
     }
 
     /**
@@ -45,7 +55,8 @@ class ControllerCita extends Controller
      */
     public function show($id)
     {
-        //
+        $data = App\Cita::find($id);
+        return $data;
     }
 
     /**
@@ -56,7 +67,8 @@ class ControllerCita extends Controller
      */
     public function edit($id)
     {
-        //
+        return App\Cita::find($id);
+
     }
 
     /**
@@ -66,9 +78,12 @@ class ControllerCita extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update($id_paciente,$hora,$dia)
     {
-        //
+        $actualizar = App\Cita::find($id_paciente);
+        $actualizar->hora = $hora;
+        $actualizar->dia = $dia;
+        $actualizar->save();
     }
 
     /**
@@ -79,6 +94,9 @@ class ControllerCita extends Controller
      */
     public function destroy($id)
     {
-        //
+
+        $eliminar = App\Cita::find($id);
+        $eliminar->delete();
+
     }
 }
