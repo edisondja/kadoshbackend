@@ -30,7 +30,7 @@
 
 	///API DOCTORES
 	Route::get('/api/doctores/','ControllerDoctor@index');
-	Route::get('/api/eliminar_doctor/{id}','ControllerDoctor@drop');
+	Route::get('/api/eliminar_doctor/{id}','ControllerDoctor@destroy');
 	Route::get('/api/actualizar_doctor/{nombre}/{apellido}/{cedula}/{telefono}/{id}','ControllerDoctor@edit');
 	Route::get('api/cargar_doctor/{id_doctor}','ControllerDoctor@cargar_doctor');
 	Route::get('/api/crear_doctor/{nombre}/{apellido}/{cedula}/{telefono}','ControllerDoctor@create');
@@ -46,14 +46,18 @@
 
 
 	///API FACTURAS
-
-
+	Route::post('/api/crear_factura','ControllerFactura@create');
+	Route::get('/api/buscar_facutura/{id_factura}','ControllerFactura@buscar_factura');
+	Route::get('/api/eliminar_factura/{id_factura','ControllerFactura@eliminar_factura');
+	Route::get('/api/editar_factura/{id_factura}','ControllerFactura@edit');
+	Route::post('/api/editando_factura/','ControllerFactura@update');
 
 	///PROCEDIMIENTOS
 	Route::get('/api/cargar_procedimientos','ControllerProcedimiento@index');
-	Route::get('/api/guardar_procedimiento/{nombre}/{precio}','ControllerProcedimiento@store');
-	Route::get('/api/update/{nombre}/{precio}/{id}','ControllerProcedimiento@update');
-	Route::get('/api/eliminar/{id}','ControllerProcedimiento@destroy');
+	Route::get('/api/cargar_procedimiento/{id}','ControllerProcedimiento@show');
+	Route::get('/api/guardar_procedimiento/{nombre}/{precio}','ControllerProcedimiento@create');
+	Route::get('/api/actualizar_procedimiento/{nombre}/{precio}/{id}','ControllerProcedimiento@update');
+	Route::get('/api/eliminar_procedimiento/{id}','ControllerProcedimiento@destroy');
 	Route::get('/api/buscar_procedimiento/{buscar}','ControllerProcedimiento@buscarProcedimiento');
 
 	///REPORTES

@@ -67,7 +67,7 @@ class ControllerDoctor extends Controller
     public function cargar_doctor($id){
     
         
-        $data =DB::table("doctors")->where("id",$id)->get();
+        $data = App\Doctor::find($id);
         return $data;
     }
 
@@ -77,7 +77,7 @@ class ControllerDoctor extends Controller
      * @param  int  $id 
      * @return \Illuminate\Http\Response
      */
-    public function edit($nombre,$apellido,$cedula,$telefono,$id)
+    public function edit($nombre="test",$apellido,$cedula,$telefono,$id)
     {
         //
         $doctor = App\Doctor::find($id);
@@ -112,6 +112,9 @@ class ControllerDoctor extends Controller
     
            $doctor = App\Doctor::find($id);
            $doctor->delete();
+
+           return "doctor eliminado";
+           
 
     }
 }
