@@ -22,9 +22,41 @@ class ControllerFactura extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $data)
     {
-        //
+
+       $total =  $data->input('total');
+       $cantidad = $data->input('cantidad');
+       $id_doctor = $data->input('id_doctor');
+       $id_paciente = $data->input('id_paciente');
+       $id_paciente = array("id_factura"=>$id_paciente);
+
+        //return $id_doctor;
+       $procedimientos = $data->input('procedimientos');
+       $procedimientosx = $procedimientos[0];
+       $cantidad = count($procedimientosx);
+       $array_new = [];
+       function array_push_assoc($array, $key, $value){
+
+                $array[$key] = $value;
+                return $array;
+
+        }
+
+        for($i=0;$i<$cantidad;$i++){
+        
+
+                $array_new[] = array_push_assoc($procedimientosx[$i],'id_factura','20');
+
+
+        }
+        
+
+        return $array_new;
+        DB::table('historial_ps')->insert($array_new);
+    
+
+    
     }
 
     public function ConsultarProcedimientos($id){
@@ -32,6 +64,24 @@ class ControllerFactura extends Controller
         $persona = App\Procedimiento::find($id);
     
         return $persona;
+    }
+
+    public function cargar_facturas(){
+
+            $data = DB::table('facturas')->join('historial_ps','facturas.id','=','historial_ps.id_factura')->get();
+            return $data;
+    }
+
+    public function cargar_procedimientos_factura($id_factura){
+
+        $data = DB::table('historial_ps')->where('id_factura','=',$id_factura)->get();
+        return $data;
+    }
+
+    public function cargar_recibos($id_factura){
+
+           $data =  DB::table('recibos')->where('id_factura','=',$id_factura)->get();
+           return $data;
     }
 
     public function EliminarProcedimiento($id){

@@ -51,6 +51,8 @@
 	Route::get('/api/eliminar_factura/{id_factura','ControllerFactura@eliminar_factura');
 	Route::get('/api/editar_factura/{id_factura}','ControllerFactura@edit');
 	Route::post('/api/editando_factura/','ControllerFactura@update');
+	Route::get('/api/cargar_procedimientos_de_factura/{id}','ControllerFactura@cargar_procedimientos_factura');
+//	Route::get('/api/cargar')
 
 	///PROCEDIMIENTOS
 	Route::get('/api/cargar_procedimientos','ControllerProcedimiento@index');
