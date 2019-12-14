@@ -20,6 +20,13 @@ class ControllerCita extends Controller
         return $data;
     }
 
+    public function citas_paciente($id){
+
+
+                $citas = DB::table("citas")->where("id_paciente","=",$id)->orderBy("dia","desc")->get();
+                return $citas;
+    }
+
     /**
      * Show the form for creating a new resource.
      *
@@ -29,7 +36,7 @@ class ControllerCita extends Controller
     {
         $cita =new App\Cita();
         $cita->id_paciente = $id_paciente;
-        $cita->hora= $horal;
+        $cita->hora= $hora;
         $cita->dia= $dia;
         $cita->save();
 
@@ -78,9 +85,9 @@ class ControllerCita extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update($id_paciente,$hora,$dia)
+    public function update($id_cita,$hora,$dia)
     {
-        $actualizar = App\Cita::find($id_paciente);
+        $actualizar = App\Cita::find($id_cita);
         $actualizar->hora = $hora;
         $actualizar->dia = $dia;
         $actualizar->save();

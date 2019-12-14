@@ -39,8 +39,10 @@
 
 	///API CITAS
 	Route::get('api/cargar_citas','ControllerCita@index');
-	Route::get('api/guardar_cita/{hora}/{dia}/{id_paciente}','ControllerCita@create');
-	Route::get('api/actualizar_cita','ControllerCita@update');
+	Route::get('api/cargar_citas_de_paciente/{id}','ControllerCita@citas_paciente');
+	Route::get('api/guardar_cita/{id_paciente}/{hora}/{dia}/','ControllerCita@create');
+	Route::get('api/cargar_cita/{id}','ControllerCita@show');
+	Route::get('api/actualizar_cita/{id_cita}/{hora}/{dia}','ControllerCita@update');
 	Route::get('api/eliminar_cita/{id_cita}','ControllerCita@destroy');
 	Route::get('api/buscar_cita/{fecha}','ControllerCita@BuscarCita');
 
@@ -52,7 +54,9 @@
 	Route::get('/api/editar_factura/{id_factura}','ControllerFactura@edit');
 	Route::post('/api/editando_factura/','ControllerFactura@update');
 	Route::get('/api/cargar_procedimientos_de_factura/{id}','ControllerFactura@cargar_procedimientos_factura');
-//	Route::get('/api/cargar')
+	Route::get('/api/cargar_facturas','ControllerFactura@cargar_facturas');
+	Route::get('/api/cargar_facturas_paciente/{id_paciente}','ControllerFactura@Facturas_de_paciente');
+
 
 	///PROCEDIMIENTOS
 	Route::get('/api/cargar_procedimientos','ControllerProcedimiento@index');

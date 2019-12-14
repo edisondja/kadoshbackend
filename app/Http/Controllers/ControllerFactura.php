@@ -14,7 +14,7 @@ class ControllerFactura extends Controller
      */
     public function index()
     {
-        //
+        
     }
 
     /**
@@ -68,7 +68,7 @@ class ControllerFactura extends Controller
 
     public function cargar_facturas(){
 
-            $data = DB::table('facturas')->join('historial_ps','facturas.id','=','historial_ps.id_factura')->get();
+            $data = DB::table('facturas')->get();
             return $data;
     }
 
@@ -96,53 +96,14 @@ class ControllerFactura extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {
-        //
-    }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
+     public function Facturas_de_paciente($id_paciente){
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
+        $data = DB::table("facturas")->where("id_paciente",$id_paciente)->get();
+        return $data;
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
+     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
+
+
 }
