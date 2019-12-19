@@ -55,6 +55,7 @@
 	Route::post('/api/editando_factura/','ControllerFactura@update');
 	Route::get('/api/cargar_procedimientos_de_factura/{id}','ControllerFactura@cargar_procedimientos_factura');
 	Route::get('/api/cargar_facturas','ControllerFactura@cargar_facturas');
+	Route::get('/api/cargar_factura/{id_factura}','ControllerFactura@cargar_una_factura');
 	Route::get('/api/cargar_facturas_paciente/{id_paciente}','ControllerFactura@Facturas_de_paciente');
 
 
@@ -65,5 +66,14 @@
 	Route::get('/api/actualizar_procedimiento/{nombre}/{precio}/{id}','ControllerProcedimiento@update');
 	Route::get('/api/eliminar_procedimiento/{id}','ControllerProcedimiento@destroy');
 	Route::get('/api/buscar_procedimiento/{buscar}','ControllerProcedimiento@buscarProcedimiento');
+
+
+
+	//CARGAR HISTORIAL_PS
+
+	Route::get('/api/cargar_historial_ps/{id_factura}','ControllerHistorialps@cargar_procedimientos');
+	Route::get('/api/eliminar_historial_ps/{id_factura}','ControllerHistorialps@eliminar_procedimiento');
+	//Route::get('/api/editar_historial_ps/{id_factura}','Controller');
+
 
 	///REPORTES

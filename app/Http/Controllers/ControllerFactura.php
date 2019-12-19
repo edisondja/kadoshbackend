@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use DB;
 use App;
+use App\Factura;
+
 class ControllerFactura extends Controller
 {
     /**
@@ -26,10 +28,20 @@ class ControllerFactura extends Controller
     {
 
        $total =  $data->input('total');
-       $cantidad = $data->input('cantidad');
+       //$cantidad = $data->input('cantidad');
        $id_doctor = $data->input('id_doctor');
        $id_paciente = $data->input('id_paciente');
-       $id_paciente = array("id_factura"=>$id_paciente);
+
+       //return $total." ".$id_doctor." ".$id_paciente;
+       $id_factura=DB::table("facturas")->insertGetId([
+                'id_doctor'=>$id_doctor,
+                'id_paciente'=>$id_paciente,
+                'precio_estatus'=>$total
+
+       ]);
+
+      // return $id_factura;
+       $id_factura= array("id_factura"=>$id_factura);
 
         //return $id_doctor;
        $procedimientos = $data->input('procedimientos');
@@ -46,18 +58,25 @@ class ControllerFactura extends Controller
         for($i=0;$i<$cantidad;$i++){
         
 
-                $array_new[] = array_push_assoc($procedimientosx[$i],'id_factura','20');
+                $array_new[] = array_push_assoc($procedimientosx[$i],'id_factura',$id_factura);
 
 
         }
         
-
-        return $array_new;
+        return  $array_new;
         DB::table('historial_ps')->insert($array_new);
-    
+        return "factura guardada con exito";
+
 
     
     }
+
+    public function cargar_una_factura($id_factura){
+        
+            $factura = DB::table("facturas")->join("doctors","facturas.id_doctor","=","doctors.id")->where("facturas.id","=",$id_factura)->get();
+            return $factura;
+     }
+
 
     public function ConsultarProcedimientos($id){
 
@@ -74,7 +93,7 @@ class ControllerFactura extends Controller
 
     public function cargar_procedimientos_factura($id_factura){
 
-        $data = DB::table('historial_ps')->where('id_factura','=',$id_factura)->get();
+        $data = DB::table('historial_ps')->join('procedimientos','historial_ps.id_procedimiento','=','procedimientos.id')->where('historial_ps.id_factura','=',$id_factura)->get();
         return $data;
     }
 

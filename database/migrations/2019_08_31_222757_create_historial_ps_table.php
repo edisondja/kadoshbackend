@@ -18,6 +18,7 @@ class CreateHistorialPsTable extends Migration
             $table->integer('id_procedimiento');
             $table->integer('cantidad');
             $table->integer('total');
+            $table->float('estado_actual');
             $table->timestamps();
         });
     }
