@@ -48,23 +48,21 @@ class ControllerFactura extends Controller
        $procedimientosx = $procedimientos[0];
        $cantidad = count($procedimientosx);
        $array_new = [];
-       function array_push_assoc($array, $key, $value){
-
-                $array[$key] = $value;
-                return $array;
-
-        }
-
+  
         for($i=0;$i<$cantidad;$i++){
         
 
-                $array_new[] = array_push_assoc($procedimientosx[$i],'id_factura',$id_factura);
-
-
+                $array_new[] = [
+                        'id_factura'=>$id_factura['id_factura'],
+                        'total'=>$procedimientosx[$i]['total'],
+                        'cantidad'=>$procedimientosx[$i]['cantidad'],
+                        'id_procedimiento'=>$procedimientosx[$i]['id_procedimiento']
+                ];
         }
-        
-        return  $array_new;
+
         DB::table('historial_ps')->insert($array_new);
+        return  $array_new;
+
         return "factura guardada con exito";
 
 

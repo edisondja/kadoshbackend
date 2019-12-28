@@ -67,6 +67,14 @@
 	Route::get('/api/eliminar_procedimiento/{id}','ControllerProcedimiento@destroy');
 	Route::get('/api/buscar_procedimiento/{buscar}','ControllerProcedimiento@buscarProcedimiento');
 
+	
+	//RECIBOS
+	Route::get('/api/pagar_recibo/{id_factura}/{monto}/{tipo_de_pago}/{estado_actual}','ControllerRecibo@pagar_recibo');
+	Route::get('/api/actualizar_recibo/{id_recibo}','ControllerRecibo@actualizar_recibo');
+	Route::get('/api/eliminar_recibo/{id_recibo}/{id_facutara}','ControllerRecibo@eliminar_recibo');
+	Route::get('/api/cargar_recibos/{id_factura}','ControllerRecibo@cargar_recibos');
+	Route::get('/api/cargar_recibo/{id_recibo}','ControllerRecibo@cargar_recibo');
+	Route::get('/api/imprimir_recibo/{id_recibo}/{id_factura}','ControllerRecibo@imprimir_recibo');
 
 
 	//CARGAR HISTORIAL_PS

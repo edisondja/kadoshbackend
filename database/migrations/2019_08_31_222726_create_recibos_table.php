@@ -17,6 +17,8 @@ class CreateRecibosTable extends Migration
             $table->increments('id');
             $table->integer("monto");
             $table->integer('id_factura');
+            $table->string('tipo_de_pago');
+            $table->float('estado_actual');
             $table->string("concepto_pago");
             $table->timestamps();
         });
