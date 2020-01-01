@@ -23,9 +23,8 @@
 	Route::get('/api/paciente/{id}','Paciente@show');
 	Route::get('/api/borrar_paciente/{id}','Paciente@destroy');
 	Route::get('/api/guardar_paciente/{nombre}/{apellido}/{telefono}/{id_doctor}/{cedula}/{fecha_nacimiento}','Paciente@guardar');
-
+	Route::get('/api/notificar_cumple','Paciente@notificar_cumple');
 	Route::get('api/actualizar_paciente/{nombre}/{apellido}/{telefono}/{id_doctor}/{id_paciente}/{cedula}/{fecha_nacimiento}/{id}','Paciente@update');
-
 	Route::get('api/buscar_paciente/{nombre}','Paciente@buscando_paciente');
 
 	///API DOCTORES
@@ -50,13 +49,14 @@
 	///API FACTURAS
 	Route::post('/api/crear_factura','ControllerFactura@create');
 	Route::get('/api/buscar_facutura/{id_factura}','ControllerFactura@buscar_factura');
-	Route::get('/api/eliminar_factura/{id_factura','ControllerFactura@eliminar_factura');
+	Route::get('/api/eliminar_factura/{id_factura}','ControllerFactura@eliminar_factura');
 	Route::get('/api/editar_factura/{id_factura}','ControllerFactura@edit');
 	Route::post('/api/editando_factura/','ControllerFactura@update');
 	Route::get('/api/cargar_procedimientos_de_factura/{id}','ControllerFactura@cargar_procedimientos_factura');
 	Route::get('/api/cargar_facturas','ControllerFactura@cargar_facturas');
 	Route::get('/api/cargar_factura/{id_factura}','ControllerFactura@cargar_una_factura');
 	Route::get('/api/cargar_facturas_paciente/{id_paciente}','ControllerFactura@Facturas_de_paciente');
+	Route::get('/api/descontar_precio_factura/{id_factura}/{monto}','ControllerFactura@descontar_estatus');
 
 
 	///PROCEDIMIENTOS
@@ -83,5 +83,8 @@
 	Route::get('/api/eliminar_historial_ps/{id_factura}','ControllerHistorialps@eliminar_procedimiento');
 	//Route::get('/api/editar_historial_ps/{id_factura}','Controller');
 
+	//USUARIOS
+	Route::get('/api/login/{usuario}/{clave}','ControllerUsuario@login');
 
 	///REPORTES
+	Route::get('/api/facturas_reportes/{fecha_inicial}/{fecha_final}','ControllerRecibo@reporte_recibos');

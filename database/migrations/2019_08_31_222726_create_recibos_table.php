@@ -20,6 +20,8 @@ class CreateRecibosTable extends Migration
             $table->string('tipo_de_pago');
             $table->float('estado_actual');
             $table->string("concepto_pago");
+            $table->string("codigo_recibo");
+            $table->datetime("fecha_pago");
             $table->timestamps();
         });
     }

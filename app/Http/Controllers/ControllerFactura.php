@@ -14,9 +14,14 @@ class ControllerFactura extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
+
+    public function descontar_estatus($id_factura,$cantidad){
         
+        $factura = App\Factura::find($id_factura);
+        $estado_actual = $factura->precio_estatus - $cantidad;
+        $factura->precio_estatus = $estado_actual;
+        $factura->save();
+
     }
 
     /**
@@ -83,6 +88,10 @@ class ControllerFactura extends Controller
         return $persona;
     }
 
+    public function eliminar_factura($id_factura){
+            App\Factura::find($id_factura)->delete();
+    }
+
     public function cargar_facturas(){
 
             $data = DB::table('facturas')->get();
@@ -116,7 +125,7 @@ class ControllerFactura extends Controller
 
      public function Facturas_de_paciente($id_paciente){
 
-        $data = DB::table("facturas")->where("id_paciente",$id_paciente)->get();
+        $data = DB::table("facturas")->where("id_paciente",$id_paciente)->orderBy('id','desc')->get();
         return $data;
 
      }

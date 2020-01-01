@@ -117,6 +117,13 @@ class Paciente extends Controller
 
     }
 
+    public function Notificar_cumple(){
+
+        $paciente= App\Paciente::whereDay('fecha_nacimiento', '=',date('d'))->whereMonth('fecha_nacimiento', '=',date('m'))->get();
+    
+        return $paciente;
+    }
+
     public function buscando_paciente($nombre){
 
 

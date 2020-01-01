@@ -11,7 +11,7 @@ class ControllerRecibo extends Controller
   
     public function cargar_recibos($id_factura){
     
-            $recibos =  DB::table('recibos')->where('id_factura',"=",$id_factura)->get();
+            $recibos =  DB::table('recibos')->where('id_factura',"=",$id_factura)->orderBy('id','desc')->get();
             return $recibos;
     }
 
@@ -35,7 +35,7 @@ class ControllerRecibo extends Controller
 
     public function eliminar_recibo($id_recibo,$id_factura){
 
-        $recibo = DB::table('recibos')->where('id',$id_recibo)->where('id_factura',$id_factura)->get();   
+        $recibo = DB::table('recibos')->where('id',$id_recibo)->get();   
         $restablecer = $recibo[0]->monto;
         $factura = App\Factura::find($id_factura);
         $factura = $factura->precio_estatus = ($factura->precio_estatus + $restablecer);
@@ -48,12 +48,19 @@ class ControllerRecibo extends Controller
 
     public function pagar_recibo($id_factura,$monto,$tipo_de_pago,$estado_actual){
 
+        //capturando el ultimo registro de recibo
+        $ultimo_recibo = DB::table('recibos')->orderBy('id','desc')->first();
+        $numero = $ultimo_recibo->id + 1;
+        $codigo ="B02".str_pad($numero, 7, "0", STR_PAD_LEFT);
+
             $recibo = new App\Recibo();
             $recibo->id_factura = $id_factura;
             $recibo->monto = $monto;
             $recibo->concepto_pago = "normal";
             $recibo->tipo_de_pago =  $tipo_de_pago;
+            $recibo->codigo_recibo = $codigo;
             $recibo->estado_actual = ($estado_actual - $monto);
+            $recibo->fecha_pago = date("Y-m-d H:i:s");
             $recibo->save();
             
             $factura = App\Factura::find($id_factura);
@@ -75,4 +82,26 @@ class ControllerRecibo extends Controller
 
         return $recibo_interfaz;
     }
+
+    public function reporte_recibos($fecha_inicial,$fecha_final){
+
+        $tiempo_inicial = '00:00:00';
+        $tiempo_final = '23:59:59';
+        
+        $total = DB::table('recibos')
+        ->where('fecha_pago','>=',$fecha_inicial." ".$tiempo_inicial)
+        ->where('fecha_pago','<=',$fecha_final." ".$tiempo_final)->sum('monto');
+        
+        $recibos = DB::table('recibos')
+        ->where('fecha_pago','>=',$fecha_inicial." ".$tiempo_inicial)
+        ->where('fecha_pago','<=',$fecha_final." ".$tiempo_final)->get();
+
+        return [
+                'monto_total'=>$total,
+                'recibos'=>$recibos 
+               ];
+
+
+    }
+
 }
