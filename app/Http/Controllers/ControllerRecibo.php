@@ -37,12 +37,12 @@ class ControllerRecibo extends Controller
 
         $recibo = DB::table('recibos')->where('id',$id_recibo)->get();   
         $restablecer = $recibo[0]->monto;
+
         $factura = App\Factura::find($id_factura);
-        $factura = $factura->precio_estatus = ($factura->precio_estatus + $restablecer);
+        $factura->precio_estatus = $factura->precio_estatus + $restablecer;
         $factura->save();
 
         $recibo = App\Recibo::find($id_recibo)->delete();
-        $recibo->save();
 
     }
 
