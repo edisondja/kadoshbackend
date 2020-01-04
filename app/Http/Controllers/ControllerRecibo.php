@@ -50,7 +50,7 @@ class ControllerRecibo extends Controller
 
         //capturando el ultimo registro de recibo
         $ultimo_recibo = DB::table('recibos')->orderBy('id','desc')->first();
-        $numero = $ultimo_recibo->id + 1;
+        $numero = $ultimo_recibo[0]->id + 1;
         $codigo ="B02".str_pad($numero, 7, "0", STR_PAD_LEFT);
 
             $recibo = new App\Recibo();
