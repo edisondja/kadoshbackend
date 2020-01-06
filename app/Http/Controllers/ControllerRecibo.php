@@ -46,6 +46,16 @@ class ControllerRecibo extends Controller
 
     }
 
+    public function verificar_estatus($id_factura){
+
+        $factura =  App\Factura::find($id_factura);
+        if($factura->precio_estatus<0){
+                $factura->precio_estatus =0;
+                $factura->save();
+        }
+
+    }
+
     public function pagar_recibo($id_factura,$monto,$tipo_de_pago,$estado_actual){
 
         //capturando el ultimo registro de recibo
@@ -64,17 +74,11 @@ class ControllerRecibo extends Controller
             $recibo->save();
             
             $factura = App\Factura::find($id_factura);
-            $co = $factura->precio_estatus - $monto;
-            if($co<0){
-                $factura->precio_estatus =0;
-            }else{
-                $factura->precio_estatus =$factura->precio_estatus - $monto;
-            }
+            $factura->precio_estatus =$factura->precio_estatus - $monto;
             $factura->save();
 
-            //verificar
-            w
-            
+            //evaluando 
+            $this->verificar_estatus($id_factura);
             return ["ready"=>"payment"];
 
     }
