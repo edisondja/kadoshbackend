@@ -78,7 +78,7 @@ class ControllerRecibo extends Controller
             $factura->save();
 
             //evaluando 
-            $this->verificar_estatus($id_factura);
+            ///$this->verificar_estatus($id_factura);
             return ["ready"=>"payment"];
 
     }
