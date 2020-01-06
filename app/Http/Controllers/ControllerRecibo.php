@@ -65,8 +65,12 @@ class ControllerRecibo extends Controller
             
             $factura = App\Factura::find($id_factura);
             $factura->precio_estatus =$factura->precio_estatus - $monto;
+            if($factura->precio_estatus<0){
+                    $factura->pagar_recibo=0;
+            }
             $factura->save();
 
+        
             return ["ready"=>"payment"];
 
     }
