@@ -46,21 +46,11 @@ class ControllerRecibo extends Controller
 
     }
 
-    public function verificar_estatus($id_factura){
-
-        $factura =  App\Factura::find($id_factura);
-        if($factura->precio_estatus<0){
-                $factura->precio_estatus =0;
-                $factura->save();
-        }
-
-    }
-
     public function pagar_recibo($id_factura,$monto,$tipo_de_pago,$estado_actual){
 
         //capturando el ultimo registro de recibo
         $ultimo_recibo = DB::table('recibos')->orderBy('id','desc')->first();
-        $numero = $ultimo_recibo[0]->id + 1;
+        $numero = $ultimo_recibo->id + 1;
         $codigo ="B02".str_pad($numero, 7, "0", STR_PAD_LEFT);
 
             $recibo = new App\Recibo();
@@ -77,8 +67,6 @@ class ControllerRecibo extends Controller
             $factura->precio_estatus =$factura->precio_estatus - $monto;
             $factura->save();
 
-            //evaluando 
-            //$this->verificar_estatus($id_factura);
             return ["ready"=>"payment"];
 
     }
