@@ -64,14 +64,17 @@ class ControllerRecibo extends Controller
             $recibo->save();
             
             $factura = App\Factura::find($id_factura);
-            $verificar =$factura->precio_estatus - $monto;
-            $factura->precio_estatus =$factura->precio_estatus - $monto;
-            if($verificar<0){
-                $factura->precio_estatus = 0;
+            $co = $factura->precio_estatus - $monto;
+            if($co<0){
+                $factura->precio_estatus =0;
+            }else{
+                $factura->precio_estatus =$factura->precio_estatus - $monto;
             }
             $factura->save();
 
-        
+            //verificar
+            w
+            
             return ["ready"=>"payment"];
 
     }
