@@ -111,7 +111,7 @@ class Paciente extends Controller
     public function destroy($id_paciente)
     {
         //
-        DB::table("facturas")->where('id_paciente','=',$id_paciente);
+        DB::table("facturas")->where('id_paciente','=',$id_paciente)->delete();
         $registro = App\Paciente::find($id_paciente);
         $registro->delete();
 
