@@ -113,7 +113,6 @@ class Paciente extends Controller
         //
         $registro = App\Paciente::find($id);
         $registro->delete();
-        $registro->save();
 
     }
 
