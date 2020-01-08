@@ -108,11 +108,13 @@ class Paciente extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy($id_paciente)
     {
         //
-        $registro = App\Paciente::find($id);
+        DB::table("facturas")->where('id_paciente','=',$id_paciente);
+        $registro = App\Paciente::find($id_paciente);
         $registro->delete();
+
 
     }
 
@@ -122,7 +124,6 @@ class Paciente extends Controller
     
         return $paciente;
     }
-
     public function buscando_paciente($nombre){
 
 
