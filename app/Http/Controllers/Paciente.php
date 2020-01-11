@@ -66,9 +66,9 @@ class Paciente extends Controller
     public function show($id_paciente)
     {
         //
-
-        $paciente  = DB::table('pacientes')->join('doctors','pacientes.id_doctor','=','doctors.id')->select("doctors.*","pacientes.*","doctors.nombre as nombre_doctor","doctors.apellido as apellido_doctor")->where("pacientes.id","=",$id_paciente)->get();
+        $paciente = App\Paciente::find($id_paciente);
         return $paciente;
+
     }
 
     /**
