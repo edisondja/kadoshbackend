@@ -98,6 +98,7 @@ class Paciente extends Controller
         $Paciente->nombre = $nombre;
         $Paciente->apellido = $apellido;
         $Paciente->id_doctor = $id_doctor;
+        $Paciente->fecha_de_ingreso  =date("Y-m-d H:i:s");
         $Paciente->save();
 
     }

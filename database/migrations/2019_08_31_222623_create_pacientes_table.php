@@ -20,6 +20,7 @@ class CreatePacientesTable extends Migration
             $table->string("apellido");
             $table->string("telefono");
             $table->date("fecha_nacimiento");
+            $table->datetime("fecha_de_ingreso");
             $table->string("cedula");
             $table->timestamps();
         });
