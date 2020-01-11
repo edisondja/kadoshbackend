@@ -63,14 +63,12 @@ class Paciente extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($id_paciente)
     {
         //
 
-        $paciente  = DB::table('pacientes')->join('doctors','pacientes.id_doctor','=','doctors.id')->where("pacientes.id","=",$id)->select("doctors.*","pacientes.*","doctors.nombre as nombre_doctor","doctors.apellido as apellido_doctor")->get();
-
+        $paciente  = DB::table('pacientes')->join('doctors','pacientes.id_doctor','=','doctors.id')->where("pacientes.id","=",$id_paciente)->select("doctors.*","pacientes.*","doctors.nombre as nombre_doctor","doctors.apellido as apellido_doctor")->get();
         return $paciente[0];
-
     }
 
     /**
