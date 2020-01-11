@@ -67,11 +67,8 @@ class Paciente extends Controller
     {
         //
 
-        $paciente  = DB::table('pacientes')->join('doctors','pacientes.id_doctor','=','doctors.id')->where("pacientes.id","=",$id)
-        ->select("doctors.*","pacientes.*","doctors.nombre as nombre_doctor","doctors.apellido as apellido_doctor")->get();
+        $paciente  = DB::table('pacientes')->join('doctors','pacientes.id_doctor','=','doctors.id')->where("pacientes.id","=",$id)->select("doctors.*","pacientes.*","doctors.nombre as nombre_doctor","doctors.apellido as apellido_doctor")->get();
 
-
-        
         return $paciente[0];
 
     }
