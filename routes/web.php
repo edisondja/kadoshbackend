@@ -20,7 +20,7 @@
 
 	//API PACIENTE
 	Route::get('/api/paciente','Paciente@index');
-	Route::get('/api/paciente/{id}','Paciente@show');
+	Route::get('/api/paciente/{id_paciente}','Paciente@show');
 	Route::get('/api/borrar_paciente/{id_paciente}','Paciente@destroy');
 	Route::get('/api/guardar_paciente/{nombre}/{apellido}/{telefono}/{id_doctor}/{cedula}/{fecha_nacimiento}','Paciente@guardar');
 	Route::get('/api/notificar_cumple','Paciente@notificar_cumple');
