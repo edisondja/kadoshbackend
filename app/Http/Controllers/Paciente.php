@@ -37,6 +37,7 @@ class Paciente extends Controller
         $paciente->telefono = $telefono;
         $paciente->id_doctor = 1;
         $paciente->cedula = $cedula;
+        $Paciente->fecha_de_ingreso  =date("Y-m-d H:i:s");
         $paciente->fecha_nacimiento = $fecha_nacimiento;
         
         if($paciente->save()){
@@ -98,7 +99,6 @@ class Paciente extends Controller
         $Paciente->nombre = $nombre;
         $Paciente->apellido = $apellido;
         $Paciente->id_doctor = $id_doctor;
-        $Paciente->fecha_de_ingreso  =date("Y-m-d H:i:s");
         $Paciente->save();
 
     }
