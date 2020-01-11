@@ -127,7 +127,7 @@ class Paciente extends Controller
     public function buscando_paciente($nombre){
 
 
-        $data=DB::table('doctors')->where("nombre","like","%$nombre%")->take(20)->get();
+        $data=DB::table('pacientes')->where("nombre","like","%$nombre%")->take(20)->get();
 
         return  $data;
 
