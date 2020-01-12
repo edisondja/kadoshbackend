@@ -26,7 +26,7 @@
 	Route::get('/api/notificar_cumple','Paciente@notificar_cumple');
 	Route::get('/api/actualizar_paciente/{nombre}/{apellido}/{telefono}/{id_doctor}/{id_paciente}/{cedula}/{fecha_nacimiento}/{id}','Paciente@update');
 	Route::get('/api/buscar_paciente/{nombre}','Paciente@buscando_paciente');
-	Route::get('/api/consular_deuda/{id_paciente}','Paciente@deuda_paciente');
+	Route::get('/api/consultar_deuda/{id_paciente}','Paciente@deuda_paciente');
 
 	///API DOCTORES
 	Route::get('/api/doctores/','ControllerDoctor@index');
