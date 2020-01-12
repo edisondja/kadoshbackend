@@ -132,5 +132,11 @@ class Paciente extends Controller
 
     }
 
+    public function deuda_paciente($id_paciente){
+
+        $deuda=DB::table("facturas")->sum('precio_estatus')->where('id_paciente','=',$id_paciente)->select("precio_estatus as deuda_total")->get();
+        return $deuda[0];
+    }
+
 
 }
