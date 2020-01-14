@@ -91,19 +91,19 @@ class Paciente extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update($nombre,$apellido,$cedula,$telefono,$sexo,$fecha_nacimiento,$id_doctor,$id)
-    {
-    
+    {                   
+        
         $Paciente = App\Paciente::find($id);
 
         $Paciente->nombre = $nombre;
         $Paciente->apellido = $apellido;
         $Paciente->cedula = $cedula;
-        $paciente->telefono = $telefono;
+        $Paciente->telefono = $telefono;
         $Paciente->sexo = $sexo;
-        $paciente->fecha_nacimiento = $fecha_nacimiento;
+        $Paciente->fecha_nacimiento = $fecha_nacimiento;
         $Paciente->id_doctor = $id_doctor;
         $Paciente->save();
-
+        return "Cliente acutalizado correctamente";
     }
 
     /**
