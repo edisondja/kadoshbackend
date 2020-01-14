@@ -16,7 +16,7 @@ class ControllerProcedimiento extends Controller
     public function index()
     {
         //
-        $data = DB::table("procedimientos")->get();
+        $data = DB::table("procedimientos")->orderBy('id','desc')->get();
         return $data;
     }
 
