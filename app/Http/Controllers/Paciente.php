@@ -26,7 +26,7 @@ class Paciente extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function guardar($nombre,$apellido,$telefono,$id_doctor,$cedula,$fecha_nacimiento)
+    public function guardar($nombre,$apellido,$telefono,$id_doctor,$cedula,$fecha_nacimiento,$sexo)
 
     {
         //metodo para crear un paciente
@@ -35,10 +35,11 @@ class Paciente extends Controller
         $paciente->nombre = $nombre;
         $paciente->apellido =  $apellido;
         $paciente->telefono = $telefono;
-        $paciente->id_doctor = 1;
+        $paciente->id_doctor = $id_doctor;
         $paciente->cedula = $cedula;
-        $paciente->fecha_de_ingreso  =date("Y-m-d H:i:s");
-        $paciente->fecha_nacimiento = $fecha_nacimiento;
+        $paciente->fecha_de_ingreso=date("Y-m-d H:i:s");
+        $paciente->fecha_nacimiento=$fecha_nacimiento;
+        $paciente->sexo = $sexo;
         
         if($paciente->save()){
 
@@ -89,13 +90,17 @@ class Paciente extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update($nombre,$apellido,$id_doctor,$cedula,$fecha_nacimiento,$id)
+    public function update($nombre,$apellido,$cedula,$telefono,$sexo,$fecha_nacimiento,$id_doctor,$id)
     {
     
         $Paciente = App\Paciente::find($id);
 
         $Paciente->nombre = $nombre;
         $Paciente->apellido = $apellido;
+        $Paciente->cedula = $cedula;
+        $paciente->telefono = $telefono;
+        $Paciente->sexo = $sexo;
+        $paciente->fecha_nacimiento = $fecha_nacimiento;
         $Paciente->id_doctor = $id_doctor;
         $Paciente->save();
 
