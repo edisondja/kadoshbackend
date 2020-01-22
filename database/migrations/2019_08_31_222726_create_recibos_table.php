@@ -19,6 +19,7 @@ class CreateRecibosTable extends Migration
             $table->integer('id_factura');
             $table->string('tipo_de_pago');
             $table->float('estado_actual');
+            $table->string('codigo_confirmacion');
             $table->string("concepto_pago");
             $table->string("codigo_recibo");
             $table->datetime("fecha_pago");

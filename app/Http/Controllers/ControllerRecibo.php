@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use DB;
 use App;
+use Carbon\Carbon;
+
 
 class ControllerRecibo extends Controller
 {
@@ -46,7 +48,7 @@ class ControllerRecibo extends Controller
 
     }
 
-    public function pagar_recibo($id_factura,$monto,$tipo_de_pago,$estado_actual){
+    public function pagar_recibo($id_factura,$monto,$tipo_de_pago,$estado_actual,$codigo_tarjeta=null){
 
         //capturando el ultimo registro de recibo
         $ultimo_recibo = DB::table('recibos')->orderBy('id','desc')->first();
@@ -56,8 +58,13 @@ class ControllerRecibo extends Controller
             $recibo = new App\Recibo();
             $recibo->id_factura = $id_factura;
             $recibo->monto = $monto;
-            $recibo->concepto_pago = "normal";
-            $recibo->tipo_de_pago =  $tipo_de_pago;
+            if($codigo!=null){
+                $recibo->tipo_de_pago =  "tarjeta";
+                $recibo->concepto_pago = "Pago realizado con tarjeta";
+
+            }else{
+                $recibo->concepto_pago = "normal";
+            }
             $recibo->codigo_recibo = $codigo;
             $recibo->estado_actual = ($estado_actual - $monto);
             $recibo->fecha_pago = date("Y-m-d H:i:s");
@@ -66,9 +73,16 @@ class ControllerRecibo extends Controller
             $factura = App\Factura::find($id_factura);
             $factura->precio_estatus =$factura->precio_estatus - $monto;
             $factura->save();
-
+            
             return ["ready"=>"payment"];
 
+    }
+
+    public function ingresos_de_meses(){
+
+        
+    
+        return;
     }
 
     public function imprimir_recibo($id_recibo,$id_factura){
@@ -81,6 +95,66 @@ class ControllerRecibo extends Controller
         ];
 
         return $recibo_interfaz;
+    }
+
+    public function ingresos_de_semana(){
+       // Carbon::parse('2017-05-01')si desaea obtener la semana de otra fecha en lugar de Carbon::now()
+        
+        $data = App\Recibo::where('created_at', '>', Carbon::now()->startOfWeek())
+        ->where('created_at', '<', Carbon::now()->endOfWeek())
+        ->get();
+
+        $semana = [];
+        $ingreso_de_dias =[
+            'lunes'=>'',
+            'martes'=>'',
+            'miercoles'=>'',
+            'jueves'=>'',
+            'viernes'=>'',
+            'sabado'=>''
+        ];
+
+
+        foreach ($data as $key) {
+           // echo $key['nombre'] . "\n";
+    
+           $timestamp = strtotime($key['fecha_pago']);
+            $mydate = getdate($timestamp);
+    
+            if ($mydate['weekday'] == 'Monday') {
+
+                $ingreso_de_dias['lunes']+= $key['monto'];
+                $semana['Monday'][] = $key;
+
+            } elseif ($mydate['weekday'] == 'Tuesday') {
+                
+                $ingreso_de_dias['martes']+= $key['monto'];
+                $semana['Tuesday'][] = $key;
+            
+            } elseif ($mydate['weekday'] == 'Wednesday') {
+
+                $ingreso_de_dias['miercoles']+= $key['monto'];
+                $semana['Wednesday'][] = $key;
+           
+            } elseif ($mydate['weekday'] == 'Thursday') {
+
+               $ingreso_de_dias['jueves']+= $key['monto'];
+                $semana['Thursday'] = $key;
+           
+            } elseif ($mydate['weekday'] == 'Friday') {
+
+                $ingreso_de_dias['viernes']+= $key['monto'];
+                $semana['Friday'][] = $key;
+
+            } elseif ($mydate['weekday'] == 'Saturday') {
+
+                $ingreso_de_dias['sabado']+= $key['monto'];
+                $semana['Saturday'][] = $key;
+
+            }
+        }
+
+        return $ingreso_de_dias;
     }
 
     public function reporte_recibos($fecha_inicial,$fecha_final){

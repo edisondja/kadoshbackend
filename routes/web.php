@@ -70,12 +70,14 @@
 
 	
 	//RECIBOS
-	Route::get('/api/pagar_recibo/{id_factura}/{monto}/{tipo_de_pago}/{estado_actual}','ControllerRecibo@pagar_recibo');
+	Route::get('/api/pagar_recibo/{id_factura}/{monto}/{tipo_de_pago}/{estado_actual}/{codigo}','ControllerRecibo@pagar_recibo');
 	Route::get('/api/actualizar_recibo/{id_recibo}','ControllerRecibo@actualizar_recibo');
 	Route::get('/api/eliminar_recibo/{id_recibo}/{id_facutara}','ControllerRecibo@eliminar_recibo');
 	Route::get('/api/cargar_recibos/{id_factura}','ControllerRecibo@cargar_recibos');
 	Route::get('/api/cargar_recibo/{id_recibo}','ControllerRecibo@cargar_recibo');
 	Route::get('/api/imprimir_recibo/{id_recibo}/{id_factura}','ControllerRecibo@imprimir_recibo');
+	Route::get('/api/ingresos_de_mes/','ControllerRecibo@ingresos_en_meses');
+	Route::get('/api/ingresos_de_semana/','ControllerRecibo@ingresos_de_semana');
 
 
 	//CARGAR HISTORIAL_PS
