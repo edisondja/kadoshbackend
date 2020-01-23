@@ -42,9 +42,9 @@ return [
         'mysql' => [
             'driver' => 'mysql',
             'host' =>'127.0.0.1',
-            'port' => '3307',
+            'port' => '3306',
             'database' =>'clinica_kadosh',
-            'username' =>'root',
+            'username' =>'kadosh',
             'password' => 'meteoro2412',
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
