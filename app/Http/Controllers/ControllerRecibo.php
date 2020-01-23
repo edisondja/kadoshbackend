@@ -64,6 +64,7 @@ class ControllerRecibo extends Controller
 
             }else{
                 $recibo->concepto_pago = "normal";
+                $recibo->tipo_de_pago = "efectivo";
             }
             $recibo->codigo_recibo = $codigo;
             $recibo->estado_actual = ($estado_actual - $monto);
