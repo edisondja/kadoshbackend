@@ -98,12 +98,18 @@ class ControllerRecibo extends Controller
         return $recibo_interfaz;
     }
 
-    public function ingresos_de_semana(){
+    public function ingresos_de_semana($fecha){
        // Carbon::parse('2017-05-01')si desaea obtener la semana de otra fecha en lugar de Carbon::now()
         
-        $data = App\Recibo::where('created_at', '>', Carbon::now()->startOfWeek())
-        ->where('created_at', '<', Carbon::now()->endOfWeek())
-        ->get();
+       if($fecha=='hoy'){
+            $data = App\Recibo::where('created_at', '>', Carbon::now()->startOfWeek())
+            ->where('created_at', '<', Carbon::now()->endOfWeek())
+            ->get();
+        }else{
+            $data = App\Recibo::where('created_at', '>', Carbon::parse($fecha)->startOfWeek())
+            ->where('created_at', '<', Carbon::parse($fecha)->endOfWeek())
+            ->get();
+        }
 
         $semana = [];
         $ingreso_de_dias =[

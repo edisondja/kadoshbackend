@@ -77,7 +77,7 @@
 	Route::get('/api/cargar_recibo/{id_recibo}','ControllerRecibo@cargar_recibo');
 	Route::get('/api/imprimir_recibo/{id_recibo}/{id_factura}','ControllerRecibo@imprimir_recibo');
 	Route::get('/api/ingresos_de_mes/','ControllerRecibo@ingresos_en_meses');
-	Route::get('/api/ingresos_de_semana/','ControllerRecibo@ingresos_de_semana');
+	Route::get('/api/ingresos_de_semana/{fecha}','ControllerRecibo@ingresos_de_semana');
 
 
 	//CARGAR HISTORIAL_PS
