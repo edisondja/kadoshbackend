@@ -59,12 +59,12 @@ class ControllerRecibo extends Controller
             $recibo->id_factura = $id_factura;
             $recibo->monto = $monto;
             if($codigo!=null){
-                $recibo->tipo_de_pago =  "tarjeta";
-                $recibo->concepto_pago = "Pago realizado con tarjeta";
+                $recibo->tipo_de_pago =  "Pago en tarjeta";
+                $recibo->concepto_pago = "tarjeta";
 
             }else{
-                $recibo->concepto_pago = "normal";
-                $recibo->tipo_de_pago = "efectivo";
+                $recibo->concepto_pago = "efectivo";
+                $recibo->tipo_de_pago = "Pago en efectivo";
             }
             $recibo->codigo_recibo = $codigo;
             $recibo->estado_actual = ($estado_actual - $monto);
