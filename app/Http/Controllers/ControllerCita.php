@@ -66,6 +66,13 @@ class ControllerCita extends Controller
         return $data;
     }
 
+    public function cargar_citas(){
+
+       $citas = DB::table('citas')->orderBy('dia','desc')->join('pacientes','citas.id_paciente','=','pacientes.id')->get();
+
+       return $citas;
+    }
+
     /**
      * Show the form for editing the specified resource.
      *

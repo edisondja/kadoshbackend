@@ -32,7 +32,7 @@
 	Route::get('/api/doctores/','ControllerDoctor@index');
 	Route::get('/api/eliminar_doctor/{id}','ControllerDoctor@destroy');
 	Route::get('/api/actualizar_doctor/{nombre}/{apellido}/{cedula}/{telefono}/{id}','ControllerDoctor@edit');
-	Route::get('api/cargar_doctor/{id_doctor}','ControllerDoctor@cargar_doctor');
+	Route::get('/api/cargar_doctor/{id_doctor}','ControllerDoctor@cargar_doctor');
 	Route::get('/api/crear_doctor/{nombre}/{apellido}/{cedula}/{telefono}','ControllerDoctor@create');
 	Route::get('/api/buscando_doctor/{nombre}','ControllerDoctor@buscando_doctor');
 
@@ -45,6 +45,7 @@
 	Route::get('api/actualizar_cita/{id_cita}/{hora}/{dia}','ControllerCita@update');
 	Route::get('api/eliminar_cita/{id_cita}','ControllerCita@destroy');
 	Route::get('api/buscar_cita/{fecha}','ControllerCita@BuscarCita');
+	Route::get('/api/cargar_citas','ControllerCita@cargar_citas');
 
 
 	///API FACTURAS
