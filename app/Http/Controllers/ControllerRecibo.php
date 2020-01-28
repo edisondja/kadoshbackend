@@ -130,7 +130,7 @@ class ControllerRecibo extends Controller
     
             if ($mydate['weekday'] == 'Monday') {
 
-                $ingreso_de_dias['lunes'].= $key['monto'];
+                $ingreso_de_dias['lunes'].=$key['monto'];
                 $semana['Monday'][] = $key;
 
             } elseif ($mydate['weekday'] == 'Tuesday') {
