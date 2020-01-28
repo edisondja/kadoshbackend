@@ -130,32 +130,32 @@ class ControllerRecibo extends Controller
     
             if ($mydate['weekday'] == 'Monday') {
 
-                $ingreso_de_dias['lunes'].= (int)$key['monto'];
+                $ingreso_de_dias['lunes'].= $key['monto'];
                 $semana['Monday'][] = $key;
 
             } elseif ($mydate['weekday'] == 'Tuesday') {
                 
-                $ingreso_de_dias['martes'].= (int)$key['monto'];
+                $ingreso_de_dias['martes'].=$key['monto'];
                 $semana['Tuesday'][] = $key;
             
             } elseif ($mydate['weekday'] == 'Wednesday') {
 
-                $ingreso_de_dias['miercoles'].= (int)$key['monto'];
+                $ingreso_de_dias['miercoles'].=$key['monto'];
                 $semana['Wednesday'][] = $key;
            
             } elseif ($mydate['weekday'] == 'Thursday') {
 
-               $ingreso_de_dias['jueves'].= (int)$key['monto'];
+               $ingreso_de_dias['jueves'].=$key['monto'];
                 $semana['Thursday'] = $key;
            
             } elseif ($mydate['weekday'] == 'Friday') {
 
-                $ingreso_de_dias['viernes'].= (int)$key['monto'];
+                $ingreso_de_dias['viernes'].=$key['monto'];
                 $semana['Friday'][] = $key;
 
             } elseif ($mydate['weekday'] == 'Saturday') {
 
-                $ingreso_de_dias['sabado'].= (int)$key['monto'];
+                $ingreso_de_dias['sabado'].=$key['monto'];
                 $semana['Saturday'][] = $key;
 
             }
