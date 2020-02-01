@@ -85,6 +85,7 @@
 
 	Route::get('/api/cargar_historial_ps/{id_factura}','ControllerHistorialps@cargar_procedimientos');
 	Route::get('/api/eliminar_historial_ps/{id_factura}','ControllerHistorialps@eliminar_procedimiento');
+	Route::get('/api/eliminar_procedimiento/lista/{id_procedimiento}/{id_factura}/{total}','ControllerProcedimiento@eliminar_procedimiento_lista');
 	//Route::get('/api/editar_historial_ps/{id_factura}','Controller');
 
 	//USUARIOS

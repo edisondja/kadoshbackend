@@ -66,4 +66,16 @@ class ControllerProcedimiento extends Controller
         $eliminar = App\Procedimiento::find($id);
         $eliminar->delete();
     }
+
+    public function eliminar_procedimiento_lista($id_procedimiento,$id_factura,$total){
+
+            DB::table('historial_ps')->delete()->where('id',$id_procedimiento);
+        
+            $factura = App\Factura::find($id_factura);
+            $factura->precio_estatus = ($factura->precio_estatus  - $total);
+            $factura->save();
+
+            return "success";
+        
+    }
 }
