@@ -100,7 +100,7 @@ class ControllerFactura extends Controller
 
     public function cargar_procedimientos_factura($id_factura){
 
-        $data = DB::table('historial_ps')->join('procedimientos','historial_ps.id_procedimiento','=','procedimientos.id')->where('historial_ps.id_factura','=',$id_factura)->get();
+        $data = DB::table('historial_ps')->join('procedimientos','historial_ps.id_procedimiento','=','procedimientos.id')->select('historial_ps.*','procedimientos.*','historial_ps.id as id_historial')->where('historial_ps.id_factura','=',$id_factura)->get();
         return $data;
     }
 
