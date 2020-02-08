@@ -10,7 +10,8 @@
         "laravel/framework": "5.5.*",
         "laravel/tinker": "~1.0",
         "kylekatarnls/laravel-carbon-2": "^1.0.0",
-        "barryvdh/laravel-dompdf": "~0.8.0"
+        "dompdf/dompdf": "dev-master as 0.7.0"
+
     },
     "require-dev": {
         "filp/whoops": "~2.0",

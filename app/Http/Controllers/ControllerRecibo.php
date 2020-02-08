@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use DB;
+use Mail;
 use App;
 use Carbon\Carbon;
+use App\Mail\KadoshNotificacion;
 
 
 class ControllerRecibo extends Controller
@@ -113,12 +115,12 @@ class ControllerRecibo extends Controller
 
         $semana = [];
         $ingreso_de_dias =[
-            'lunes'=>'',
-            'martes'=>'',
-            'miercoles'=>'',
-            'jueves'=>'',
-            'viernes'=>'',
-            'sabado'=>''
+            'lunes'=>0,
+            'martes'=>0,
+            'miercoles'=>0,
+            'jueves'=>0,
+            'viernes'=>0,
+            'sabado'=>0
         ];
 
 
@@ -185,4 +187,17 @@ class ControllerRecibo extends Controller
 
     }
 
+    public function notificar_reporte(){
+
+        
+
+       
+
+        Mail::send('reporte', ['user' => 'co'], function ($m){
+            $m->from('hello@app.com', 'Your Application');
+
+            $m->to('edisondja@gmail.com','Edison')->subject('Your Reminder!');
+        });
+
+    }
 }
