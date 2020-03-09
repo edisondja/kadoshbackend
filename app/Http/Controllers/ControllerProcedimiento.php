@@ -72,17 +72,15 @@ class ControllerProcedimiento extends Controller
             //DB::table('historial_ps')->where('id','=',$id_procedimiento)->delete();
             App\historial_p::find($id_procedimiento)->delete();
             $factura = App\Factura::find($id_factura);  
-            $calculo = $factura->precio_estatus - $total;
+            $calculo = ($factura->precio_estatus - $total);
 
             if($calculo>=0){
                 $factura->precio_estatus = ($factura->precio_estatus  - $total);
-                return "success";
             }else{
                 $factura->precio_estatus = 0;
             }
-
             $factura->save();
-
+            return "success";
     }
 
     public function agregar_procedimiento_a_lista($id_factura,$id_procedimiento,$total,$cantidad){
