@@ -131,7 +131,7 @@ class Paciente extends Controller
     public function buscando_paciente($nombre){
 
         //buscando el paciente por el filtro like
-        $data=DB::table('pacientes')->where("nombre","like","%$nombre%")->where("apellido","like","%$nombre%")->take(20)->get();
+        $data=DB::table('pacientes')->where("nombre","like","%$nombre%")->OrWhere("apellido","like","%$nombre%")->take(20)->get();
 
         return  $data;
 
