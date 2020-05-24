@@ -136,7 +136,7 @@ class Paciente extends Controller
         $data = App\Paciente::whereRaw("MATCH(nombre,apellido) AGAINST(? IN BOOLEAN MODE)", array($q))->take(20)->get();
         if(count($data)==0){
                 $data = App\Paciente::where('nombre','like',"%$q%")->take(20)->get();
-                if($data==0){
+                if(count($data)==0){
                     $data = App\Paciente::where('apellido','like',"%$q%")->take(20)->get();
                 }
         }
