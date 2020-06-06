@@ -101,3 +101,6 @@
 	 Route::post('/api/guardar_descuento','ControllerDescuento@descontar');
 	 Route::get('/api/consultar_descuentos/{id_factura}','ControllerDescuento@consultar_descuentos');
 	 Route::post('/api/eliminar_descuento/','ControllerDescuento@eliminar_descuento');
+	 Route::get('/test',function(){
+		 return "ready";
+	 });
