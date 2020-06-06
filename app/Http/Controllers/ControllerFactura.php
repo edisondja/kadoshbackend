@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use DB;
 use App;
 use App\Factura;
+use App\Descuento;
 
 class ControllerFactura extends Controller
 {
@@ -21,6 +22,11 @@ class ControllerFactura extends Controller
         $estado_actual = $factura->precio_estatus - $cantidad;
         $factura->precio_estatus = $estado_actual;
         $factura->save();
+
+        $descuentos = new App\Descuento();
+        $descuentos->monto = $cantidad;
+        $descuentos->id_factura = $id_factura;
+        $descuentos->save();
 
     }
 

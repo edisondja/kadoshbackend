@@ -95,3 +95,9 @@
 	///REPORTES
 	Route::get('/api/facturas_reportes/{fecha_inicial}/{fecha_final}','ControllerRecibo@reporte_recibos');
 	Route::get('/api/notificar_ingresos','ControllerRecibo@notificar_reporte');
+
+	//Descuentos Factura
+
+	 Route::post('/api/guardar_descuento','ControllerDescuento@descontar');
+	 Route::get('/api/consultar_descuentos/{id_factura}','ControllerDescuento@consultar_descuentos');
+	 Route::post('/api/eliminar_descuento/','ControllerDescuento@eliminar_descuento');

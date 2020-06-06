@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateProcedimientosTable extends Migration
+class CreateDescuentosTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,11 @@ class CreateProcedimientosTable extends Migration
      */
     public function up()
     {
-        Schema::create('procedimientos', function (Blueprint $table) {
+        Schema::create('descuentos', function (Blueprint $table) {
             $table->increments('id');
-            $table->string("nombre");
-            $table->integer("precio");            
+            $table->float("monto");
+            $table->integer("id_factura")->unsigned();
+            $table->foreign("id_factura")->references("id")->on("facturas");   
             $table->timestamps();
         });
     }
@@ -28,6 +29,6 @@ class CreateProcedimientosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('procedimientos');
+        Schema::dropIfExists('descuentos');
     }
 }
