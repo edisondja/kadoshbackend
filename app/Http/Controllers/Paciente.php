@@ -138,6 +138,8 @@ class Paciente extends Controller
                 $data = App\Paciente::where('nombre','like',"%$q%")->take(20)->get();
                 if(count($data)==0){
                     $data = App\Paciente::where('apellido','like',"%$q%")->take(20)->get();
+                }else if(count($data)==0){
+                    $data = App\Paciente::where('telefono','like',"%$q%")->take(20)->get();
                 }
         }
         return  $data;
