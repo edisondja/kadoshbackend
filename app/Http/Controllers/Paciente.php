@@ -128,20 +128,34 @@ class Paciente extends Controller
     
         return $paciente;
     }
-    public function buscando_paciente($q){
+    public function buscando_paciente($q,$estado_buqueda){
 
+        
         //buscando el paciente por el filtro like
         //$data=DB::table('pacientes')->where("nombre","like","%$nombre%")->OrWhere("apellido","like","%$nombre%")->take(20)->get();
         //$data = App\Paciente::whereRaw("MATCH (nombre,apellido) AGAINST ($nombre)")->take(20)->get();
-        $data = App\Paciente::whereRaw("MATCH(nombre,apellido) AGAINST(? IN BOOLEAN MODE)", array($q))->take(20)->get();
-        if(count($data)==0){
-                $data = App\Paciente::where('nombre','like',"%$q%")->take(20)->get();
-                if(count($data)==0){
-                    $data = App\Paciente::where('apellido','like',"%$q%")->take(20)->get();
-                }else if(count($data)==0){
-                    $data = App\Paciente::where('telefono','like',"%$q%")->take(20)->get();
-                }
+        
+        if($estado_buqueda=="paciente_por_telefono"){
+
+            $data = App\Paciente::where('telefono','like',"%$q%")->orWhere('apellido','like',"%$q%")->take(50)->get();
+        
+        }else if($estado_buqueda=="paciente_por_nombre"){
+
+        $data = App\Paciente::where('nombre','like',"%$q%")->take(50)->get();
+        
+        }else if($estado_buqueda=="panciente_por_cedula"){
+
+            $data = App\Paciente::where('telefono','like',"%$q%")->take(50)->get();
+
+        }else if($estado_buqueda=="paciente_por_apellido"){
+            
+            $data = App\Paciente::where('apellido','like',"%$q%")->take(50)->get();
+     
+        }else{
+
         }
+
+
         return  $data;
 
     }

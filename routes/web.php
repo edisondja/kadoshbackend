@@ -25,7 +25,7 @@
 	Route::get('/api/guardar_paciente/{nombre}/{apellido}/{telefono}/{id_doctor}/{cedula}/{fecha_nacimiento}/{sexo}','Paciente@guardar');
 	Route::get('/api/notificar_cumple','Paciente@notificar_cumple');
 	Route::get('/api/actualizar_paciente/{nombre}/{apellido}/{cedula}/{telefono}/{sexo}/{fecha_nacimiento}/{id_doctor}/{id}','Paciente@update');
-	Route::get('/api/buscar_paciente/{nombre}','Paciente@buscando_paciente');
+	Route::get('/api/buscar_paciente/{nombre}/{estado_busqueda}','Paciente@buscando_paciente');
 	Route::get('/api/consultar_deuda/{id_paciente}','Paciente@deuda_paciente');
 
 	///API DOCTORES

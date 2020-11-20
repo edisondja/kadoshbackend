@@ -60,13 +60,20 @@ class ControllerRecibo extends Controller
             $recibo = new App\Recibo();
             $recibo->id_factura = $id_factura;
             $recibo->monto = $monto;
-            if($codigo_tarjeta!="ef"){
-                $recibo->tipo_de_pago =  "Pago en tarjeta";
-                $recibo->concepto_pago = "tarjeta";
 
+            if($codigo_tarjeta=="ts"){
+                $recibo->tipo_de_pago =  "Transferencia Bancaria";
+                $recibo->concepto_pago = "Transferencia";
             }else{
-                $recibo->concepto_pago = "efectivo";
-                $recibo->tipo_de_pago = "Pago en efectivo";
+
+                if($codigo_tarjeta!="ef"){
+                    $recibo->tipo_de_pago =  "Pago en tarjeta";
+                    $recibo->concepto_pago = "tarjeta";
+
+                }else{
+                    $recibo->concepto_pago = "efectivo";
+                    $recibo->tipo_de_pago = "Pago en efectivo";
+                }
             }
             $recibo->codigo_recibo = $codigo;
             $recibo->estado_actual = ($estado_actual - $monto);
