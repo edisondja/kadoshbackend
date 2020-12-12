@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App;
 use DB;
 
+
 class Paciente extends Controller
 {
     /**
@@ -16,9 +17,8 @@ class Paciente extends Controller
     public function index()
     {
         //
-        $data = DB::table('pacientes')->orderBy("id","desc")->get();
 
-        return $data;
+        return App\Paciente::with("estatus")->orderBy("id","desc")->take(30)->get();
     }
 
     /**
@@ -130,17 +130,30 @@ class Paciente extends Controller
     }
     public function buscando_paciente($q){
 
+        
         //buscando el paciente por el filtro like
         //$data=DB::table('pacientes')->where("nombre","like","%$nombre%")->OrWhere("apellido","like","%$nombre%")->take(20)->get();
         //$data = App\Paciente::whereRaw("MATCH (nombre,apellido) AGAINST ($nombre)")->take(20)->get();
-        $data = App\Paciente::whereRaw("MATCH(nombre,apellido) AGAINST(? IN BOOLEAN MODE)", array($q))->take(20)->get();
-        if(count($data)==0){
-                $data = App\Paciente::where('nombre','like',"%$q%")->take(20)->get();
-                if(count($data)==0){
-                    $data = App\Paciente::where('apellido','like',"%$q%")->take(20)->get();
-                }
-        }
-        return  $data;
+
+            $searchTerms = explode(' ', $q);
+            
+            $query = App\Paciente::query()->with("estatus");
+
+            foreach($searchTerms as $searchTerm){
+                $query->where(function($q) use ($searchTerm){
+                    $q->where('nombre', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('apellido', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('telefono', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('cedula', 'like', '%'.$searchTerm.'%');
+                    // and so on
+                });
+            }
+
+            $results = $query->get();
+        
+
+
+        return  $results;
 
     }
 
