@@ -135,6 +135,7 @@ class Paciente extends Controller
         //$data=DB::table('pacientes')->where("nombre","like","%$nombre%")->OrWhere("apellido","like","%$nombre%")->take(20)->get();
         //$data = App\Paciente::whereRaw("MATCH (nombre,apellido) AGAINST ($nombre)")->take(20)->get();
 
+
             $searchTerms = explode(' ', $q);
             
             $query = App\Paciente::query()->with("estatus");
@@ -154,6 +155,8 @@ class Paciente extends Controller
 
 
         return  $results;
+        
+      
 
     }
 
