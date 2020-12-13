@@ -18,7 +18,8 @@ class Paciente extends Controller
     {
         //
 
-        return App\Paciente::with("estatus")->orderBy("id","desc")->take(30)->get();
+        return App\Paciente::withSum('estatus:precio_estatus')->get();
+        
     }
 
     /**
@@ -138,7 +139,7 @@ class Paciente extends Controller
 
             $searchTerms = explode(' ', $q);
             
-            $query = App\Paciente::query()->with("estatus");
+            $query = App\Paciente::query()->withSum('estatus:precio_estatus');
 
             foreach($searchTerms as $searchTerm){
                 $query->where(function($q) use ($searchTerm){

@@ -3,10 +3,13 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
+
 
 
 class Paciente extends Model
 {
+    use LaravelSubQueryTrait;
 
 
     public function searchableAs()
