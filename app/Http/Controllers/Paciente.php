@@ -18,7 +18,7 @@ class Paciente extends Controller
     {
         //
 
-        return App\Paciente::withSum('estatus:precio_estatus')->get();
+        return App\Paciente::withSum('estatus:precio_estatus')->take(30)->orderBy("id","desc")->get();
         
     }
 
