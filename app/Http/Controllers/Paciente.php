@@ -22,10 +22,10 @@ class Paciente extends Controller
 
         //return ['token_llego'=>$request->bearerToken()];
 
-        $DECO = JWT::decode($request->bearerToken(),env("FIRMA_TOKEN"),array('HS256'));
+       // $DECO = JWT::decode($request->bearerToken(),env("FIRMA_TOKEN"),array('HS256'));
        
-        print_r($DECO);
-        die();
+        //print_r($DECO);
+        //die();
         //
         // return $request->getContent();
         
