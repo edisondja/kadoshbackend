@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use \Firebase\JWT\JWT;
 use App;
 use DB;
 
@@ -14,11 +15,26 @@ class Paciente extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+
+
+    public function index(Request $request)
     {
+
+        //return ['token_llego'=>$request->bearerToken()];
+
+        $DECO = JWT::decode($request->bearerToken(),env("FIRMA_TOKEN"),array('HS256'));
+       
+        print_r($DECO);
+        die();
         //
+        // return $request->getContent();
+        
+      //  return ['token_llego'=>$request->bearerToken()];
+
+       // dd("Este es el token!!!".$request->bearerToken());
 
         return App\Paciente::withSum('estatus:precio_estatus')->take(30)->orderBy("id","desc")->get();
+        
         
     }
 

@@ -63,7 +63,7 @@ class ControllerRecibo extends Controller
 
             if($codigo_tarjeta=="ts"){
                 $recibo->tipo_de_pago =  "Transferencia Bancaria";
-                $recibo->concepto_pago = "Transferencia";
+                $recibo->concepto_pago = "Transferencia Bancaria";
             }else{
 
                 if($codigo_tarjeta!="ef"){
