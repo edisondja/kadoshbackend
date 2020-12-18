@@ -25,7 +25,7 @@ class Paciente extends Controller
        // $DECO = JWT::decode($request->bearerToken(),env("FIRMA_TOKEN"),array('HS256'));
        
         //print_r($DECO);
-        //die();
+        //gidie();
         //
         // return $request->getContent();
         
