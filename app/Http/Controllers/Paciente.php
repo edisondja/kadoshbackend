@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use \Firebase\JWT\JWT;
 use App;
 use DB;
+use Carbon\Carbon;
 
 
 class Paciente extends Controller
@@ -182,6 +183,19 @@ class Paciente extends Controller
         $deuda=DB::table("facturas")->where('id_paciente','=',$id_paciente)->sum('precio_estatus');
 
         return  ['deuda_total'=>number_format($deuda, 2, '.', ',')];
+    }
+
+    public function cargar_generos(){
+
+            //select sexo,COUNT(*) from pacientes  GROUP BY sexo;
+           
+            $results = DB::select( DB::raw("select sexo,COUNT(*) as cantidad from pacientes  GROUP BY sexo") );
+            //return $results[2]->cantidad;
+            return [
+                ['hombres'=>$results[2]->cantidad],
+                ['mujeres'=>$results[3]->cantidad]
+            ];
+
     }
 
 

@@ -27,6 +27,7 @@
 	Route::get('/api/actualizar_paciente/{nombre}/{apellido}/{cedula}/{telefono}/{sexo}/{fecha_nacimiento}/{id_doctor}/{id}','Paciente@update');
 	Route::get('/api/buscar_paciente/{nombre}','Paciente@buscando_paciente');
 	Route::get('/api/consultar_deuda/{id_paciente}','Paciente@deuda_paciente');
+	Route::get('/api/cargar_generos_pacientes','Paciente@cargar_generos');
 
 	///API DOCTORES
 	Route::get('/api/doctores/','ControllerDoctor@index');
@@ -87,6 +88,7 @@
 	Route::get('/api/eliminar_historial_ps/{id_factura}','ControllerHistorialps@eliminar_procedimiento');
 	Route::get('/api/eliminar_procedimiento/lista/{id_procedimiento}/{id_factura}/{total}','ControllerProcedimiento@eliminar_procedimiento_lista');
 	Route::get('/api/agregar_procedimiento_lista/{id_factura}/{id_procedimiento}/{total}/{cantidad}','ControllerProcedimiento@agregar_procedimiento_a_lista');
+	Route::get('/api/procedimientos_realizados','ControllerFinanciero@procedimientos_realizados');
 	//Route::get('/api/editar_historial_ps/{id_factura}','Controller');
 
 	//USUARIOS
@@ -104,3 +106,31 @@
 	 Route::get('/test',function(){
 		 return "ready";
 	 });
+
+	 //Administracion 
+
+	Route::get('/api/cargar_suplidores','ControllerFinanciero@suplidores');
+	Route::post('/api/eliminar_suplidor','ControllerFinanciero@eliminar_suplidor');
+	Route::post('/api/actualizar_suplidor','ControllerFinanciero@actualizar_suplidor');
+	Route::get('/api/buscar_suplidores','ControllerFinanciero@buscar_suplidor');
+	
+
+	//Gastos
+	Route::post('/api/registrar_gastos','ControllerFinanciero@registrar_gastos');
+	Route::get('/api/cargar_gasto/{id}','ControllerFinanciero@cargar_gasto');
+	Route::get('/api/cargar_gastos','ControllerFinanciero@cargar_gastos');
+	Route::post('/api/actualizar_gasto','ControllerFinanciero@actualizar_gasto');
+	Route::post('/api/eliminar_gasto','ControllerFinanciero@eliminar_gasto');
+	Route::get('/api/buscar_gasto/{id}','ControllerFinanciero@buscar_gasto');
+	Route::get('/api/fecha_gastos/{fecha_i}/{fecha_f}','ControllerFinanciero@buscar_por_fecha');
+	Route::get('/api/cargar_gastos_fecha/{fecha_i}/{fecha_f}','ControllerFinanciero@cargar_gastos_fecha');
+
+
+	//Suplidores
+	Route::get('/api/buscar_suplidor','ControllerFinanciero@buscar_suplidor');
+	Route::get('/api/cargar_suplidores','ControllerFinanciero@suplidores');
+	Route::post('/api/actualizar_suplidor','ControllerFinanciero@actualizar_suplidor');
+	Route::post('/api/registrar_suplidor','ControllerFinanciero@registrar_suplidor');
+	Route::post('/api/eliminar_suplidor','ControllerFinanciero@eliminar_suplidor');
+
+
