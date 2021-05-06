@@ -17,7 +17,7 @@ class ControllerFinanciero extends Controller
      */
 
     //Suplidores
-    //Actualizado 29-04-2021
+    //Actualizado 6-05-2021
 
 
     public function suplidores(){

@@ -22,7 +22,7 @@ class Paciente extends Controller
     {
 
         //return ['token_llego'=>$request->bearerToken()];
-
+        //Este es el token e cuidadito
        // $DECO = JWT::decode($request->bearerToken(),env("FIRMA_TOKEN"),array('HS256'));
        
         //print_r($DECO);
@@ -90,7 +90,7 @@ class Paciente extends Controller
 
     }
 
-    /**
+    /**Cosilla nuevas
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
