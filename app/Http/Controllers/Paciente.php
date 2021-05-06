@@ -8,7 +8,7 @@ use App;
 use DB;
 use Carbon\Carbon;
 
-
+//Paciente control
 class Paciente extends Controller
 {
     /**
@@ -195,6 +195,14 @@ class Paciente extends Controller
                 ['hombres'=>$results[2]->cantidad],
                 ['mujeres'=>$results[3]->cantidad]
             ];
+
+    }
+
+    public function cantidad_de_pacientes(){
+
+         $pacientes = App\Paciente::count();    
+
+         return ['cantidad_pacientes'=>$pacientes];
 
     }
 

@@ -28,6 +28,7 @@
 	Route::get('/api/buscar_paciente/{nombre}','Paciente@buscando_paciente');
 	Route::get('/api/consultar_deuda/{id_paciente}','Paciente@deuda_paciente');
 	Route::get('/api/cargar_generos_pacientes','Paciente@cargar_generos');
+	Route::get('/api/cantidad_de_pacientes','Paciente@cantidad_de_pacientes');
 
 	///API DOCTORES
 	Route::get('/api/doctores/','ControllerDoctor@index');
@@ -134,3 +135,5 @@
 	Route::post('/api/eliminar_suplidor','ControllerFinanciero@eliminar_suplidor');
 
 
+	//Nominas
+	Route::get('/api/cargar_nomina/{fecha_i}/{fecha_f}','ControllerFinanciero@cargar_nomina');

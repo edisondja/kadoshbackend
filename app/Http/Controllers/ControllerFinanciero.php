@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App;
 use DB;
 use Carbon\Carbon;
+use Factura;
 
 class ControllerFinanciero extends Controller
 {
@@ -16,6 +17,7 @@ class ControllerFinanciero extends Controller
      */
 
     //Suplidores
+    //Actualizado 29-04-2021
 
 
     public function suplidores(){
@@ -27,12 +29,11 @@ class ControllerFinanciero extends Controller
         
         
             DB::table("suplidores")->updateOrInsert(
-                ['id'=>$suplidor->id],
+                ['id'=>$suplidor->input('id')],
                 [
-                'nombre'=>$suplidor->nombre,
-                'descripcion'=>$suplidor->descripcion,
-                'rnc_suplidor'=>$suplidor->rnc_suplidor,
-                'fecha_registro_s'=>$this->fecha_registro,
+                'nombre'=>$suplidor->input('nombre'),
+                'descripcion'=>$suplidor->input('descripcion'),
+                'rnc_suplidor'=>$suplidor->input('rnc_suplidor')
                 ]
             );
 
@@ -45,22 +46,22 @@ class ControllerFinanciero extends Controller
     public function registrar_suplidor(Request $data){
         
 
-        try{
-            DB::table("suplidores")->insert([
-                'nombre'=>$data->nombre,
-                'descripcion'=>$data->descripcion,
-                'rnc_suplidor'=>$data->rnc_suplidor,
-                'fecha_registro_s'=>date('ymdiis')
+
+             DB::table("suplidores")->insert([
+                'nombre'=>$data->input('nombre'),
+                'descripcion'=>$data->input('descripcion'),
+                'rnc_suplidor'=>$data->input('rnc_suplidor'),
+                'fecha_registro_s'=>date('ymd')
             ]);
+             
+
+        
+
+
             return "Suplidor Registrado con exito";
 
-        }
-        catch(Exception $e){
-
-
-            return "no se pudo guardar carajo!!!!";
-
-        }   
+    
+      
 
     
     
@@ -70,14 +71,11 @@ class ControllerFinanciero extends Controller
     public function eliminar_suplidor(Request $id){
 
 
-        try{
-            DB::table("suplidores")->where("id",$id->id)->delete();
+    
+            DB::table("suplidores")->where("id",$id->input('id'))->delete();
             return "Suplidor eliminado con exito";
 
-        }catch(Exception $e){
 
-            return "Erro al eliminar suplidor";
-        }
 
     }
   
@@ -92,14 +90,14 @@ class ControllerFinanciero extends Controller
     public function registrar_gastos(Request $data){
         
          DB::table('gastos')->insert(
-             ['tipo_de_gasto'=>$data->tipo_de_gasto,
-              'tipo_de_pago'=>$data->tipo_de_pago,
-              'suplidor_id'=>$data->suplidor_id,
-              'itebis'=>$data->itebis,
-              'total'=>$data->total,
-              'fecha_registro'=>date('ymdiis'),
-              'descripcion'=>$data->descripcion,
-              'comprobante_fiscal'=>$data->comprobante_fiscal
+             ['tipo_de_gasto'=>$data->input('tipo_de_gasto'),
+              'tipo_de_pago'=>$data->input('tipo_de_pago'),
+              'suplidor_id'=>$data->input('suplidor_id'),
+              'itebis'=>$data->input('itebis'),
+              'total'=>$data->input('total'),
+              'fecha_registro'=>date('ymd'),
+              'descripcion'=>$data->input('descripcion'),
+              'comprobante_fiscal'=>$data->input('comprobante_fiscal')
              ]);
 
             return "Gasto registrado con exito";
@@ -112,29 +110,24 @@ class ControllerFinanciero extends Controller
 
     public function actualizar_gasto(Request $data){
 
-        try{
             
 
             DB::table('gastos')->updateOrInsert(
             ['id'=>$data->id],
             [
-            'tipo_de_gasto'=>$data->tipo_de_gasto,
-            'tipo_de_pago'=>$data->tipo_de_pago,
-            'suplidor_id'=>$data->suplidor_id,
-            'itebis'=>$data->itebis,
+            'tipo_de_gasto'=>$data->input('tipo_de_gasto'),
+            'tipo_de_pago'=>$data->input('tipo_de_pago'),
+            'suplidor_id'=>$data->input('suplidor_id'),
+            'itebis'=>$data->input('itebis'),
             'total'=>$data->total,
-            'fecha_registro'=>date('ymdiis'),
-            'descripcion'=>$data->descripcion,
-            'comprobante_fiscal'=>$data->comprobante_fiscal
+            'fecha_registro'=>date('ymd'),
+            'descripcion'=>$data->input('descripcion'),
+            'comprobante_fiscal'=>$data->input('comprobante_fiscal')
            ]);
   
-               return "Gasto registrado con exito";
+           return "Gasto actualizado con exito";
    
-            }catch(Exception $e){
-   
-               return $e;
-   
-            }
+          
 
 
     }
@@ -149,15 +142,11 @@ class ControllerFinanciero extends Controller
 
     public function eliminar_gasto(Request $data){
 
-            try{
 
-                DB::table('gastos')->where('id',$data->id)->delete();
+                DB::table('gastos')->where('id',$data->input('id'))->delete();
                 return "Registro eliminado con exito";
 
-            }catch(Exception $e){
-
-                return $e;
-            }
+         
 
 
     }
@@ -231,6 +220,44 @@ class ControllerFinanciero extends Controller
     
     
      
+    }
+
+
+    public function cargar_nomina($fecha_i="",$fecha_f=""){
+
+
+      //  return date('yy-m-d');
+        
+        if($fecha_i=="s" && $fecha_f=="s"){
+            
+
+            //cargar nomina regenerada hoy
+        
+            
+            $hoy = date('yy-m-d');
+        
+
+            $sql ="SELECT COUNT(*) as recibos,doctors.nombre,doctors.apellido,SUM(recibos.monto) 
+            as monto FROM recibos inner JOIN facturas on recibos.id_factura=facturas.id
+            inner JOIN doctors on doctors.id=facturas.id_doctor
+            where recibos.id_factura=facturas.id and recibos.fecha_pago 
+            BETWEEN '$hoy 12:00:00' AND '2021-05-03 23:30:00' GROUP BY doctors.nombre";
+        
+        }else{
+
+            $sql ="SELECT COUNT(*) as recibos,doctors.nombre,doctors.apellido,SUM(recibos.monto) 
+            as monto FROM recibos inner JOIN facturas on recibos.id_factura=facturas.id
+            inner JOIN doctors on doctors.id=facturas.id_doctor
+            where recibos.id_factura=facturas.id and recibos.fecha_pago 
+            BETWEEN '$fecha_i 12:00:00' AND '$fecha_f 23:30:00' GROUP BY doctors.nombre";
+
+        }
+        
+        $data =DB::select( DB::raw($sql) );
+    
+        return $data;
+
+
     }
 
 
