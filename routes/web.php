@@ -109,12 +109,12 @@
 	 });
 
 	 //Administracion 
-
+	 /*
 	Route::get('/api/cargar_suplidores','ControllerFinanciero@suplidores');
 	Route::post('/api/eliminar_suplidor','ControllerFinanciero@eliminar_suplidor');
 	Route::post('/api/actualizar_suplidor','ControllerFinanciero@actualizar_suplidor');
 	Route::get('/api/buscar_suplidores','ControllerFinanciero@buscar_suplidor');
-	
+	 */
 
 	//Gastos
 	Route::post('/api/registrar_gastos','ControllerFinanciero@registrar_gastos');
