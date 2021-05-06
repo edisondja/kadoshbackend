@@ -18,7 +18,7 @@
 	Route::get('/api/eliminar_usuario/{id}','LoginContorller@AactualizarUsuario');
 	Route::get('/api/consultar_usuarios','LoginController@CargarUsuarios');
 
-	//API PACIENTES
+	//API PACIENTES READY
 	Route::get('/api/paciente','Paciente@index');	
 	Route::get('/api/paciente/{id_paciente}','Paciente@show');
 	Route::get('/api/borrar_paciente/{id_paciente}','Paciente@destroy');
