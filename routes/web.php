@@ -137,3 +137,12 @@
 
 	//Nominas
 	Route::get('/api/cargar_nomina/{fecha_i}/{fecha_f}','ControllerFinanciero@cargar_nomina');
+
+    //Usuario
+
+	Route::post('/api/agregar_usuario','ControllerUsuario@agregar_usuario');
+	Route::post('/api/eliminar_usuario','ControllerUsuario@eliminar_usuario');
+    Route::post('/api/actualizar_usuario','ControllerUsuario@actualizar_usuario');
+	Route::get('/api/buscar_usuario/{usuario}','ControllerUsuario@buscar_usuario');
+	Route::get('/api/cantidad_de_usuario','ControllerUsuario@cantidad_usuario');
+	Route::get('/api/cargar_usuarios','ControllerUsuario@cargar_usuarios');
