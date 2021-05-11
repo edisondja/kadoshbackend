@@ -210,11 +210,16 @@ class ControllerFinanciero extends Controller
        if($fecha_i=="s" && $fecha_f=="s"){
 
             $fecha_i = date('y-m-d');
-            return DB::table("gastos")->where("fecha_registro",$fecha_i)->sum('total');
+            $bruto = DB::table("gastos")->where("fecha_registro",$fecha_i)->sum('total');
+            $itebis = DB::table("gastos")->where("fecha_registro",$fecha_i)->sum('itebis');
+
+            return ($bruto+$itebis);
       
        }else{
 
-            return DB::table("gastos")->where("fecha_registro",">=",$fecha_i)->where("fecha_registro","<=",$fecha_i)->sum('total');
+            $bruto=DB::table("gastos")->where("fecha_registro",">=",$fecha_i)->where("fecha_registro","<=",$fecha_i)->sum('total');
+            $itebis=DB::table("gastos")->where("fecha_registro",">=",$fecha_i)->where("fecha_registro","<=",$fecha_i)->sum('total');
+            return ($bruto+$itebis);
 
        }    
     
