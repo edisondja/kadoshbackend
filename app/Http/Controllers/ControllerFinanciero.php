@@ -154,7 +154,7 @@ class ControllerFinanciero extends Controller
     public function cargar_gastos(){
 
     
-        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->orderBy("gastos.id","desc")->limit(20)->get();
+        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre","suplidores.rnc_suplidor")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->orderBy("gastos.id","desc")->limit(20)->get();
        
         return $data;
 
@@ -163,7 +163,7 @@ class ControllerFinanciero extends Controller
     public function buscar_gasto($id){
 
 
-        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->where("gastos.id",$id)->orderBy("gastos.id","desc")->limit(20)->get();
+        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre","suplidores.rnc_suplidor")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->where("gastos.id",$id)->orderBy("gastos.id","desc")->limit(20)->get();
 
         return $data;
 
