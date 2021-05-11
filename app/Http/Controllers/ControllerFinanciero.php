@@ -68,11 +68,11 @@ class ControllerFinanciero extends Controller
     }
 
 
-    public function eliminar_suplidor(Request $id){
+    public function eliminar_suplidor($id){
 
 
     
-            DB::table("suplidores")->where("id",$id->input('id'))->delete();
+            DB::table("suplidores")->where("id",$id)->delete();
             return "Suplidor eliminado con exito";
 
 
@@ -140,10 +140,10 @@ class ControllerFinanciero extends Controller
 
     }
 
-    public function eliminar_gasto(Request $data){
+    public function eliminar_gasto($id){
 
 
-                DB::table('gastos')->where('id',$data->input('id'))->delete();
+                DB::table('gastos')->where('id',$id)->delete();
                 return "Registro eliminado con exito";
 
          

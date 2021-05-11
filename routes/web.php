@@ -121,7 +121,7 @@
 	Route::get('/api/cargar_gasto/{id}','ControllerFinanciero@cargar_gasto');
 	Route::get('/api/cargar_gastos','ControllerFinanciero@cargar_gastos');
 	Route::post('/api/actualizar_gasto','ControllerFinanciero@actualizar_gasto');
-	Route::post('/api/eliminar_gasto','ControllerFinanciero@eliminar_gasto');
+	Route::get('/api/eliminar_gasto/{id}','ControllerFinanciero@eliminar_gasto');
 	Route::get('/api/buscar_gasto/{id}','ControllerFinanciero@buscar_gasto');
 	Route::get('/api/fecha_gastos/{fecha_i}/{fecha_f}','ControllerFinanciero@buscar_por_fecha');
 	Route::get('/api/cargar_gastos_fecha/{fecha_i}/{fecha_f}','ControllerFinanciero@cargar_gastos_fecha');
@@ -132,7 +132,7 @@
 	Route::get('/api/cargar_suplidores','ControllerFinanciero@suplidores');
 	Route::post('/api/actualizar_suplidor','ControllerFinanciero@actualizar_suplidor');
 	Route::post('/api/registrar_suplidor','ControllerFinanciero@registrar_suplidor');
-	Route::post('/api/eliminar_suplidor','ControllerFinanciero@eliminar_suplidor');
+	Route::get('/api/eliminar_suplidor/{id}','ControllerFinanciero@eliminar_suplidor');
 
 
 	//Nominas
