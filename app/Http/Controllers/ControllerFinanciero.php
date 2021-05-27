@@ -154,7 +154,7 @@ class ControllerFinanciero extends Controller
     public function cargar_gastos(){
 
     
-        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre","suplidores.rnc_suplidor")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->orderBy("gastos.id","desc")->limit(20)->distinct()->get();
+        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre","suplidores.rnc_suplidor")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->orderBy("gastos.id","desc")->limit(20)->get();
        
         return $data;
 
@@ -163,7 +163,7 @@ class ControllerFinanciero extends Controller
     public function buscar_gasto($id){
 
 
-        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre","suplidores.rnc_suplidor")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->where("gastos.id",$id)->orderBy("gastos.id","desc")->limit(20)->distinct()->get();
+        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre","suplidores.rnc_suplidor")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->where("gastos.id",$id)->orderBy("gastos.id","desc")->limit(20)->get();
 
         return $data;
 
@@ -217,9 +217,21 @@ class ControllerFinanciero extends Controller
       
        }else{
 
-            $bruto=DB::table("gastos")->where("fecha_registro",">=",$fecha_i)->where("fecha_registro","<=",$fecha_i)->sum('total');
-            $itebis=DB::table("gastos")->where("fecha_registro",">=",$fecha_i)->where("fecha_registro","<=",$fecha_i)->sum('total');
-            return ($bruto+$itebis);
+      
+            $sql = "SELECT sum(total) as monto from gastos  where fecha_registro BETWEEN '$fecha_i 12:00:00' AND '$fecha_f 23:30:00'";     
+            $monto =DB::select(DB::raw($sql));
+            
+            $sql = "SELECT sum(itebis) as itebis from gastos  where fecha_registro BETWEEN '$fecha_i 12:00:00' AND '$fecha_f 23:30:00'";
+            $itebis =DB::select(DB::raw($sql));
+
+            return ($monto[0]->monto + $itebis[0]->itebis);
+            /*recibos.fecha_pago 
+            BETWEEN '$fecha_i 12:00:00' AND '$fecha_f 23:30:00'
+            */
+          
+
+           
+    
 
        }    
     
