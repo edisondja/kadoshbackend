@@ -22,7 +22,7 @@ class ControllerFinanciero extends Controller
 
     public function suplidores(){
 
-        return DB::table("suplidores")->take(20)->get();
+        return DB::table("suplidores")->get();
     }
     public function actualizar_suplidor(Request $suplidor){
 
