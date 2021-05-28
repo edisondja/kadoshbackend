@@ -81,7 +81,7 @@ class ControllerFinanciero extends Controller
   
     public function buscar_suplidor($nombre){
 
-        $data = App\Supplidor::where('like',"%$nombre%")->take(20)->get();
+        $data = App\Supplidor::where('like',"%$nombre%")->get();
         return $data;
 
 
