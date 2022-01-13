@@ -13,7 +13,6 @@ class CreateGastosTable extends Migration
      */
     public function up()
     {
-
     
         Schema::create('gastos', function (Blueprint $table) {
             $table->increments('id');
@@ -22,6 +21,8 @@ class CreateGastosTable extends Migration
             $table->integer("suplidor_id")->unsigned();
             $table->string("tipo_de_gasto");
             $table->string("tipo_de_pago");
+            $table->date('fecha_registro');
+            $table->string('comprobante_fiscal');
             $table->integer("usuario_id")->unsigned();
             $table->float("total");
             $table->float("itebis");

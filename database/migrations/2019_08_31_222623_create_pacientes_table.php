@@ -16,7 +16,6 @@ class CreatePacientesTable extends Migration
         Schema::create('pacientes', function (Blueprint $table) {
             $table->increments('id');
             $table->string("nombre");
-            $table->engine = 'MyISAM';
             $table->integer("id_doctor");
             $table->string("apellido");
             $table->string("telefono");

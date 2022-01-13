@@ -16,9 +16,15 @@ class ControllerDescuento extends Controller
     public function descontar(Request $data)
     {
         $descuentos = new App\Descuento();
-        $descuentos->monto = $data->input('monto');
-        $descuentos->id_factura - $data->input('id_factura');
+        $descuentos->monto-=$data->input('monto');
+        $descuentos->id_factura = $data->input('id_factura');
         $descuentos->save();
+        
+
+      /*/  $descuento = Descuento::find($data->input('id_factura'));
+        $descuento->monto = ($descuento->monto - $data->input('monto'));
+        $descuento->save();
+        */
     }
 
     public function consultar_descuentos($id_factura)

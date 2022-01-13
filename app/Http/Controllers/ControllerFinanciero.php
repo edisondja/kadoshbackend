@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App;
+use App\Suplidor;
 use DB;
 use Carbon\Carbon;
 use Factura;
@@ -16,19 +16,19 @@ class ControllerFinanciero extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    //Suplidores
+    //suplidors
     //Actualizado 6-05-2021
 
 
     public function suplidores(){
 
-        return DB::table("suplidores")->get();
+        return DB::table("suplidors")->get();
     }
     public function actualizar_suplidor(Request $suplidor){
 
         
         
-            DB::table("suplidores")->updateOrInsert(
+            DB::table("suplidors")->updateOrInsert(
                 ['id'=>$suplidor->input('id')],
                 [
                 'nombre'=>$suplidor->input('nombre'),
@@ -46,18 +46,16 @@ class ControllerFinanciero extends Controller
     public function registrar_suplidor(Request $data){
         
 
-
-             DB::table("suplidores")->insert([
-                'nombre'=>$data->input('nombre'),
-                'descripcion'=>$data->input('descripcion'),
-                'rnc_suplidor'=>$data->input('rnc_suplidor'),
-                'fecha_registro_s'=>date('ymd')
-            ]);
-             
-
         
+            $sup = new Suplidor();
 
-
+            $sup->nombre = $data->nombre;
+            $sup->descripcion = $data->descripcion;
+            $sup->rnc_suplidor = $data->rnc_suplidor;
+            $sup->usuario_id = 1;
+            $sup->fecha_registro_s =date('ymd');
+            $sup->save();
+             
             return "Suplidor Registrado con exito";
 
     
@@ -72,7 +70,7 @@ class ControllerFinanciero extends Controller
 
 
     
-            DB::table("suplidores")->where("id",$id)->delete();
+            DB::table("suplidors")->where("id",$id)->delete();
             return "Suplidor eliminado con exito";
 
 
@@ -154,7 +152,7 @@ class ControllerFinanciero extends Controller
     public function cargar_gastos(){
 
     
-        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre","suplidores.rnc_suplidor")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->orderBy("gastos.id","desc")->limit(20)->get();
+        $data= DB::table("gastos")->select("gastos.*","suplidors.nombre","suplidors.rnc_suplidor")->join("suplidors","gastos.suplidor_id","=","suplidors.id")->orderBy("gastos.id","desc")->limit(20)->get();
        
         return $data;
 
@@ -163,7 +161,7 @@ class ControllerFinanciero extends Controller
     public function buscar_gasto($id){
 
 
-        $data= DB::table("gastos")->select("gastos.*","suplidores.nombre","suplidores.rnc_suplidor")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->where("gastos.id",$id)->orderBy("gastos.id","desc")->limit(20)->get();
+        $data= DB::table("gastos")->select("gastos.*","suplidors.nombre","suplidors.rnc_suplidor")->join("suplidors","gastos.suplidor_id","=","suplidors.id")->where("gastos.id",$id)->orderBy("gastos.id","desc")->limit(20)->get();
 
         return $data;
 
@@ -175,14 +173,14 @@ class ControllerFinanciero extends Controller
            // return $fecha_i." ".$fecha_f;
             if($fecha_i=="" && $fecha_f==""){
 
-                return DB::table("gastos")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->where("fecha_registro",date('ymd'))->get();
+                return DB::table("gastos")->join("suplidors","gastos.suplidor_id","=","suplidors.id")->where("fecha_registro",date('ymd'))->get();
                 
             }else{  
 
                 //$fecha_i." 00:00:00";
                 $fecha_f." 23:59:59";
 
-                return DB::table("gastos")->select("gastos.*","suplidores.nombre")->join("suplidores","gastos.suplidor_id","=","suplidores.id")->whereBetween("gastos.fecha_registro",array($fecha_i,$fecha_f))->get();
+                return DB::table("gastos")->select("gastos.*","suplidors.nombre")->join("suplidors","gastos.suplidor_id","=","suplidors.id")->whereBetween("gastos.fecha_registro",array($fecha_i,$fecha_f))->get();
 
             }
 

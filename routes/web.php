@@ -146,3 +146,19 @@
 	Route::get('/api/buscar_usuario/{usuario}','ControllerUsuario@buscar_usuario');
 	Route::get('/api/cantidad_de_usuario','ControllerUsuario@cantidad_usuario');
 	Route::get('/api/cargar_usuarios','ControllerUsuario@cargar_usuarios');
+
+    //Agregar Notas a pacientes
+
+	Route::post('/api/agregar_nota','ControllerNotas@agregar_nota');
+	Route::post('/api/actualizar_nota','ControllerNotas@agregar_nota');
+	Route::post('/api/eliminar_nota','ControllerNotas@eliminar_nota');
+	Route::get('/api/capturar_notas','ContollerNotas@capturar_notas');
+	Route::get('/api/ver_nota','ControllerNotas@ver_notas');
+
+    //Agregar documentos
+
+	Route::get('/api/subir_radiografia','ControllerRadiografia@subir_documento');
+	Route::post('/api/eliminar_radiografia','ControllerRadiografia@eliminar_documento');
+	Route::get('/api/cargar_documentos','ControllerRadiografia@cargar_documentos');
+	Route::get('/api/buscar_documentos','ControllerRadiografia@buscar_documentos');
+

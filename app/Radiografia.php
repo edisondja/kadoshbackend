@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Historial_p extends Model
+class Radiografia extends Model
 {
     //
 }

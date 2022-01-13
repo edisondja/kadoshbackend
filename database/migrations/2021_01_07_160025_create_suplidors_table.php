@@ -18,7 +18,9 @@ class CreateSuplidorsTable extends Migration
             $table->string('nombre');
             $table->integer("usuario_id")->unsigned();
             $table->foreign("usuario_id")->references("id")->on("usuarios");
-            $table->string('descripcion');       
+            $table->string('descripcion');  
+            $table->string('rnc_suplidor'); 
+            $table->date('fecha_registro_s');
             $table->timestamps();
         });
     }

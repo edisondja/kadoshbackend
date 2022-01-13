@@ -53,10 +53,23 @@ class ControllerRecibo extends Controller
     public function pagar_recibo($id_factura,$monto,$tipo_de_pago,$estado_actual,$codigo_tarjeta){
 
         //capturando el ultimo registro de recibo
-        $ultimo_recibo = DB::table('recibos')->orderBy('id','desc')->first();
-        $numero = $ultimo_recibo->id + 1;
-        $codigo ="B02".str_pad($numero, 7, "0", STR_PAD_LEFT);
 
+       // return $id_factura." ".$monto." ".$tipo_de_pago." ".$estado_actual." ".$codigo_tarjeta;
+
+        $ultimo_recibo = DB::table('recibos')->orderBy('id','desc')->first();
+
+       // return "ULTIMO RECIBO!!!--->".$ultimo_recibo;
+        if($ultimo_recibo!=""){
+
+            $numero = ($ultimo_recibo->id + 1);
+            $codigo ="B02".str_pad($numero, 7, "0", STR_PAD_LEFT);
+    
+        }else{
+
+            $numero=1;
+            $codigo="B02".str_pad($numero, 7, "0", STR_PAD_LEFT);
+        }
+ 
             $recibo = new App\Recibo();
             $recibo->id_factura = $id_factura;
             $recibo->monto = $monto;

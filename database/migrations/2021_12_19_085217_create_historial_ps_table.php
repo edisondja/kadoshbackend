@@ -15,10 +15,12 @@ class CreateHistorialPsTable extends Migration
     {
         Schema::create('historial_ps', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('id_procedimiento');
+            $table->integer('id_procedimiento')->unsigned();
+            $table->integer('id_factura')->unsigned();
+            $table->foreign('id_factura')->references('id')->on('facturas');
             $table->integer('cantidad');
             $table->integer('total');
-            $table->float('estado_actual');
+            $table->float('estado_actual'); 
             $table->timestamps();
         });
     }
