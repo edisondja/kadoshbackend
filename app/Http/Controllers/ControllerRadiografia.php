@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use App\Radiografia;
 
 class ControllerRadiografia extends Controller
 {
@@ -11,75 +13,51 @@ class ControllerRadiografia extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function subir_documento(Request $data);
-    {
+    public function subir_documento(Request $data){
+        
+
+    //    return $data;
+
+        $archivo = $data->file('image')->store("public");
+        $id_usuario = $data->input('usuario_id');
+        $archivo = explode('/',$archivo);
+
+        $radio = new Radiografia();
+        $radio->ruta_radiografia = $archivo[1];
+        $radio->id_usuario=$id_usuario;
+        $radio->save();
+        return "Rarchivo guardado con exito!";
+    }
+
+    public function actualizar_documento(Request $data){
+
+        #Codigo de actulizar el documento..
     
-        return $data;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
+    public function cargar_documentos($id){
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
+    
+        $radiografias = Radiografia::where('id_usuario',$id)->get();
+        return $radiografias;
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
+    
+
+    public function eliminar_radiografia(Request $data){
+
+        $radiografia = Radiografia::find($data->input('id_radiografia'));
+        $radiografia->delete();
+  
+        return "Archivo eliminado con exito";
+
+
+    }
+    
+
+
+
 }

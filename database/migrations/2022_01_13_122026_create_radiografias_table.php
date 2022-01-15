@@ -17,7 +17,7 @@ class CreateRadiografiasTable extends Migration
             $table->increments('id');
             $table->string("ruta_radiografia");
             $table->integer("id_usuario")->unsigned();
-            $table->foreign("id_usuario")->references("id")->on("usuarios");
+            $table->foreign("id_usuario")->references("id")->on("usuarios")->onDelete('cascade');
             $table->string("titulo");
             $table->string("decripcion");
             $table->timestamps();

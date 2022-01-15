@@ -17,7 +17,7 @@ class CreateNotasTable extends Migration
             $table->increments('id');
             $table->string("descripcion");
             $table->integer("id_paciente")->unsigned();
-            $table->foreign("id_paciente")->references("id")->on('pacientes');
+            $table->foreign("id_paciente")->references("id")->on('pacientes')->onDelete('cascade');
             $table->timestamps();
         });
     }

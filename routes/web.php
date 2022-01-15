@@ -13,10 +13,10 @@
 
 
 	//API LOGIN
-	Route::get('/api/login','LoginController@Login');
-	Route::get('/api/actualizar_usuario/{usuario}/{clave}/{nombre}/{apellido}/{id}','LoginContorller@AactualizarUsuario');
-	Route::get('/api/eliminar_usuario/{id}','LoginContorller@AactualizarUsuario');
-	Route::get('/api/consultar_usuarios','LoginController@CargarUsuarios');
+	//Route::get('/api/login','LoginController@Login');
+	//Route::get('/api/actualizar_usuario/{usuario}/{clave}/{nombre}/{apellido}/{id}','LoginContorller@AactualizarUsuario');
+	//Route::get('/api/eliminar_usuario/{id}','LoginContorller@AactualizarUsuario');
+	//Route::get('/api/consultar_usuarios','LoginController@CargarUsuarios');
 
 	//API PACIENTES READY
 	Route::get('/api/paciente','Paciente@index');	
@@ -149,16 +149,23 @@
 
     //Agregar Notas a pacientes
 
-	Route::post('/api/agregar_nota','ControllerNotas@agregar_nota');
-	Route::post('/api/actualizar_nota','ControllerNotas@agregar_nota');
+	Route::post('/api/crear_nota','ControllerNotas@agregar_nota');
+	Route::get('/api/cargar_notas/{id_nota}','ControllerNotas@cargar_notas');
+	Route::post('/api/actualizar_nota','ControllerNotas@actualizar_nota');
 	Route::post('/api/eliminar_nota','ControllerNotas@eliminar_nota');
-	Route::get('/api/capturar_notas','ContollerNotas@capturar_notas');
+	Route::get('/api/capturar_notas','ControllerNotas@capturar_notas');
 	Route::get('/api/ver_nota','ControllerNotas@ver_notas');
 
     //Agregar documentos
+	Route::post('/api/subir_radiografia','ControllerRadiografia@subir_documento');
+	Route::post('/api/eliminar_radiografia','ControllerRadiografia@eliminar_radiografia');
+	Route::get('/api/cargar_documentos/{id}','ControllerRadiografia@cargar_documentos');
+	#Route::get('/api/buscar_documentos','ControllerRadiografia@buscar_documentos');
 
-	Route::get('/api/subir_radiografia','ControllerRadiografia@subir_documento');
-	Route::post('/api/eliminar_radiografia','ControllerRadiografia@eliminar_documento');
-	Route::get('/api/cargar_documentos','ControllerRadiografia@cargar_documentos');
-	Route::get('/api/buscar_documentos','ControllerRadiografia@buscar_documentos');
 
+
+   Route::get('/hard',function(){
+
+		return "weo";
+
+   });

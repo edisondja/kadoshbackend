@@ -17,7 +17,7 @@ class CreateHistorialPsTable extends Migration
             $table->increments('id');
             $table->integer('id_procedimiento')->unsigned();
             $table->integer('id_factura')->unsigned();
-            $table->foreign('id_factura')->references('id')->on('facturas');
+            $table->foreign('id_factura')->references('id')->on('facturas')->onDelete('cascade');
             $table->integer('cantidad');
             $table->integer('total');
             $table->float('estado_actual'); 

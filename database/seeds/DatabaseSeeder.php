@@ -4,6 +4,7 @@ use Illuminate\Database\Seeder;
 use App\Paciente;
 use App\Usuario;
 use App\Doctor;
+use App\Suplidor;
 
 class DatabaseSeeder extends Seeder
 {
