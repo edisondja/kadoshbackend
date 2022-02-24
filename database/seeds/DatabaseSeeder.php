@@ -5,6 +5,7 @@ use App\Paciente;
 use App\Usuario;
 use App\Doctor;
 use App\Suplidor;
+use App\Procedimiento;
 
 class DatabaseSeeder extends Seeder
 {
@@ -47,6 +48,22 @@ class DatabaseSeeder extends Seeder
             $sup->fecha_registro_s =date('ymd');
             $sup->save();
              
+
+            $procedimiento = new Procedimiento();
+            $procedimiento->nombre = "Extraccion de molares";
+            $procedimiento->precio = 2500;
+            $procedimiento->save();
+            
+            $procedimiento = new Procedimiento();
+            $procedimiento->nombre = "Limpieza Dental";
+            $procedimiento->precio = 900;
+            $procedimiento->save();
+
+
+            $procedimiento = new Procedimiento();
+            $procedimiento->nombre = "Endondocia";
+            $procedimiento->precio = 25000;
+            $procedimiento->save(); 
     
     }
 }

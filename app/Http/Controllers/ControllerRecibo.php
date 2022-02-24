@@ -50,7 +50,7 @@ class ControllerRecibo extends Controller
 
     }
 
-    public function pagar_recibo($id_factura,$monto,$tipo_de_pago,$estado_actual,$codigo_tarjeta){
+    public function pagar_recibo($id_factura,$monto,$tipo_de_pago,$estado_actual,$codigo_tarjeta,$total=0,$procedimientos=[]){
 
         //capturando el ultimo registro de recibo
 
@@ -73,6 +73,7 @@ class ControllerRecibo extends Controller
             $recibo = new App\Recibo();
             $recibo->id_factura = $id_factura;
             $recibo->monto = $monto;
+    
 
             if($codigo_tarjeta=="ts"){
                 $recibo->tipo_de_pago =  "Transferencia Bancaria";
@@ -89,12 +90,15 @@ class ControllerRecibo extends Controller
                 }
             }
             $recibo->codigo_recibo = $codigo;
+            $recibo->total = $total;
+            $recibo->procedimientos = $procedimientos;
             $recibo->estado_actual = ($estado_actual - $monto);
             $recibo->fecha_pago = date("Y-m-d H:i:s");
             $recibo->save();
             
             $factura = App\Factura::find($id_factura);
             $factura->precio_estatus =$factura->precio_estatus - $monto;
+           
             $factura->save();
             
             return ["ready"=>"payment"];

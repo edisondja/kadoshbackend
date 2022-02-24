@@ -34,6 +34,15 @@ class ControllerUsuario extends Controller
     }
 
 
+    public function cargar_usuario($id_usuario){
+
+            $usuario = App\Usuario::find($id_usuario);
+            return $usuario;
+
+
+    }
+
+
     public function agregar_usuario(Request $data){
 
 

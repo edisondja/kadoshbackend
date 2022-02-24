@@ -44,20 +44,33 @@ class Paciente extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function guardar($nombre,$apellido,$telefono,$id_doctor,$cedula,$fecha_nacimiento,$sexo)
-
-    {
+    public function guardar(Request $data){
         //metodo para crear un paciente
 
         $paciente = new App\Paciente();
-        $paciente->nombre = $nombre;
-        $paciente->apellido =  $apellido;
-        $paciente->telefono = $telefono;
-        $paciente->id_doctor = $id_doctor;
-        $paciente->cedula = $cedula;
+        $paciente->nombre = $data->$nombre;
+        $paciente->apellido =  $data->$apellido;
+        $paciente->telefono = $data->$telefono;
+        $paciente->id_doctor = $data->$id_doctor;
+        $paciente->cedula = $data->$cedula;
         $paciente->fecha_de_ingreso=date("Y-m-d H:i:s");
-        $paciente->fecha_nacimiento=$fecha_nacimiento;
-        $paciente->sexo = $sexo;
+        $paciente->fecha_nacimiento=$data->$fecha_nacimiento;
+        $paciente->foto_paciente="";
+        $paciente->sexo = $data->$sexo;
+
+
+        /*
+        formData.append("foto_paciente", imagefile.files[0]);
+        formData.append("nombre",document.getElementById("nombre").value);
+        formData.append("apellido",document.getElementById("apellido").value);
+        formData.append("cedula",document.getElementById("cedula").value);
+        formData.append("telefono",document.getElementById("telefono").value);
+        formData.append("id_doctor",document.getElementById("doctores_select").value);
+        formData.append("fecha_nacimiento",document.getElementById("fecha_nacimiento").value);
+        formData.append("sexo",document.getElementById("sexo").value);
+        */
+
+
         
         if($paciente->save()){
 

@@ -22,9 +22,9 @@
 	Route::get('/api/paciente','Paciente@index');	
 	Route::get('/api/paciente/{id_paciente}','Paciente@show');
 	Route::get('/api/borrar_paciente/{id_paciente}','Paciente@destroy');
-	Route::get('/api/guardar_paciente/{nombre}/{apellido}/{telefono}/{id_doctor}/{cedula}/{fecha_nacimiento}/{sexo}','Paciente@guardar');
+	Route::post('/api/guardar_paciente','Paciente@guardar');
 	Route::get('/api/notificar_cumple','Paciente@notificar_cumple');
-	Route::get('/api/actualizar_paciente/{nombre}/{apellido}/{cedula}/{telefono}/{sexo}/{fecha_nacimiento}/{id_doctor}/{id}','Paciente@update');
+	Route::post('/api/actualizar_paciente','Paciente@update');
 	Route::get('/api/buscar_paciente/{nombre}','Paciente@buscando_paciente');
 	Route::get('/api/consultar_deuda/{id_paciente}','Paciente@deuda_paciente');
 	Route::get('/api/cargar_generos_pacientes','Paciente@cargar_generos');
@@ -60,7 +60,7 @@
 	Route::get('/api/cargar_facturas','ControllerFactura@cargar_facturas');
 	Route::get('/api/cargar_factura/{id_factura}','ControllerFactura@cargar_una_factura');
 	Route::get('/api/cargar_facturas_paciente/{id_paciente}','ControllerFactura@Facturas_de_paciente');
-	Route::get('/api/descontar_precio_factura/{id_factura}/{monto}','ControllerFactura@descontar_estatus');
+	Route::get('/api/descontar_precio_factura/{id_factura}/{monto}/{comentario}','ControllerFactura@descontar_estatus');
 
 
 	///PROCEDIMIENTOS
@@ -73,7 +73,7 @@
 
 	
 	//RECIBOS
-	Route::get('/api/pagar_recibo/{id_factura}/{monto}/{tipo_de_pago}/{estado_actual}/{codigo}','ControllerRecibo@pagar_recibo');
+	Route::get('/api/pagar_recibo/{id_factura}/{monto}/{tipo_de_pago}/{estado_actual}/{codigo}/{total}/{procedimientos}','ControllerRecibo@pagar_recibo');
 	Route::get('/api/actualizar_recibo/{id_recibo}','ControllerRecibo@actualizar_recibo');
 	Route::get('/api/eliminar_recibo/{id_recibo}/{id_facutara}','ControllerRecibo@eliminar_recibo');
 	Route::get('/api/cargar_recibos/{id_factura}','ControllerRecibo@cargar_recibos');
@@ -146,6 +146,8 @@
 	Route::get('/api/buscar_usuario/{usuario}','ControllerUsuario@buscar_usuario');
 	Route::get('/api/cantidad_de_usuario','ControllerUsuario@cantidad_usuario');
 	Route::get('/api/cargar_usuarios','ControllerUsuario@cargar_usuarios');
+	Route::get('/api/cargar_usuario/{id_usuario}','ControllerUsuario@cargar_usuario');
+
 
     //Agregar Notas a pacientes
 

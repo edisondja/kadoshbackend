@@ -35,18 +35,22 @@ class ControllerDescuento extends Controller
 
     public function eliminar_descuento(Request $data){
         
-        $des = Descuento::find("id",$data->input('id_descuento'));
+
+
+        $des=Descuento::find($data->id_descuento);
         $cantidad = $des->monto; 
         $id_factura = $des->id_factura;
         $des->delete();
-        $des->save();
 
-        $factura = App\Factura::find($id_factura);
+        $factura = Factura::find($id_factura);
         $estado_actual = $factura->precio_estatus + $cantidad;
         $factura->precio_estatus = $estado_actual;
         $factura->save();
 
         return response()->json(['cantidad'=>$cantidad]);
     }
+
+
+  
 
 }

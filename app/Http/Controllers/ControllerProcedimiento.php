@@ -73,12 +73,8 @@ class ControllerProcedimiento extends Controller
             App\historial_p::find($id_procedimiento)->delete();
             $factura = App\Factura::find($id_factura);  
             $calculo = ($factura->precio_estatus - $total);
-
-            if($calculo>=0){
-                $factura->precio_estatus = ($factura->precio_estatus  - $total);
-            }else{
-                $factura->precio_estatus = 0;
-            }
+            $factura->precio_estatus = $calculo;
+           
             $factura->save();
             return "success";
     }

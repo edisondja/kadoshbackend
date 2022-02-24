@@ -14,7 +14,7 @@ class CreateRecibosTable extends Migration
     public function up()
     {   
 
-        Schema::dropIfExists('recibos');
+       // Schema::dropIfExists('recibos');
         Schema::create('recibos', function (Blueprint $table) {
             $table->increments('id');
             $table->integer("monto");
@@ -22,6 +22,8 @@ class CreateRecibosTable extends Migration
             $table->foreign('id_factura')->references('id')->on('facturas')->onDelete('cascade');
             $table->string('tipo_de_pago');
             $table->float('estado_actual');
+            $table->integer("total");
+            $table->text("procedimientos");
             $table->string('codigo_confirmacion');
             $table->string("concepto_pago");
             $table->string("codigo_recibo");

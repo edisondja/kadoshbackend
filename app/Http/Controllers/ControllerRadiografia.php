@@ -19,12 +19,13 @@ class ControllerRadiografia extends Controller
     //    return $data;
 
         $archivo = $data->file('image')->store("public");
+        $comentarios = $data->input('comentarios');
         $id_usuario = $data->input('usuario_id');
-        $archivo = explode('/',$archivo);
-
+        
         $radio = new Radiografia();
         $radio->ruta_radiografia = $archivo[1];
         $radio->id_usuario=$id_usuario;
+        $radio->comentarios =$comentarios;
         $radio->save();
         return "Rarchivo guardado con exito!";
     }

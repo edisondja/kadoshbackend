@@ -16,7 +16,7 @@ class ControllerFactura extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function descontar_estatus($id_factura,$cantidad){
+    public function descontar_estatus($id_factura,$cantidad,$comentario){
         
         $factura = App\Factura::find($id_factura);
         $estado_actual = $factura->precio_estatus - $cantidad;
@@ -26,6 +26,7 @@ class ControllerFactura extends Controller
         $descuentos = new App\Descuento();
         $descuentos->monto = $cantidad;
         $descuentos->id_factura = $id_factura;
+        $descuentos->comentario  = $comentario;
         $descuentos->save();
 
     }
