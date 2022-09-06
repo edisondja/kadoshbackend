@@ -139,7 +139,7 @@ class Paciente extends Controller
         $Paciente->cedula = $data->cedula;
         $Paciente->telefono = $data->telefono;
         $Paciente->sexo = $data->sexo;
-        $Paciente->correo_electronico =$data->correo_electronico;
+        $Paciente->correo_electronico = $data->correo_electronico;
         $Paciente->fecha_nacimiento = $data->fecha_nacimiento;
         $Paciente->id_doctor = $data->id_doctor;
         $Paciente->save();
@@ -191,11 +191,26 @@ class Paciente extends Controller
             }
 
             $results = $query->get();
-        
+            
+            if($results->doctor==null){
 
+                $results->doctor = [
+                    
+                        "id"=> 9,
+                        "nombre"=> "No doctor",
+                        "apellido"=> "registrado",
+                        "dni"=> "229-0016140-1",
+                        "numero_telefono"=> "809-714-6667",
+                        "created_at"=>"2020-01-13 09:16:49",
+                        "updated_at"=>"2020-01-13 09:16:49",
 
-        return  $results;
-        
+                ];
+               
+            }else{
+
+                    return  $results;
+
+            }
       
 
     }
