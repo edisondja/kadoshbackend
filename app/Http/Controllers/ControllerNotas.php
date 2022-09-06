@@ -42,7 +42,7 @@ class ControllerNotas extends Controller{
 
     public function cargar_notas($id_paciente){
 
-            $notas = Nota::where('id_paciente',$id_paciente)->get();
+            $notas = Nota::where('id_paciente',$id_paciente)->orderBy('id','desc')->get();
             return $notas;
 
     }

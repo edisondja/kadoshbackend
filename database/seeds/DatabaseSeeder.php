@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             $paciente->nombre = "Albert";
             $paciente->apellido ="De Jesus Abreu";
             $paciente->cedula ="402-2350-30";
+            $paciente->id_doctor= "1";
             $paciente->sexo= "masculino";
             $paciente->fecha_de_ingreso = date('ymd');
             $paciente->save();

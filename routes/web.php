@@ -19,10 +19,11 @@
 	//Route::get('/api/consultar_usuarios','LoginController@CargarUsuarios');
 
 	//API PACIENTES READY
+	Route::post('/api/guardar_paciente','Paciente@guardar');
 	Route::get('/api/paciente','Paciente@index');	
 	Route::get('/api/paciente/{id_paciente}','Paciente@show');
 	Route::get('/api/borrar_paciente/{id_paciente}','Paciente@destroy');
-	Route::post('/api/guardar_paciente','Paciente@guardar');
+	Route::post('/api/actualizar_foto_paciente','Paciente@actualizar_foto_paciente');
 	Route::get('/api/notificar_cumple','Paciente@notificar_cumple');
 	Route::post('/api/actualizar_paciente','Paciente@update');
 	Route::get('/api/buscar_paciente/{nombre}','Paciente@buscando_paciente');
@@ -163,6 +164,16 @@
 	Route::post('/api/eliminar_radiografia','ControllerRadiografia@eliminar_radiografia');
 	Route::get('/api/cargar_documentos/{id}','ControllerRadiografia@cargar_documentos');
 	#Route::get('/api/buscar_documentos','ControllerRadiografia@buscar_documentos');
+
+	//Presupuestos
+
+	Route::post('/api/crear_presupuesto','ControllerPresupuesto@create');
+	Route::get('/api/cargar_presupuestos/{paciente_id}','ControllerPresupuesto@cargar_presupuestos');
+	Route::get('/api/cargar_presupuesto/{id_presupuesto}','ControllerPresupuesto@cargar_presupuesto');
+	Route::post('/api/eliminar_presupuesto','ControllerPresupuesto@eliminar_prespuesto');
+	Route::post('/api/actualizar_presupuesto','ControllerPresupuesto@actualizar_presupuesto');
+	Route::get('/api/buscar_presupuesto/{buscar}','ControllerPresupuesto@buscar_presupuesto');
+
 
 
 

@@ -16,6 +16,7 @@ class ControllerFactura extends Controller
      * @return \Illuminate\Http\Response
      */
 
+
     public function descontar_estatus($id_factura,$cantidad,$comentario){
         
         $factura = App\Factura::find($id_factura);
@@ -51,6 +52,7 @@ class ControllerFactura extends Controller
                 'precio_estatus'=>$total
 
        ]);
+       
 
       // return $id_factura;
        $id_factura= array("id_factura"=>$id_factura);
@@ -136,6 +138,55 @@ class ControllerFactura extends Controller
         return $data;
 
      }
+
+
+     public function create_presupuesto(Request $data)
+     {
+ 
+        $total =  $data->input('total');
+        //$cantidad = $data->input('cantidad');
+        $id_doctor = $data->input('id_doctor');
+        $id_paciente = $data->input('id_paciente');
+ 
+        //return $total." ".$id_doctor." ".$id_paciente;
+        $id_factura=DB::table("presupuestos")->insertGetId([
+                 'id_doctor'=>$id_doctor,
+                 'id_paciente'=>$id_paciente,
+                 'precio_estatus'=>$total
+ 
+        ]);
+        
+ 
+       // return $id_factura;
+        $id_factura= array("id_factura"=>$id_factura);
+ 
+         //return $id_doctor;
+        $procedimientos = $data->input('procedimientos');
+        $procedimientosx = $procedimientos[0];
+        $cantidad = count($procedimientosx);
+        $array_new = [];
+   
+         for($i=0;$i<$cantidad;$i++){
+         
+ 
+                 $array_new[] = [
+                         'id_factura'=>$id_factura['id_factura'],
+                         'total'=>$procedimientosx[$i]['total'],
+                         'cantidad'=>$procedimientosx[$i]['cantidad'],
+                         'id_procedimiento'=>$procedimientosx[$i]['id_procedimiento']
+                 ];
+         }
+ 
+         DB::table('historial_ps')->insert($array_new);
+         return  $array_new;
+ 
+         return "factura guardada con exito";
+ 
+ 
+     
+     }
+
+
 
 
 

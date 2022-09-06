@@ -18,6 +18,7 @@ class CreatePacientesTable extends Migration
             $table->string("nombre");
             $table->integer("id_doctor");
             $table->string("apellido");
+            $table->string("correo_electronico");
             $table->string("telefono");
             $table->string("foto_paciente");
             $table->date("fecha_nacimiento");

@@ -22,4 +22,11 @@ class Paciente extends Model
         return $this->hasMany('App\Factura','id_paciente');
     }
 
+    public function doctor(){
+
+        return $this->belongsTo('App\Doctor','id_doctor');
+
+    }
+
+
 }

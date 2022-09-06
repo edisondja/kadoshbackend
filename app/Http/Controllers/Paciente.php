@@ -34,7 +34,7 @@ class Paciente extends Controller
 
        // dd("Este es el token!!!".$request->bearerToken());
 
-        return App\Paciente::withSum('estatus:precio_estatus')->take(30)->orderBy("id","desc")->get();
+        return App\Paciente::withSum('estatus:precio_estatus')->with('doctor')->take(30)->orderBy("id","desc")->get();
         
         
     }
@@ -47,17 +47,29 @@ class Paciente extends Controller
     public function guardar(Request $data){
         //metodo para crear un paciente
 
-        $paciente = new App\Paciente();
-        $paciente->nombre = $data->$nombre;
-        $paciente->apellido =  $data->$apellido;
-        $paciente->telefono = $data->$telefono;
-        $paciente->id_doctor = $data->$id_doctor;
-        $paciente->cedula = $data->$cedula;
-        $paciente->fecha_de_ingreso=date("Y-m-d H:i:s");
-        $paciente->fecha_nacimiento=$data->$fecha_nacimiento;
-        $paciente->foto_paciente="";
-        $paciente->sexo = $data->$sexo;
+        if($data->hasFile("foto_paciente")){
+            
+            $archivo = $data->file('foto_paciente')->store("public");
+            $archivo = explode("/",$archivo);
+    
+        }else{
 
+            $archivo= array("0"=>"","1"=>"");
+        }
+
+ 
+        $paciente = new App\Paciente();
+        $paciente->nombre = $data->nombre;
+        $paciente->apellido =  $data->apellido;
+        $paciente->telefono = $data->telefono;
+        $paciente->id_doctor = $data->id_doctor;
+        $paciente->cedula = $data->cedula;
+        $paciente->correo_electronico = $data->correo_electronico;
+        $paciente->fecha_de_ingreso=date("Y-m-d H:i:s");
+        $paciente->fecha_nacimiento=$data->fecha_nacimiento;
+        $paciente->foto_paciente= $archivo[1];
+        $paciente->sexo = $data->sexo;
+        $paciente->save();
 
         /*
         formData.append("foto_paciente", imagefile.files[0]);
@@ -72,10 +84,7 @@ class Paciente extends Controller
 
 
         
-        if($paciente->save()){
-
-                echo "guardado con exito";
-        }
+     
     }
 
     /**
@@ -98,7 +107,7 @@ class Paciente extends Controller
     public function show($id_paciente)
     {
         //
-        $paciente = App\Paciente::find($id_paciente);
+        $paciente = App\Paciente::with("doctor")->find($id_paciente);
         return $paciente;
 
     }
@@ -121,18 +130,18 @@ class Paciente extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update($nombre,$apellido,$cedula,$telefono,$sexo,$fecha_nacimiento,$id_doctor,$id)
+    public function update(Request $data)
     {                   
-        
-        $Paciente = App\Paciente::find($id);
 
-        $Paciente->nombre = $nombre;
-        $Paciente->apellido = $apellido;
-        $Paciente->cedula = $cedula;
-        $Paciente->telefono = $telefono;
-        $Paciente->sexo = $sexo;
-        $Paciente->fecha_nacimiento = $fecha_nacimiento;
-        $Paciente->id_doctor = $id_doctor;
+        $Paciente = App\Paciente::find($data->id);
+        $Paciente->nombre = $data->nombre;
+        $Paciente->apellido = $data->apellido;
+        $Paciente->cedula = $data->cedula;
+        $Paciente->telefono = $data->telefono;
+        $Paciente->sexo = $data->sexo;
+        $Paciente->correo_electronico =$data->correo_electronico;
+        $Paciente->fecha_nacimiento = $data->fecha_nacimiento;
+        $Paciente->id_doctor = $data->id_doctor;
         $Paciente->save();
         return "Cliente acutalizado correctamente";
     }
@@ -169,7 +178,7 @@ class Paciente extends Controller
 
             $searchTerms = explode(' ', $q);
             
-            $query = App\Paciente::query()->withSum('estatus:precio_estatus');
+            $query = App\Paciente::query()->withSum('estatus:precio_estatus')->with('doctor');
 
             foreach($searchTerms as $searchTerm){
                 $query->where(function($q) use ($searchTerm){
@@ -216,6 +225,21 @@ class Paciente extends Controller
          $pacientes = App\Paciente::count();    
 
          return ['cantidad_pacientes'=>$pacientes];
+
+    }
+
+    public function actualizar_foto_paciente(Request $data){
+        
+
+        $archivo = $data->file('foto_paciente')->store("public");
+        $archivo = explode("/",$archivo);
+
+        $paciente = App\Paciente::find($data->id);
+        $paciente->foto_paciente = $archivo[1];
+        $paciente->save();
+
+        return $archivo[1];
+
 
     }
 
