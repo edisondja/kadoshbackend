@@ -192,7 +192,7 @@ class Paciente extends Controller
 
             $results = $query->get();
             
-            if($results->doctor==null){
+            if( isset($results->doctor)==null){
 
                 $results->doctor = [
                     
