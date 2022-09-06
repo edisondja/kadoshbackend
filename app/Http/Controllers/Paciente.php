@@ -192,25 +192,9 @@ class Paciente extends Controller
 
             $results = $query->get();
             
-            if( isset($results->doctor)==null){
+             return  $results;
 
-                $results->doctor = [
-                    
-                        "id"=> 9,
-                        "nombre"=> "No doctor",
-                        "apellido"=> "registrado",
-                        "dni"=> "229-0016140-1",
-                        "numero_telefono"=> "809-714-6667",
-                        "created_at"=>"2020-01-13 09:16:49",
-                        "updated_at"=>"2020-01-13 09:16:49",
-
-                ];
-               
-            }else{
-
-                    return  $results;
-
-            }
+            
       
 
     }
