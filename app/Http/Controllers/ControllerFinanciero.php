@@ -52,7 +52,8 @@ class ControllerFinanciero extends Controller
             $sup->nombre = $data->nombre;
             $sup->descripcion = $data->descripcion;
             $sup->rnc_suplidor = $data->rnc_suplidor;
-            $sup->fecha_registro_s=date('ymd');
+            $sup->usuario_id = 1;
+            $sup->fecha_registro_s =date('ymd');
             $sup->save();
              
             return "Suplidor Registrado con exito";
