@@ -13,12 +13,18 @@ class ControllerProcedimiento extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        //
-        $data = DB::table("procedimientos")->orderBy('id','desc')->get();
-        return $data;
-    }
+        public function index()
+        {
+            //
+            $data = DB::table("procedimientos")->where('estado','activo')->orderBy('id','desc')->get();
+            if($data->isEmpty()){
+
+                return  new App\Procedimiento();
+
+            }else{
+                return $data;
+            }
+        }
 
     /**
      * Show the form for creating a new resource.
@@ -30,6 +36,7 @@ class ControllerProcedimiento extends Controller
         $procedimiento = new App\Procedimiento();
         $procedimiento->nombre = $nombre;
         $procedimiento->precio = $precio;
+        $procedimiento->estado = 'activo';
         $procedimiento->save();
 
     }
@@ -52,7 +59,7 @@ class ControllerProcedimiento extends Controller
 
     public function buscarProcedimiento($buscar){
     
-        $data = DB::table("procedimientos")->where("nombre","like","%$buscar%")->get();
+        $data = DB::table("procedimientos")->where("nombre","like","%$buscar%")->where("estado","activo")->get();
         return $data;
     }
     /**
@@ -63,8 +70,9 @@ class ControllerProcedimiento extends Controller
      */
     public function destroy($id)
     {
-        $eliminar = App\Procedimiento::find($id);
-        $eliminar->delete();
+        $desactivar = App\Procedimiento::find($id);
+        $desactivar->estado='inactivo';
+        $desactivar->save();
     }
 
     public function eliminar_procedimiento_lista($id_procedimiento,$id_factura,$total){

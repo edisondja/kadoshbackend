@@ -46,22 +46,15 @@ class ControllerFinanciero extends Controller
     public function registrar_suplidor(Request $data){
         
 
-        
             $sup = new Suplidor();
-
             $sup->nombre = $data->nombre;
             $sup->descripcion = $data->descripcion;
             $sup->rnc_suplidor = $data->rnc_suplidor;
-            $sup->usuario_id = 4;
+            $sup->usuario_id = $data->id_usuario;
             $sup->fecha_registro_s =date('ymd');
             $sup->save();
              
-            return "Suplidor Registrado con exito";
-
-    
-      
-
-    
+            return "Suplidor Registrado con exito";    
     
     }
 

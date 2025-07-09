@@ -13,8 +13,10 @@ class ControllerPresupuesto extends Controller
      */
     public function cargar_presupuestos($paciente_id){    
 
-
-        $presupuesto = Presupuesto::where("paciente_id",$paciente_id)->orderBy("id","desc")->get();
+        $presupuesto = Presupuesto::with('paciente')
+        ->where('paciente_id', $paciente_id)
+        ->orderBy('id', 'desc')
+        ->get();
 
         return $presupuesto;
 
@@ -31,13 +33,18 @@ class ControllerPresupuesto extends Controller
 
     }
 
-    public function cargar_presupuesto($id_presupuesto){
+public function cargar_presupuesto($id_presupuesto)
+{
+    $presupuesto = Presupuesto::with('paciente')
+        ->where('id', $id_presupuesto)
+        ->first();
 
-        $prespuesto = Presupuesto::find($id_presupuesto);
-        $nombre = ["noombre"=>$prespuesto->nombre];
-        return   $prespuesto->factura;
-
+    if (!$presupuesto) {
+        return response()->json(['error' => 'Presupuesto no encontrado'], 404);
     }
+
+    return $presupuesto->factura;
+}
 
 
     public function eliminar_prespuesto(Request $data){

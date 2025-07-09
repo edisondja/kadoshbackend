@@ -29,7 +29,7 @@ class ControllerUsuario extends Controller
         $jwt = JWT::encode($payload,env("FIRMA_TOKEN"),'HS256');
 
 
-        return ["nombre"=>$usuario->nombre,"apellido"=>$usuario->apellido,"token"=>$jwt,"roll"=>$usuario->roll];
+        return ["id"=>$usuario->id,"nombre"=>$usuario->nombre,"apellido"=>$usuario->apellido,"token"=>$jwt,"roll"=>$usuario->roll];
     
     }
 

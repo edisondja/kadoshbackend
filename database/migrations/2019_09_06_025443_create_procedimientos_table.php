@@ -16,6 +16,7 @@ class CreateProcedimientosTable extends Migration
         Schema::create('procedimientos', function (Blueprint $table) {
             $table->increments('id');
             $table->string("nombre");
+            $table->string('estado');
             $table->integer("precio");            
             $table->timestamps();
         });

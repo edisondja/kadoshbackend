@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 
 class Factura extends Model
 {
@@ -12,9 +13,16 @@ class Factura extends Model
         return $this->belongsTo(Doctor::class);
     }
 
+   
     public function recibos(){
 
         return $this->hasMany(Recibo::class);
+
+    }
+
+     public function paciente(){
+
+        return $this->BelongsTo('App\Paciente','id_paciente');
 
     }
 

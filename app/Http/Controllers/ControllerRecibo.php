@@ -55,7 +55,6 @@ class ControllerRecibo extends Controller
         //capturando el ultimo registro de recibo
 
        // return $id_factura." ".$monto." ".$tipo_de_pago." ".$estado_actual." ".$codigo_tarjeta;
-
         $ultimo_recibo = DB::table('recibos')->orderBy('id','desc')->first();
 
        // return "ULTIMO RECIBO!!!--->".$ultimo_recibo;
@@ -190,25 +189,26 @@ class ControllerRecibo extends Controller
         return $ingreso_de_dias;
     }
 
-    public function reporte_recibos($fecha_inicial,$fecha_final){
-
+   public function reporte_recibos($fecha_inicial, $fecha_final)
+    {
         $tiempo_inicial = '00:00:00';
         $tiempo_final = '23:59:59';
-        
-        $total = DB::table('recibos')
-        ->where('fecha_pago','>=',$fecha_inicial." ".$tiempo_inicial)
-        ->where('fecha_pago','<=',$fecha_final." ".$tiempo_final)->sum('monto');
-        
-        $recibos = DB::table('recibos')
-        ->where('fecha_pago','>=',$fecha_inicial." ".$tiempo_inicial)
-        ->where('fecha_pago','<=',$fecha_final." ".$tiempo_final)->get();
+
+        $desde = $fecha_inicial . ' ' . $tiempo_inicial;
+        $hasta = $fecha_final . ' ' . $tiempo_final;
+
+        // Total de monto (no necesita relaciones)
+        $total = App\Recibo::whereBetween('fecha_pago', [$desde, $hasta])->sum('monto');
+
+        // Recibos con factura y paciente (a través de factura)
+        $recibos = App\Recibo::with('factura.paciente')
+            ->whereBetween('fecha_pago', [$desde, $hasta])
+            ->get();
 
         return [
-                'monto_total'=>(int)$total,
-                'recibos'=>$recibos 
-               ];
-
-
+            'monto_total' => (int) $total,
+            'recibos' => $recibos
+        ];
     }
 
     public function notificar_reporte(){
