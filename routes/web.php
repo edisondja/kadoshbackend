@@ -74,7 +74,7 @@
 
 	
 	//RECIBOS
-	Route::get('/api/pagar_recibo/{id_factura}/{monto}/{tipo_de_pago}/{estado_actual}/{codigo}/{total}/{procedimientos}','ControllerRecibo@pagar_recibo');
+	Route::post('/api/pagar_recibo', 'ControllerRecibo@pagar_recibo');
 	Route::get('/api/actualizar_recibo/{id_recibo}','ControllerRecibo@actualizar_recibo');
 	Route::get('/api/eliminar_recibo/{id_recibo}/{id_facutara}','ControllerRecibo@eliminar_recibo');
 	Route::get('/api/cargar_recibos/{id_factura}','ControllerRecibo@cargar_recibos');

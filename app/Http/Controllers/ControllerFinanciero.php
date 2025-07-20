@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Suplidor;
+use App;
 use DB;
 use Carbon\Carbon;
 use Factura;
@@ -43,19 +43,25 @@ class ControllerFinanciero extends Controller
         
     }
 
-    public function registrar_suplidor(Request $data){
-        
+   public function registrar_suplidor(Request $request)
+    {   
+        // Validar los datos que vienen del frontend
+        $validated = $request->validate([
+            'nombre_suplidor' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'rnc_suplidor' => 'nullable|string|max:20',
+        ]);
 
-            $sup = new Suplidor();
-            $sup->nombre = $data->nombre;
-            $sup->descripcion = $data->descripcion;
-            $sup->rnc_suplidor = $data->rnc_suplidor;
-            $sup->usuario_id = $data->id_usuario;
-            $sup->fecha_registro_s =date('ymd');
-            $sup->save();
-             
-            return "Suplidor Registrado con exito";    
-    
+
+        // Crear nuevo suplidor
+        $sup = new App/Suplidor();
+        $sup->nombre = $validated['nombre_suplidor'];
+        $sup->descripcion = $validated['descripcion'];
+        $sup->rnc_suplidor = $validated['rnc_suplidor'];
+        $sup->usuario_id = $id_usuario; // ID del usuario autenticado
+        $sup->save();
+
+        return response()->json(["mensaje" => "Suplidor registrado con éxito"]);
     }
 
 

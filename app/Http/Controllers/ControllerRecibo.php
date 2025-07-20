@@ -50,59 +50,80 @@ class ControllerRecibo extends Controller
 
     }
 
-    public function pagar_recibo($id_factura,$monto,$tipo_de_pago,$estado_actual,$codigo_tarjeta,$total=0,$procedimientos=[]){
 
-        //capturando el ultimo registro de recibo
 
-       // return $id_factura." ".$monto." ".$tipo_de_pago." ".$estado_actual." ".$codigo_tarjeta;
-        $ultimo_recibo = DB::table('recibos')->orderBy('id','desc')->first();
 
-       // return "ULTIMO RECIBO!!!--->".$ultimo_recibo;
-        if($ultimo_recibo!=""){
+    public function pagar_recibo(Request $request) {
+    // Validación básica de entrada
+        $request->validate([
+            'id_factura'      => 'required|integer|exists:facturas,id',
+            'monto'           => 'required|numeric|min:0.01',
+            'tipo_de_pago'    => 'required|string',
+            'estado_actual'   => 'required|numeric',
+            'codigo_tarjeta'  => 'nullable|string',
+            'total'           => 'nullable|numeric',
+            'procedimientos'  => 'nullable|array',
+        ]);
 
-            $numero = ($ultimo_recibo->id + 1);
-            $codigo ="B02".str_pad($numero, 7, "0", STR_PAD_LEFT);
-    
-        }else{
+        $id_factura     = $request->input('id_factura');
+        $monto          = $request->input('monto');
+        $tipo_de_pago   = $request->input('tipo_de_pago');
+        $estado_actual  = $request->input('estado_actual');
+        $concepto_pago  = $request->input('concepto_pago');
+        $total          = $request->input('total', 0);
+        $procedimientos = $request->input('procedimientos', []);
 
-            $numero=1;
-            $codigo="B02".str_pad($numero, 7, "0", STR_PAD_LEFT);
-        }
- 
-            $recibo = new App\Recibo();
-            $recibo->id_factura = $id_factura;
-            $recibo->monto = $monto;
-    
+        // Obtener el último recibo
+        $ultimo_recibo = App\Recibo::orderBy('id', 'desc')->first();
+        $numero = $ultimo_recibo ? ($ultimo_recibo->id + 1) : 1;
+        $codigo = "B02" . str_pad($numero, 7, "0", STR_PAD_LEFT);
 
-            if($codigo_tarjeta=="ts"){
-                $recibo->tipo_de_pago =  "Transferencia Bancaria";
+        // Crear nuevo recibo
+        $recibo = new App\Recibo();
+        $recibo->id_factura     = $id_factura;
+        $recibo->monto          = $monto;
+        $recibo->codigo_recibo  = $codigo;
+        $recibo->total          = $total;
+        $recibo->procedimientos = json_encode($procedimientos);
+        $recibo->estado_actual  = $estado_actual - $monto;
+        $recibo->fecha_pago     = now();
+
+        // Asignar tipo de pago y concepto
+        switch ($tipo_de_pago ) {
+            case 'ts':
+                $recibo->tipo_de_pago = "Transferencia Bancaria";
                 $recibo->concepto_pago = "Transferencia Bancaria";
-            }else{
+                break;
+            case 'ef':
+                $recibo->tipo_de_pago = "Pago en efectivo";
+                $recibo->concepto_pago = "efectivo";
+                break;
+            case 'ch':
+                $recibo->tipo_de_pago = "Pago con cheque";
+                $recibo->concepto_pago = "cheque";
+                break;
+                
+            case 'tj':
+                $recibo->tipo_de_pago = "Pago tarjeto";
+                $recibo->concepto_pago = "Procesador de pagos";
+                break;
+                    
+            case 'mxt':
+                $recibo->tipo_de_pago = "Pago mixto";
+                $recibo->concepto_pago =  $concepto_pago;
+                break;
+        }
 
-                if($codigo_tarjeta!="ef"){
-                    $recibo->tipo_de_pago =  "Pago en tarjeta";
-                    $recibo->concepto_pago = "tarjeta";
+        $recibo->save();
 
-                }else{
-                    $recibo->concepto_pago = "efectivo";
-                    $recibo->tipo_de_pago = "Pago en efectivo";
-                }
-            }
-            $recibo->codigo_recibo = $codigo;
-            $recibo->total = $total;
-            $recibo->procedimientos = $procedimientos;
-            $recibo->estado_actual = ($estado_actual - $monto);
-            $recibo->fecha_pago = date("Y-m-d H:i:s");
-            $recibo->save();
-            
-            $factura = App\Factura::find($id_factura);
-            $factura->precio_estatus =$factura->precio_estatus - $monto;
-           
-            $factura->save();
-            
-            return ["ready"=>"payment"];
+        // Actualizar factura
+        $factura = App\Factura::find($id_factura);
+        $factura->precio_estatus -= $monto;
+        $factura->save();
 
+        return response()->json(['status' => 'ok', 'mensaje' => 'Pago registrado con éxito.']);
     }
+
 
     public function ingresos_de_meses(){
 
@@ -201,7 +222,7 @@ class ControllerRecibo extends Controller
         $total = App\Recibo::whereBetween('fecha_pago', [$desde, $hasta])->sum('monto');
 
         // Recibos con factura y paciente (a través de factura)
-        $recibos = App\Recibo::with('factura.paciente')
+        $recibos = App\Recibo::with(['factura.paciente', 'factura.doctor'])
             ->whereBetween('fecha_pago', [$desde, $hasta])
             ->get();
 
@@ -213,10 +234,7 @@ class ControllerRecibo extends Controller
 
     public function notificar_reporte(){
 
-        
-
-       
-
+    
         Mail::send('reporte', ['user' => 'co'], function ($m){
             $m->from('hello@app.com', 'Your Application');
 

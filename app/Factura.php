@@ -10,7 +10,7 @@ class Factura extends Model
 
     public function doctor(){
 
-        return $this->belongsTo(Doctor::class);
+        return $this->BelongsTo('App\Doctor','id_doctor');
     }
 
    
