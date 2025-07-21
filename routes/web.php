@@ -129,7 +129,7 @@
 
 
 	//Suplidores
-	Route::get('/api/buscar_suplidor','ControllerFinanciero@buscar_suplidor');
+	Route::get('/api/buscar_suplidor/{nombre}','ControllerFinanciero@buscar_suplidor');
 	Route::get('/api/cargar_suplidores','ControllerFinanciero@suplidores');
 	Route::post('/api/actualizar_suplidor','ControllerFinanciero@actualizar_suplidor');
 	Route::post('/api/registrar_suplidor','ControllerFinanciero@registrar_suplidor');

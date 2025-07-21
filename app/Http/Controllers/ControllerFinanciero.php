@@ -8,6 +8,8 @@ use DB;
 use Carbon\Carbon;
 use Factura;
 
+
+
 class ControllerFinanciero extends Controller
 {
     /**
@@ -44,24 +46,29 @@ class ControllerFinanciero extends Controller
     }
 
    public function registrar_suplidor(Request $request)
-    {   
-        // Validar los datos que vienen del frontend
+    {
         $validated = $request->validate([
             'nombre_suplidor' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'rnc_suplidor' => 'nullable|string|max:20',
+            'descripcion'     => 'nullable|string',
+            'rnc_suplidor'    => 'nullable|string|max:20',
+            'id_usuario'      => 'required|integer',
         ]);
 
-
-        // Crear nuevo suplidor
-        $sup = new App/Suplidor();
+        $sup = new App\Suplidor();
         $sup->nombre = $validated['nombre_suplidor'];
-        $sup->descripcion = $validated['descripcion'];
-        $sup->rnc_suplidor = $validated['rnc_suplidor'];
-        $sup->usuario_id = $id_usuario; // ID del usuario autenticado
+        $sup->descripcion = $validated['descripcion'] ?? null;
+        $sup->rnc_suplidor = $validated['rnc_suplidor'] ?? null;
+        $sup->usuario_id = $validated['id_usuario'];
+        $sup->fecha_registro_s = date('Y-m-d');
         $sup->save();
 
-        return response()->json(["mensaje" => "Suplidor registrado con éxito"]);
+
+        
+
+        return response()->json([
+            'status' => 'ok',
+            'nombre' => $sup->nombre,
+        ]);
     }
 
 
@@ -76,13 +83,14 @@ class ControllerFinanciero extends Controller
 
     }
   
-    public function buscar_suplidor($nombre){
+    public function buscar_suplidor($nombre)
+    {
 
-        $data = App\Supplidor::where('like',"%$nombre%")->get();
+        $data = App\Suplidor::where('nombre', 'like', "%{$nombre}%")->get();
+
         return $data;
-
-
     }
+
     //GASTOS
     public function registrar_gastos(Request $data){
         
