@@ -19,6 +19,9 @@ class CreateConfigsTable extends Migration
             $table->string('descripcion');
             $table->string('ruta_logo');
             $table->string('ruta_favicon');
+            $table->string('email');
+            $table->string('numero_empresa');
+            $table->string('dominio');
             $table->string("api_whatapps");
             $table->string("api_token_ws");
             $table->string("api_gmail");

@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App;
-use DB;
 use Carbon\Carbon;
 use Factura;
+use DB;
 
 
 
@@ -28,12 +28,12 @@ class ControllerFinanciero extends Controller
     }
     public function actualizar_suplidor(Request $suplidor){
 
-        
+            
         
             DB::table("suplidors")->updateOrInsert(
                 ['id'=>$suplidor->input('id')],
                 [
-                'nombre'=>$suplidor->input('nombre'),
+                'nombre'=>$suplidor->input('nombre_suplidor'),
                 'descripcion'=>$suplidor->input('descripcion'),
                 'rnc_suplidor'=>$suplidor->input('rnc_suplidor')
                 ]
@@ -45,32 +45,25 @@ class ControllerFinanciero extends Controller
         
     }
 
-   public function registrar_suplidor(Request $request)
+    public function registrar_suplidor(Request $request)
     {
-        $validated = $request->validate([
-            'nombre_suplidor' => 'required|string|max:255',
-            'descripcion'     => 'nullable|string',
-            'rnc_suplidor'    => 'nullable|string|max:20',
-            'id_usuario'      => 'required|integer',
-        ]);
-
-        $sup = new App\Suplidor();
-        $sup->nombre = $validated['nombre_suplidor'];
-        $sup->descripcion = $validated['descripcion'] ?? null;
-        $sup->rnc_suplidor = $validated['rnc_suplidor'] ?? null;
-        $sup->usuario_id = $validated['id_usuario'];
-        $sup->fecha_registro_s = date('Y-m-d');
-        $sup->save();
+                
 
 
         
+        $sup = new App\Suplidor();
+        $sup->nombre = $request->nombre_suplidor;
+        $sup->descripcion = $request->descripcion;
+        $sup->rnc_suplidor = $request->rnc_suplidor;
+        $sup->usuario_id = $request->usuario_id;
+        $sup->save();
 
         return response()->json([
             'status' => 'ok',
-            'nombre' => $sup->nombre,
+            'mensaje' => 'Registrado correctamente',
+            'nombre' => $sup->nombre
         ]);
     }
-
 
     public function eliminar_suplidor($id){
 
@@ -148,19 +141,14 @@ class ControllerFinanciero extends Controller
     public function eliminar_gasto($id){
 
 
-                DB::table('gastos')->where('id',$id)->delete();
-                return "Registro eliminado con exito";
-
-         
-
-
+        DB::table('gastos')->where('id',$id)->delete();
+        return "Registro eliminado con exito";
     }
 
     public function cargar_gastos(){
 
     
         $data= DB::table("gastos")->select("gastos.*","suplidors.nombre","suplidors.rnc_suplidor")->join("suplidors","gastos.suplidor_id","=","suplidors.id")->orderBy("gastos.id","desc")->limit(20)->get();
-       
         return $data;
 
     }

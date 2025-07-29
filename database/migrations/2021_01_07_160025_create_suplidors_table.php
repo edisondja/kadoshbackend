@@ -16,11 +16,11 @@ class CreateSuplidorsTable extends Migration
         Schema::create('suplidors', function (Blueprint $table) {
             $table->increments('id');
             $table->string('nombre');
-            $table->integer("usuario_id")->unsigned();
-            $table->foreign("usuario_id")->references("id")->on("usuarios");
-            $table->string('descripcion');  
-            $table->string('rnc_suplidor'); 
-            $table->date('fecha_registro_s');
+            $table->unsignedInteger('usuario_id');
+            $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('cascade');
+            $table->string('descripcion')->nullable();
+            $table->string('rnc_suplidor', 20)->nullable(); // asumiendo RNC no pasa de 20 caracteres
+            $table->date('fecha_registro_s')->nullable();
             $table->timestamps();
         });
     }

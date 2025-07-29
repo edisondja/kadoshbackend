@@ -12,10 +12,10 @@ class SuplidorControllerTest extends TestCase
     public function registrar_suplidor()
     {
         $payload = [
-            'nombre_suplidor' => 'Alexander Dientes',
+            'nombre_suplidor' => 'Alexander Dientess',
             'descripcion'     => 'The Best',
             'rnc_suplidor'    => '1654196584',
-            'id_usuario'      => 1,
+            'usuario_id'      => 1,
         ];
 
         $response = $this->postJson('/api/registrar_suplidor', $payload);
