@@ -1,5 +1,18 @@
 <?php
 
+
+/* Para depuración de la configuración de la base de datos, descomentar las siguientes líneas:
+ * Asegúrate de que el archivo .env esté configurado correctamente antes de ejecutar.
+ * Puedes usar este código para verificar los valores de conexión a la base de datos.
+dd([
+    'DB_HOST' => env('DB_HOST'),
+    'DB_PORT' => env('DB_PORT'),
+    'DB_DATABASE' => env('DB_DATABASE'),
+    'DB_USERNAME' => env('DB_USERNAME'),
+    'DB_PASSWORD' => env('DB_PASSWORD'),
+]);
+*/
+
 return [
 
     /*
@@ -31,6 +44,7 @@ return [
     |
     */
     //Base de datos
+    
     'connections' => [
 
         'sqlite' => [
@@ -40,18 +54,18 @@ return [
         ],
 
         'mysql' => [
-            'driver' => 'mysql',
-            'host' =>'127.0.0.1',
-            'port' => '3307',
-            'database' =>'odontoed',
-            'username' =>'root',
-            'password' => '',
-            'unix_socket' => env('DB_SOCKET',''),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => false,
-            'engine' => null,
+        'driver' => 'mysql',
+        'host' => env('DB_HOST', 'localhost'),
+        'port' => env('DB_PORT', '3307'),
+        'database' => env('DB_DATABASE', 'odontoed'),
+        'username' => env('DB_USERNAME', 'root'),
+        'password' => env('DB_PASSWORD', ''),
+        'unix_socket' => env('DB_SOCKET', ''),
+        'charset' => 'utf8mb4',
+        'collation' => 'utf8mb4_unicode_ci',
+        'prefix' => '',
+        'strict' => false,
+        'engine' => null,
         ],
 
         'pgsql' => [

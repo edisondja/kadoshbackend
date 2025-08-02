@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Nota;
+use App;
 
 
 class ControllerNotas extends Controller{
@@ -12,12 +12,17 @@ class ControllerNotas extends Controller{
 
     public function agregar_nota(Request $data){
 
-  
 
-        $nota = new Nota();
+        $nota = new App\Nota();
         $nota->descripcion = $data->nota;
         $nota->id_paciente = $data->id_paciente;
         $nota->save();
+
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Nota agregada correctamente',
+            'nota_id' => $nota->id
+        ]);
 
     }
 
@@ -25,7 +30,7 @@ class ControllerNotas extends Controller{
 
 
       // return $data;
-        $nota = Nota::find($data->id_nota);
+        $nota = App\Nota::find($data->id_nota);
         $nota->descripcion = $data->descripcion;
         $nota->save();
 
@@ -34,7 +39,7 @@ class ControllerNotas extends Controller{
 
     public function eliminar_nota(Request $data){
  
-        $nota = Nota::find($data->input('nota_id'));
+        $nota = App\Nota::find($data->input('nota_id'));
         $nota->delete();
 
     }
@@ -42,7 +47,7 @@ class ControllerNotas extends Controller{
 
     public function cargar_notas($id_paciente){
 
-            $notas = Nota::where('id_paciente',$id_paciente)->orderBy('id','desc')->get();
+            $notas = App\Nota::where('id_paciente',$id_paciente)->orderBy('id','desc')->get();
             return $notas;
 
     }
@@ -50,7 +55,7 @@ class ControllerNotas extends Controller{
 
     public function ver_nota($id_nota){
 
-        $nota = Nota::find($id_nota);
+        $nota = App\Nota::find($id_nota);
         return $nota;
 
 

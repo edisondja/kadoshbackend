@@ -3,114 +3,98 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use DB;
 use App;
-
 class ControllerCita extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    // Lista todas las citas
     public function index()
     {
-        //
-        $data = DB::table("citas")->take(20)->get();
-        return $data;
+        return App\Cita::with('paciente', 'doctor')->orderBy('inicio', 'desc')->get();
     }
 
-    public function citas_paciente($id){
 
+    
 
-                $citas = DB::table("citas")->where("id_paciente","=",$id)->orderBy("dia","desc")->get();
-                return $citas;
-    }
+    // Crear nueva cita
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create($id_paciente,$hora,$dia)
+  public function citas_paciente($paciente_id)
     {
-        $cita =new App\Cita();
-        $cita->id_paciente = $id_paciente;
-        $cita->hora= $hora;
-        $cita->dia= $dia;
-        $cita->save();
+        $citas = App\Cita::where('paciente_id', $paciente_id)
+                    ->with('doctor') // Opcional: para incluir datos del doctor
+                    ->orderBy('inicio', 'asc')
+                    ->get();
 
-    }
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function BuscarCita($fecha)
-    {   
-        $citas = DB::table('citas')->where('dia','=',$fecha)->get();
-        return $citas;
-        
+        return response()->json($citas);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+
+    public function citas_doctor($doctor_id)
+    {
+        $citas = App\Cita::where('doctor_id', $doctor_id)
+                    ->with('paciente') // Opcional: para incluir datos del paciente
+                    ->orderBy('inicio', 'asc')
+                    ->get();
+
+        return response()->json($citas);
+    }
+
+
+    public function store(Request $request)
+    {
+
+        $request->validate([
+            'motivo' => 'required|string',
+            'inicio' => 'required|date',
+            'fin' => 'required|date|after_or_equal:start',
+            'paciente_id' => 'required|exists:pacientes,id',
+            'doctor_id' => 'required|exists:doctors,id',
+        ]);
+
+        $cita = App\Cita::create($request->all());
+
+        return response()->json([
+            'status' => 'ok',
+            'mensaje' => 'Cita registrada correctamente',
+            'cita' => $cita
+        ]);
+    }
+
+    // Ver una cita
     public function show($id)
     {
-        $data = App\Cita::find($id);
-        return $data;
+        $cita = Cita::with('paciente', 'doctor')->findOrFail($id);
+        return $cita;
     }
 
-    public function cargar_citas(){
+   public function update(Request $request, $id){
+       /* $request->validate([
+            'motivo' => 'required|string',
+            'inicio' => 'required|date',
+            'fin' => 'required|date|after_or_equal:inicio',
+            'paciente_id' => 'required|exists:pacientes,id',
+            'doctor_id' => 'required|exists:doctors,id',
+        ]);*/
 
-       $citas = DB::table('citas')->orderBy('dia','desc')->join('pacientes','citas.id_paciente','=','pacientes.id')->get();
+        $cita = App\Cita::findOrFail($id);
+        $cita->update($request->all());
 
-       return $citas;
+        return response()->json([
+            'status' => 'ok',
+            'mensaje' => 'Cita actualizada correctamente',
+            'cita' => $cita
+        ]);
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        return App\Cita::find($id);
-
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update($id_cita,$hora,$dia)
-    {
-        $actualizar = App\Cita::find($id_cita);
-        $actualizar->hora = $hora;
-        $actualizar->dia = $dia;
-        $actualizar->save();
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
+    // Eliminar una cita
     public function destroy($id)
     {
+        $cita = App\Cita::findOrFail($id);
+        $cita->delete();
 
-        $eliminar = App\Cita::find($id);
-        $eliminar->delete();
-
+        return response()->json([
+            'status' => 'ok',
+            'mensaje' => 'Cita eliminada correctamente'
+        ]);
     }
 }
+
+

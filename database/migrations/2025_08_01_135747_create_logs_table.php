@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateCita2sTable extends Migration
+class CreateLogsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,12 @@ class CreateCita2sTable extends Migration
      */
     public function up()
     {
-        Schema::create('cita2s', function (Blueprint $table) {
+        Schema::create('logs', function (Blueprint $table) {
             $table->increments('id');
+            $table->integer('usuario_id')->unsigned();
+            $table->foreign('usuario_id')->references('id')->on('usuarios');
+            $table->string('accion');
+            $table->string('modulo');
             $table->timestamps();
         });
     }
@@ -26,6 +30,6 @@ class CreateCita2sTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('cita2s');
+        Schema::dropIfExists('logs');
     }
 }

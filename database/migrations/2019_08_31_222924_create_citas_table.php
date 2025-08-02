@@ -11,14 +11,18 @@ class CreateCitasTable extends Migration
      *
      * @return void
      */
-    public function up()
+      public function up()
     {
         Schema::create('citas', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('id_paciente');
-            $table->time('hora');
-            $table->date('dia');
+            $table->unsignedInteger('paciente_id');
+            $table->unsignedInteger('doctor_id');
+            $table->datetime('inicio');
+            $table->datetime('fin');
+            $table->string('motivo')->nullable();
             $table->timestamps();
+            $table->foreign('paciente_id')->references('id')->on('pacientes')->onDelete('cascade');
+            $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
         });
     }
 

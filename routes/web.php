@@ -39,17 +39,14 @@
 	Route::get('/api/crear_doctor/{nombre}/{apellido}/{cedula}/{telefono}','ControllerDoctor@create');
 	Route::get('/api/buscando_doctor/{nombre}','ControllerDoctor@buscando_doctor');
 
-
-	///API CITAS
-	Route::get('api/cargar_citas','ControllerCita@index');
-	Route::get('api/cargar_citas_de_paciente/{id}','ControllerCita@citas_paciente');
-	Route::get('api/guardar_cita/{id_paciente}/{hora}/{dia}/','ControllerCita@create');
-	Route::get('api/cargar_cita/{id}','ControllerCita@show');
-	Route::get('api/actualizar_cita/{id_cita}/{hora}/{dia}','ControllerCita@update');
-	Route::get('api/eliminar_cita/{id_cita}','ControllerCita@destroy');
-	Route::get('api/buscar_cita/{fecha}','ControllerCita@BuscarCita');
-	Route::get('/api/cargar_citas','ControllerCita@cargar_citas');
-
+	/// API  
+	Route::get('/api/citas', 'ControllerCita@index');
+	Route::get('api/citas_doctor/{doctor_id}', 'ControllerCita@citas_doctor');
+	Route::get('/api/cargar_citas_de_paciente/{paciente_id}', 'ControllerCita@citas_paciente');
+	Route::get('/api/citas/{id}', 'ControllerCita@show');
+	Route::post('/api/guardar_cita', 'ControllerCita@store');
+	Route::put('/api/actualizar_cita/{id}', 'ControllerCita@update');
+	Route::delete('/api/eliminar_cita/{id}', 'ControllerCita@destroy');
 
 	///API FACTURAS
 	Route::post('/api/crear_factura','ControllerFactura@create');
@@ -173,6 +170,15 @@
 	Route::post('/api/eliminar_presupuesto','ControllerPresupuesto@eliminar_prespuesto');
 	Route::post('/api/actualizar_presupuesto','ControllerPresupuesto@actualizar_presupuesto');
 	Route::get('/api/buscar_presupuesto/{buscar}','ControllerPresupuesto@buscar_presupuesto');
+
+
+	//Configuracion
+
+	Route::get('api/configs', [ConfigController::class, 'index']);              // Obtener todos
+	Route::get('api/configs/{id}', [ConfigController::class, 'show']);          // Obtener uno por ID
+	Route::post('api/configs', [ConfigController::class, 'store']);             // Crear nuevo
+	Route::post('api/configs/{id}', [ConfigController::class, 'update']);       // Actualizar (POST o PUT)
+	Route::delete('api/configs/{id}', [ConfigController::class, 'destroy']);    // Eliminar
 
 
 
