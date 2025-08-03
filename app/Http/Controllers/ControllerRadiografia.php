@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use App\Radiografia;
+use App;
 
 class ControllerRadiografia extends Controller
 {
@@ -13,24 +13,33 @@ class ControllerRadiografia extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function subir_documento(Request $data){
-        
+    public function subir_documento(Request $request){
+    // Validar campos obligatorios
 
-    //    return $data;
+        //\Log::info('Datos recibidos:', $request->all());
 
-        $archivo = $data->file('image')->store("public");
-        $comentarios = $data->input('comentarios');
-        $id_usuario = $data->input('usuario_id');
-        
-        $archivo = explode("/",$archivo);
+        $request->validate([
+            'image' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx,stl,obj,fbx,glb,gltf|max:10240', // hasta 10MB
+            'comentarios' => 'required|string',
+            'usuario_id' => 'required|exists:pacientes,id',
+        ]);
 
-        $radio = new Radiografia();
-        $radio->ruta_radiografia = $archivo[1];
-        $radio->id_usuario=$id_usuario;
-        $radio->comentarios =$comentarios;
-        $radio->save();
-        return "Rarchivo guardado con exito!";
+        // Guardar archivo en storage/app/public
+        $path = $request->file('image')->store('public');
+
+        // Obtener el nombre del archivo
+        $archivoNombre = basename($path);
+
+        // Guardar en base de datos
+        $radiografia = new App\Radiografia();
+        $radiografia->ruta_radiografia = $archivoNombre;
+        $radiografia->id_usuario = $request->input('usuario_id');
+        $radiografia->comentarios = $request->input('comentarios');
+        $radiografia->save();
+
+        return response()->json(['mensaje' => 'Archivo guardado con éxito.'], 200);
     }
+
 
     public function actualizar_documento(Request $data){
 
@@ -44,7 +53,7 @@ class ControllerRadiografia extends Controller
     public function cargar_documentos($id){
 
     
-        $radiografias = Radiografia::where('id_usuario',$id)->get();
+        $radiografias =  App\Radiografia::where('id_usuario',$id)->get();
         return $radiografias;
 
     }
@@ -52,7 +61,7 @@ class ControllerRadiografia extends Controller
 
     public function eliminar_radiografia(Request $data){
 
-        $radiografia = Radiografia::find($data->input('id_radiografia'));
+        $radiografia =  App\Radiografia::find($data->input('id_radiografia'));
         $radiografia->delete();
   
         return "Archivo eliminado con exito";

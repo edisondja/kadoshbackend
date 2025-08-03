@@ -14,10 +14,11 @@ class ControllerNotas extends Controller{
 
 
         $nota = new App\Nota();
-        $nota->descripcion = $data->nota;
+        $nota->descripcion = $data->descripcion;
         $nota->id_paciente = $data->id_paciente;
         $nota->save();
 
+        
         return response()->json([
             'status' => 'ok',
             'message' => 'Nota agregada correctamente',
