@@ -85,8 +85,11 @@ class ControllerFactura extends Controller
 
     public function cargar_una_factura($id_factura){
         
-            $factura = DB::table("facturas")->join("doctors","facturas.id_doctor","=","doctors.id")->where("facturas.id","=",$id_factura)->get();
-            return $factura;
+        $factura = DB::table("facturas")->join("doctors","facturas.id_doctor","=","doctors.id")->where("facturas.id","=",$id_factura)->get();
+        return $factura;
+
+        
+
      }
 
 

@@ -48,6 +48,7 @@
 	Route::put('/api/actualizar_cita/{id}', 'ControllerCita@update');
 	Route::delete('/api/eliminar_cita/{id}', 'ControllerCita@destroy');
 
+	
 	///API FACTURAS
 	Route::post('/api/crear_factura','ControllerFactura@create');
 	Route::get('/api/buscar_facutura/{id_factura}','ControllerFactura@buscar_factura');
@@ -79,6 +80,7 @@
 	Route::get('/api/imprimir_recibo/{id_recibo}/{id_factura}','ControllerRecibo@imprimir_recibo');
 	Route::get('/api/ingresos_de_mes/','ControllerRecibo@ingresos_en_meses');
 	Route::get('/api/ingresos_de_semana/{fecha}','ControllerRecibo@ingresos_de_semana');
+	Route::post('/api/enviar_recibo','ControllerRecibo@enviarRecibo');
 
 
 	//CARGAR HISTORIAL_PS

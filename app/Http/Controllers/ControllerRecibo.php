@@ -19,6 +19,17 @@ class ControllerRecibo extends Controller
             return $recibos;
     }
 
+    public function cargar_recibo($id_recibo)
+    {
+        
+        $recibo = App\Recibo::with(['factura.paciente', 'factura.doctor'])
+            ->where('id', $id_recibo)
+            ->first();
+        
+        return $recibo;
+
+    }
+
     public function actualizar_recibo($id_recibo,$monto,$tipo_de_pago,$estado_actual){
 
         
@@ -241,5 +252,37 @@ class ControllerRecibo extends Controller
             $m->to('edisondja@gmail.com','Edison')->subject('Your Reminder!');
         });
 
+    }
+
+
+     public function enviarRecibo(Request $request)
+    {
+        try {
+            // Validar los datos recibidos
+            $request->validate([
+                'pdf' => 'required|file|mimes:pdf',
+                'email' => 'required|email',
+                'asunto' => 'required|string|max:255'
+            ]);
+
+            // Guardar temporalmente el PDF
+            $pdfPath = $request->file('pdf')->store('public/temp_recibos');
+            $pdfFullPath = storage_path('app/' . $pdfPath);
+
+            // Enviar correo
+            Mail::to($request->email)->send(
+                new ReciboMailable($request->asunto, $pdfFullPath)
+            );
+
+            // Eliminar el archivo temporal
+            if (file_exists($pdfFullPath)) {
+                unlink($pdfFullPath);
+            }
+
+            return response()->json(['message' => 'Recibo enviado correctamente'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error al enviar el recibo: ' . $e->getMessage()], 500);
+        }
     }
 }
