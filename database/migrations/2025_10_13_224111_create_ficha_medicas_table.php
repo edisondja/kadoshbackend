@@ -11,8 +11,7 @@ class CreateFichaMedicasTable extends Migration
      *
      * @return void
      */
-  public function up()
-    {
+  public function up(){
         Schema::create('ficha_medicas', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->integer('paciente_id')->unsigned();
@@ -30,7 +29,6 @@ class CreateFichaMedicasTable extends Migration
             $table->string('antecedentes_familiares')->nullable();
             $table->string('alergias')->nullable();
             $table->string('alergias_detalle')->nullable();
-
             $table->timestamps();
         });
     }
