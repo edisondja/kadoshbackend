@@ -181,6 +181,14 @@
 	Route::post('api/configs', [ConfigController::class, 'store']);             // Crear nuevo
 	Route::post('api/configs/{id}', [ConfigController::class, 'update']);       // Actualizar (POST o PUT)
 	Route::delete('api/configs/{id}', [ConfigController::class, 'destroy']);    // Eliminar
+	 
+
+	 //Ficha Medica
+	 Route::post('/api/guardar_ficha_medica','ControllerFichaMedica@store');
+	 Route::get('/api/cargar_ficha_medica/{id_paciente}','ControllerFichaMedica@show');
+	 Route::post('/api/actualizar_ficha_medica/{id}','ControllerFichaMedica@update');
+	 Route::get('/api/eliminar_ficha_medica/{id}','ControllerFichaMedica@destroy');
+	 Route::get('/api/buscar_fichas/{nombre}','ControllerFichaMedica@buscar_fichas');
 
 
 

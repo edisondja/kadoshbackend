@@ -8,6 +8,7 @@ use Mail;
 use App;
 use Carbon\Carbon;
 use App\Mail\KadoshNotificacion;
+use App\Mail\ReciboMailable;
 
 
 class ControllerRecibo extends Controller
@@ -254,25 +255,24 @@ class ControllerRecibo extends Controller
 
     }
 
-
-     public function enviarRecibo(Request $request)
+    public function enviarRecibo(Request $request)
     {
         try {
             // Validar los datos recibidos
-            $request->validate([
-                'pdf' => 'required|file|mimes:pdf',
-                'email' => 'required|email',
-                'asunto' => 'required|string|max:255'
-            ]);
+      
+            // Obtener el contenido del PDF enviado desde el front
+            $pdf = $request->file('pdf');
 
-            // Guardar temporalmente el PDF
-            $pdfPath = $request->file('pdf')->store('public/temp_recibos');
+            if (!$pdf) {
+                return response()->json(['error' => 'No se recibió el PDF'], 422);
+            }
+
+            // Guardar el PDF temporalmente
+            $pdfPath = $pdf->storeAs('public/temp_recibos', 'recibo_' . time() . '.pdf');
             $pdfFullPath = storage_path('app/' . $pdfPath);
 
             // Enviar correo
-            Mail::to($request->email)->send(
-                new ReciboMailable($request->asunto, $pdfFullPath)
-            );
+            Mail::to($request->email)->send(new \App\Mail\ReciboMailable($request->asunto, $pdfFullPath));
 
             // Eliminar el archivo temporal
             if (file_exists($pdfFullPath)) {
@@ -282,7 +282,11 @@ class ControllerRecibo extends Controller
             return response()->json(['message' => 'Recibo enviado correctamente'], 200);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Error al enviar el recibo: ' . $e->getMessage()], 500);
+            \Log::error('Error al enviar recibo: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al enviar el recibo: ' . $e->getMessage()
+            ], 500);
         }
     }
+
 }

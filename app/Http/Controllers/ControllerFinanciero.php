@@ -49,8 +49,6 @@ class ControllerFinanciero extends Controller
     {
                 
 
-
-        
         $sup = new App\Suplidor();
         $sup->nombre = $request->nombre_suplidor;
         $sup->descripcion = $request->descripcion;
@@ -274,3 +272,11 @@ class ControllerFinanciero extends Controller
 
 
 }
+
+
+   $sup = new App\Suplidor();
+        $sup->nombre = $request->nombre_suplidor;
+        $sup->descripcion = $request->descripcion;
+        $sup->rnc_suplidor = $request->rnc_suplidor;
+        $sup->usuario_id = $request->usuario_id;
+        $sup->save();

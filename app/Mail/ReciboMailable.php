@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
+
 class ReciboMailable extends Mailable
 {
     use Queueable, SerializesModels;
@@ -22,7 +23,7 @@ class ReciboMailable extends Mailable
     public function build()
     {
         return $this->subject($this->asunto)
-            ->view('emails.recibo')
+            ->view('recibo')
             ->attach($this->pdfPath, [
                 'as' => 'recibo.pdf',
                 'mime' => 'application/pdf',
