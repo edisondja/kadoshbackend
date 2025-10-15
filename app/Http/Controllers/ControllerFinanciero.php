@@ -7,8 +7,7 @@ use App;
 use Carbon\Carbon;
 use Factura;
 use DB;
-
-
+use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 
 class ControllerFinanciero extends Controller
 {
@@ -47,8 +46,6 @@ class ControllerFinanciero extends Controller
 
     public function registrar_suplidor(Request $request)
     {
-                
-
         $sup = new App\Suplidor();
         $sup->nombre = $request->nombre_suplidor;
         $sup->descripcion = $request->descripcion;
@@ -58,9 +55,11 @@ class ControllerFinanciero extends Controller
 
         return response()->json([
             'status' => 'ok',
-            'mensaje' => 'Registrado correctamente',
-            'nombre' => $sup->nombre
+            'message' => 'Suplidor registrado correctamente',
+            'suplidor_id' => $sup->id
         ]);
+     
+      
     }
 
     public function eliminar_suplidor($id){
@@ -272,11 +271,3 @@ class ControllerFinanciero extends Controller
 
 
 }
-
-
-   $sup = new App\Suplidor();
-        $sup->nombre = $request->nombre_suplidor;
-        $sup->descripcion = $request->descripcion;
-        $sup->rnc_suplidor = $request->rnc_suplidor;
-        $sup->usuario_id = $request->usuario_id;
-        $sup->save();
