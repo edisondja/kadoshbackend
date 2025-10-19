@@ -24,7 +24,7 @@ class CreateRecibosTable extends Migration
             $table->float('estado_actual');
             $table->integer("total");
             $table->text("procedimientos");
-            $table->string('codigo_confirmacion');
+            $table->string('codigo_confirmacion')->nullable();
             $table->string("concepto_pago");
             $table->string("codigo_recibo");
             $table->datetime("fecha_pago");

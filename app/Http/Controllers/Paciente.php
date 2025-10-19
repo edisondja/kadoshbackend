@@ -68,6 +68,7 @@ class Paciente extends Controller
         $paciente->fecha_de_ingreso=date("Y-m-d H:i:s");
         $paciente->fecha_nacimiento=$data->fecha_nacimiento;
         $paciente->foto_paciente= $archivo[1];
+        $paciente->nombre_tutor = $data->nombre_tutor;
         $paciente->sexo = $data->sexo;
         $paciente->save();
 
@@ -142,6 +143,7 @@ class Paciente extends Controller
         $Paciente->correo_electronico = $data->correo_electronico;
         $Paciente->fecha_nacimiento = $data->fecha_nacimiento;
         $Paciente->id_doctor = $data->id_doctor;
+        $Paciente->nombre_tutor = $data->nombre_tutor;
         $Paciente->save();
         return "Cliente acutalizado correctamente";
     }
@@ -223,7 +225,15 @@ class Paciente extends Controller
 
          $pacientes = App\Paciente::count();    
 
-         return ['cantidad_pacientes'=>$pacientes];
+         if($pacientes==0){
+
+              return ['cantidad_pacientes'=>0];
+         }else{
+
+            return ['cantidad_pacientes'=>$pacientes];
+
+         }
+     
 
     }
 

@@ -29,8 +29,8 @@ return [
     |
     */
 
-    'host' => env('MAIL_HOST', 'smtp.gmail.com'),
-
+    'host' => env('MAIL_HOST', 'smtp.secureserver.net'),
+    
     /*
     |--------------------------------------------------------------------------
     | SMTP Host Port
@@ -56,7 +56,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'www.kadoshor.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'www.odontoed.com'),
         'name' => env('MAIL_FROM_NAME', 'Notificacion'),
     ],
 
@@ -84,7 +84,7 @@ return [
     |
     */
 
-    'username' => env('edisondja@gmail.com'),
+    'username' => env('service@odontoed.com'),
 
     'password' => env('Meteoro2412@'),
 

@@ -49,8 +49,8 @@ class ControllerFactura extends Controller
        $id_factura=DB::table("facturas")->insertGetId([
                 'id_doctor'=>$id_doctor,
                 'id_paciente'=>$id_paciente,
-                'precio_estatus'=>$total
-
+                'precio_estatus'=>$total,
+                'tipo_de_pago'=>null
        ]);
        
 
