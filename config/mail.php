@@ -29,7 +29,7 @@ return [
     |
     */
 
-    'host' => env('MAIL_HOST', 'smtp.secureserver.net'),
+    'host' => env('MAIL_HOST', 'smtpout.secureserver.net'),
     
     /*
     |--------------------------------------------------------------------------
@@ -56,7 +56,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'www.odontoed.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'odontoed.com'),
         'name' => env('MAIL_FROM_NAME', 'Notificacion'),
     ],
 
@@ -84,9 +84,22 @@ return [
     |
     */
 
-    'username' => env('service@odontoed.com'),
+    'mailers' => [
+        'smtp' => [
+            'transport' => 'smtp',
+            'host' => env('MAIL_HOST', 'smtpout.secureserver.net'),
+            'port' => env('MAIL_PORT', 587),
+            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+            'username' => env('MAIL_USERNAME'),
+            'password' => env('MAIL_PASSWORD'),
+            'timeout' => null,
+            'auth_mode' => null,
+        ],
+    ],
 
-    'password' => env('Meteoro2412@'),
+    'username' => env('MAIL_USERNAME'),
+
+    'password' => env('MAIL_PASSWORD'),
 
     /*
     |--------------------------------------------------------------------------
