@@ -19,6 +19,9 @@
 	//Route::get('/api/consultar_usuarios','LoginController@CargarUsuarios');
 
 	//API PACIENTES READY
+	
+Route::middleware(['tenant'])->group(function () {
+
 	Route::post('/api/guardar_paciente','Paciente@guardar');
 	Route::get('/api/paciente','Paciente@index');	
 	Route::get('/api/paciente/{id_paciente}','Paciente@show');
@@ -191,10 +194,7 @@
 	 Route::get('/api/buscar_fichas/{nombre}','ControllerFichaMedica@buscar_fichas');
 
 
+	 Route::get('/api/probar_correo','ControllerRecibo@enviarReciboTest');
 
 
-   Route::get('/hard',function(){
-
-		return "weo";
-
-   });
+});

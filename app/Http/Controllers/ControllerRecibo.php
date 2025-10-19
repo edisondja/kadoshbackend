@@ -289,4 +289,29 @@ class ControllerRecibo extends Controller
         }
     }
 
+
+
+
+    public function enviarReciboTest()
+    {
+        try {
+            $correoDestino = 'edisondja@gmail.com'; // Cambia si quieres otro correo
+            $asunto = 'Prueba de Envío de Correo';
+            $mensaje = 'Este es un correo de prueba enviado desde Laravel usando la configuración SMTP.';
+
+            Mail::raw($mensaje, function ($message) use ($correoDestino, $asunto) {
+                $message->to($correoDestino)
+                        ->subject($asunto);
+            });
+
+            return response()->json(['message' => 'Correo de prueba enviado correctamente'], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Error al enviar correo de prueba: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al enviar correo: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }
