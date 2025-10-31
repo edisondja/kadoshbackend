@@ -68,8 +68,8 @@ Route::middleware(['tenant'])->group(function () {
 	///PROCEDIMIENTOS
 	Route::get('/api/cargar_procedimientos','ControllerProcedimiento@index');
 	Route::get('/api/cargar_procedimiento/{id}','ControllerProcedimiento@show');
-	Route::get('/api/guardar_procedimiento/{nombre}/{precio}','ControllerProcedimiento@create');
-	Route::get('/api/actualizar_procedimiento/{nombre}/{precio}/{id}','ControllerProcedimiento@update');
+	Route::post('/api/guardar_procedimiento','ControllerProcedimiento@create');
+	Route::post('/api/actualizar_procedimiento','ControllerProcedimiento@update');
 	Route::get('/api/eliminar_procedimiento/{id}','ControllerProcedimiento@destroy');
 	Route::get('/api/buscar_procedimiento/{buscar}','ControllerProcedimiento@buscarProcedimiento');
 

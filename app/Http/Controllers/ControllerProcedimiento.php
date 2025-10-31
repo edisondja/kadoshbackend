@@ -31,11 +31,11 @@ class ControllerProcedimiento extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create($nombre,$precio)
+    public function create(Request $data)
     {
         $procedimiento = new App\Procedimiento();
-        $procedimiento->nombre = $nombre;
-        $procedimiento->precio = $precio;
+        $procedimiento->nombre = $data->nombre;
+        $procedimiento->precio = $data->precio;
         $procedimiento->estado = 'activo';
         $procedimiento->save();
 
@@ -48,11 +48,11 @@ class ControllerProcedimiento extends Controller
         return $procedimiento;
     }
 
-    public function update($nombre,$precio,$id)
+    public function update(Request $data)
     {
-        $procedimiento = App\Procedimiento::find($id);
-        $procedimiento->nombre = $nombre;
-        $procedimiento->precio = $precio;
+        $procedimiento = App\Procedimiento::find($data->io);
+        $procedimiento->nombre = $data->nombre;
+        $procedimiento->precio = $data->precio;
         $procedimiento->save();
             
     }
