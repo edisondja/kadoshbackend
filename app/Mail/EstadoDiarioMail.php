@@ -20,7 +20,6 @@ class EstadoDiarioMail extends Mailable
     {
         //
     }
-
     /**
      * Build the message.
      *

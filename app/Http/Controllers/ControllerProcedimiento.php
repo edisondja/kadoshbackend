@@ -50,7 +50,7 @@ class ControllerProcedimiento extends Controller
 
     public function update(Request $data)
     {
-        $procedimiento = App\Procedimiento::find($data->io);
+        $procedimiento = App\Procedimiento::find($data->id);
         $procedimiento->nombre = $data->nombre;
         $procedimiento->precio = $data->precio;
         $procedimiento->save();
