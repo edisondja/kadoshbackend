@@ -255,6 +255,24 @@ class ControllerRecibo extends Controller
 
     }
 
+    public function subir_factura_temp(Request $request)
+    {
+        if ($request->hasFile('pdf')) {
+            $pdf = $request->file('pdf');
+
+            // Guardar el archivo en storage/app/public/temp_recibos
+            $filename = 'recibo_temp_' . time() . '.pdf';
+            $path = $pdf->storeAs('public/temp_recibos', $filename);
+
+            // Generar URL pública (requiere tener el enlace simbólico "storage" creado)
+            $publicUrl = asset('storage/temp_recibos/' . $filename);
+
+            return response()->json(['url' => $publicUrl], 200);
+        } else {
+            return response()->json(['error' => 'No se recibió ningún archivo PDF'], 400);
+        }
+    }
+
     public function enviarRecibo(Request $request)
     {
         try {
@@ -270,9 +288,15 @@ class ControllerRecibo extends Controller
             // Guardar el PDF temporalmente
             $pdfPath = $pdf->storeAs('public/temp_recibos', 'recibo_' . time() . '.pdf');
             $pdfFullPath = storage_path('app/' . $pdfPath);
-
+            //dra.felizcdko@gmail.com
             // Enviar correo
-            Mail::to($request->email)->send(new \App\Mail\ReciboMailable($request->asunto, $pdfFullPath));
+            Mail::to($request->email)->send(new \App\Mail\ReciboMailable($request->asunto,
+                                                                          $pdfFullPath,
+                                                                          $request->nombre_compania,
+                                                                          $request->logo_compania,
+                                                                          $request->direccion_compania,
+                                                                          $request->telefono_compania
+                                                                        ));
 
             // Eliminar el archivo temporal
             if (file_exists($pdfFullPath)) {
@@ -288,9 +312,6 @@ class ControllerRecibo extends Controller
             ], 500);
         }
     }
-
-
-
 
     public function enviarReciboTest()
     {

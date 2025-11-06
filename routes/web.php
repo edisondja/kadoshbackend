@@ -63,7 +63,7 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/cargar_factura/{id_factura}','ControllerFactura@cargar_una_factura');
 	Route::get('/api/cargar_facturas_paciente/{id_paciente}','ControllerFactura@Facturas_de_paciente');
 	Route::get('/api/descontar_precio_factura/{id_factura}/{monto}/{comentario}','ControllerFactura@descontar_estatus');
-
+	///API TEMP
 
 	///PROCEDIMIENTOS
 	Route::get('/api/cargar_procedimientos','ControllerProcedimiento@index');
@@ -84,6 +84,8 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/ingresos_de_mes/','ControllerRecibo@ingresos_en_meses');
 	Route::get('/api/ingresos_de_semana/{fecha}','ControllerRecibo@ingresos_de_semana');
 	Route::post('/api/enviar_recibo','ControllerRecibo@enviarRecibo');
+	Route::post('/api/subir_recibo_temp','ControllerRecibo@subir_factura_temp');
+
 
 
 	//CARGAR HISTORIAL_PS
