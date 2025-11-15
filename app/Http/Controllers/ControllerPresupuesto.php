@@ -3,7 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App;
 use App\Presupuesto;
+use Mail;
+use App\Mail\ReciboMailable;
+use App\Mail\PresupuestoMail;
+
 class ControllerPresupuesto extends Controller
 {
     /**
@@ -56,11 +62,55 @@ public function cargar_presupuesto($id_presupuesto)
 
     }   
 
-
     public function actualizar_presupuesto(Request $data){
 
 
     }
+
+        public function enviarPresupuesto(Request $request)
+        {
+            \Log::info("Request recibido", [
+                "all" => $request->all(),
+                "files" => $request->files,
+            ]);
+
+            try {
+                $validated = $request->validate([
+                    "pdf" => "required|file|mimes:pdf",
+                    "email" => "required|email",
+                    "asunto" => "required|string",
+                    "nombre_compania" => "nullable|string",
+                    "logo_compania" => "nullable|string",
+                    "direccion_compania" => "nullable|string",
+                    "telefono_compania" => "nullable|string",
+                    
+                ]);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                return response()->json($e->errors(), 422);
+            }
+
+            // Guardar temporalmente el archivo
+            $pdfPath = $request->file("pdf")->store("presupuestos_temp");
+
+
+     // Enviar correo
+            // Enviar correo correctamente
+            Mail::to($validated["email"])->send(new \App\Mail\PresupuestoMail(
+                    $validated["asunto"],
+                    $validated["nombre_compania"],
+                    $validated["logo_compania"],
+                    $validated["direccion_compania"],
+                    $validated["telefono_compania"],
+                    storage_path("app/" . $pdfPath)
+                ));
+
+            return response()->json([
+                "status" => "success",
+                "message" => "Presupuesto enviado correctamente"
+            ], 200);
+        }
+
+
 
 
     /**

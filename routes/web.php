@@ -177,7 +177,8 @@ Route::middleware(['tenant'])->group(function () {
 	Route::post('/api/eliminar_presupuesto','ControllerPresupuesto@eliminar_prespuesto');
 	Route::post('/api/actualizar_presupuesto','ControllerPresupuesto@actualizar_presupuesto');
 	Route::get('/api/buscar_presupuesto/{buscar}','ControllerPresupuesto@buscar_presupuesto');
-
+	Route::get('/api/buscar_presupuesto/{buscar}','ControllerPresupuesto@buscar_presupuesto');
+	Route::post('/api/enviar_presupuesto','ControllerPresupuesto@enviarPresupuesto');
 
 	//Configuracion
 

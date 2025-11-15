@@ -89,6 +89,17 @@ class ControllerDoctor extends Controller
 
     }
 
+
+    public function desactivar_doctor(Request $request)
+    {
+        //
+        $doctor = App\Doctor::find($request->id_doctor);
+        $doctor->estado= false;
+        $doctor->save();
+
+    }
+
+
     /**
      * Update the specified resource in storage.
      *

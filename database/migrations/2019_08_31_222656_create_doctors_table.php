@@ -17,6 +17,7 @@ class CreateDoctorsTable extends Migration
             $table->increments('id');
             $table->string('nombre');
             $table->string('apellido');
+            $table->boolean('estado')->default(true);
             $table->string('dni');
             $table->string('numero_telefono');
             $table->timestamps();
