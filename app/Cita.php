@@ -15,6 +15,7 @@ class Cita extends Model
     'fin',
     'paciente_id',
     'doctor_id',
+    'google_event_id',
     ];
 
     public function doctor(){

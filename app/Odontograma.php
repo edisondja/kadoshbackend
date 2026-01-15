@@ -8,11 +8,16 @@ class Odontograma extends Model
 {
     protected $fillable = [
         'paciente_id',
-        'diente_numero',
-        'superficie',
+        'doctor_id',
+        'dibujo_odontograma',
         'estado',
-        'procedimiento_id',
     ];
+
+    public function detalles()
+    {
+        return $this->hasMany(Odontograma_detalles::class);
+    }
+
 
     public function paciente()
     {

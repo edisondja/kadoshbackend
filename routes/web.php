@@ -38,6 +38,8 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/doctores/','ControllerDoctor@index');
 	Route::get('/api/eliminar_doctor/{id}','ControllerDoctor@destroy');
 	Route::get('/api/actualizar_doctor/{nombre}/{apellido}/{cedula}/{telefono}/{id}','ControllerDoctor@edit');
+	Route::post('/api/crear_doctor_completo','ControllerDoctor@create');
+	Route::put('/api/actualizar_doctor_completo/{id}','ControllerDoctor@edit');
 	Route::get('/api/cargar_doctor/{id_doctor}','ControllerDoctor@cargar_doctor');
 	Route::get('/api/crear_doctor/{nombre}/{apellido}/{cedula}/{telefono}','ControllerDoctor@create');
 	Route::get('/api/buscando_doctor/{nombre}','ControllerDoctor@buscando_doctor');
@@ -142,6 +144,35 @@ Route::middleware(['tenant'])->group(function () {
 
 	//Nominas
 	Route::get('/api/cargar_nomina/{fecha_i}/{fecha_f}','ControllerFinanciero@cargar_nomina');
+	Route::get('/api/calcular_nomina_doctores/{fecha_i}/{fecha_f}','ControllerNomina@calcularNominaDoctores');
+	Route::post('/api/registrar_pago_nomina','ControllerNomina@registrarPagoNomina');
+	Route::get('/api/listar_pagos_nomina','ControllerNomina@listarPagosNomina');
+	Route::put('/api/marcar_pago_nomina_pagado/{id}','ControllerNomina@marcarComoPagado');
+	Route::get('/api/detalle_comisiones/{doctor_id}/{fecha_i}/{fecha_f}','ControllerNomina@obtenerDetalleComisiones');
+
+	//Punto de Venta
+	Route::get('/api/listar_productos','ControllerPuntoVenta@listarProductos');
+	Route::post('/api/guardar_producto','ControllerPuntoVenta@guardarProducto');
+	Route::delete('/api/eliminar_producto/{id}','ControllerPuntoVenta@eliminarProducto');
+	Route::post('/api/realizar_venta','ControllerPuntoVenta@realizarVenta');
+	Route::get('/api/productos_stock_bajo','ControllerPuntoVenta@productosStockBajo');
+
+	//Salarios de Doctores
+	Route::get('/api/listar_salarios_doctores','ControllerSalarioDoctor@listarSalarios');
+	Route::get('/api/salario_doctor/{doctor_id}','ControllerSalarioDoctor@obtenerSalarioDoctor');
+	Route::post('/api/guardar_salario_doctor','ControllerSalarioDoctor@guardarSalario');
+	Route::get('/api/doctores_con_salarios','ControllerSalarioDoctor@listarDoctoresConSalarios');
+	Route::delete('/api/eliminar_salario_doctor/{id}','ControllerSalarioDoctor@eliminarSalario');
+
+	//Recetas Médicas
+	Route::get('/api/listar_recetas_paciente/{id_paciente}','ControllerReceta@listarRecetasPaciente');
+	Route::get('/api/obtener_receta/{id}','ControllerReceta@obtenerReceta');
+	Route::post('/api/crear_receta','ControllerReceta@crearReceta');
+	Route::put('/api/actualizar_receta/{id}','ControllerReceta@actualizarReceta');
+	Route::delete('/api/eliminar_receta/{id}','ControllerReceta@eliminarReceta');
+	Route::get('/api/imprimir_receta/{id}','ControllerReceta@imprimirReceta');
+	Route::get('/api/ver_receta_pdf/{id}','ControllerReceta@verRecetaPDF');
+	Route::post('/api/enviar_receta_email/{id}','ControllerReceta@enviarRecetaEmail');
 
     //Usuario
 
@@ -195,9 +226,29 @@ Route::middleware(['tenant'])->group(function () {
 	 Route::post('/api/actualizar_ficha_medica/{id}','ControllerFichaMedica@update');
 	 Route::get('/api/eliminar_ficha_medica/{id}','ControllerFichaMedica@destroy');
 	 Route::get('/api/buscar_fichas/{nombre}','ControllerFichaMedica@buscar_fichas');
-
-
 	 Route::get('/api/probar_correo','ControllerRecibo@enviarReciboTest');
+
+	 //Odontogramas
+	 Route::post('/api/crear_odontograma','ControllerOdontograma@CrearOdontograma');
+	 Route::delete('/api/eliminar_odontograma/{id}','ControllerOdontograma@EliminarOdontograma');
+	 Route::get('/api/ver_odontograma/{id}','ControllerOdontograma@VerOdontograma');
+	 Route::get('/api/listar_odontogramas','ControllerOdontograma@ListarOdontogramas');
+	 Route::get('/api/listar_odontogramas_paciente/{id_paciente}','ControllerOdontograma@ListarOdontogramasPorPaciente');
+
+	 //Pagos Mensuales
+	 Route::post('/api/crear_pago_mensual','ControllerPagoMensual@CrearPagoMensual');
+	 Route::get('/api/marcar_pago_pagado/{id}','ControllerPagoMensual@MarcarComoPagado');
+	 Route::get('/api/pagos_usuario/{usuario_id}','ControllerPagoMensual@ObtenerPagosPorUsuario');
+	 Route::get('/api/alertas_pagos','ControllerPagoMensual@ObtenerAlertasPagos');
+	 Route::get('/api/proximo_pago_usuario/{usuario_id}','ControllerPagoMensual@ObtenerProximoPagoUsuario');
+	 Route::get('/api/listar_pagos','ControllerPagoMensual@ListarPagos');
+
+	 //Auditoría y Logs
+	 Route::get('/api/logs_usuario/{usuario_id}','ControllerAuditoria@ObtenerLogsUsuario');
+	 Route::get('/api/logs_todos','ControllerAuditoria@ObtenerTodosLogs');
+	 Route::get('/api/estadisticas_logs/{usuario_id?}','ControllerAuditoria@ObtenerEstadisticasLogs');
+	 Route::post('/api/crear_log','ControllerAuditoria@CrearLog');
+
 
 
 });

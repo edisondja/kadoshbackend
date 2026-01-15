@@ -23,19 +23,57 @@ class ControllerDoctor extends Controller
 
     /**
      * Show the form for creating a new resource.
+     * Mantiene compatibilidad con rutas GET antiguas
      *
      * @return \Illuminate\Http\Response
      */
-    public function create($nombre,$apellido,$cedula,$telefono)
+    public function create($nombre = null, $apellido = null, $cedula = null, $telefono = null)
     {
+        // Si se llama desde ruta GET antigua (parámetros en URL)
+        if ($nombre !== null && $apellido !== null && $cedula !== null && $telefono !== null) {
+            $doctor = new App\Doctor();
+            $doctor->nombre = $nombre;
+            $doctor->apellido = $apellido;
+            $doctor->dni = $cedula;
+            $doctor->numero_telefono = $telefono;
+            $doctor->save();
+            return response()->json(['success' => true, 'doctor' => $doctor]);
+        }
         
-        $doctor = new App\Doctor();
-        $doctor->nombre= $nombre;
-        $doctor->apellido= $apellido;
-        $doctor->dni= $cedula;
-        $doctor->numero_telefono=$telefono;
-        $doctor->save();
+        // Si se llama desde ruta POST nueva (Request body)
+        $request = request();
+        if ($request->has('nombre')) {
+            try {
+                $request->validate([
+                    'nombre' => 'required|string',
+                    'apellido' => 'required|string',
+                    'cedula' => 'required|string',
+                    'telefono' => 'required|string',
+                    'especialidad' => 'nullable|string'
+                ]);
 
+                $doctor = new App\Doctor();
+                $doctor->nombre = $request->nombre;
+                $doctor->apellido = $request->apellido;
+                $doctor->dni = $request->cedula;
+                $doctor->numero_telefono = $request->telefono;
+                $doctor->especialidad = $request->especialidad;
+                $doctor->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Doctor creado correctamente',
+                    'doctor' => $doctor
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => 'Error al crear doctor',
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+        }
+        
+        return response()->json(['error' => 'Parámetros inválidos'], 400);
     }
 
     /**
@@ -73,20 +111,60 @@ class ControllerDoctor extends Controller
 
     /**
      * Show the form for editing the specified resource.
+     * Mantiene compatibilidad con rutas GET antiguas
      *
      * @param  int  $id 
      * @return \Illuminate\Http\Response
      */
-    public function edit($nombre="test",$apellido,$cedula,$telefono,$id)
+    public function edit($nombre = null, $apellido = null, $cedula = null, $telefono = null, $id = null)
     {
-        //
-        $doctor = App\Doctor::find($id);
-        $doctor->nombre= $nombre;
-        $doctor->apellido= $apellido;
-        $doctor->dni= $cedula;
-        $doctor->numero_telefono= $telefono;
-        $doctor->save();
+        // Si se llama desde ruta GET antigua (parámetros en URL)
+        if ($nombre !== null && $apellido !== null && $cedula !== null && $telefono !== null && $id !== null) {
+            $doctor = App\Doctor::find($id);
+            if ($doctor) {
+                $doctor->nombre = $nombre;
+                $doctor->apellido = $apellido;
+                $doctor->dni = $cedula;
+                $doctor->numero_telefono = $telefono;
+                $doctor->save();
+            }
+            return response()->json(['success' => true, 'doctor' => $doctor]);
+        }
+        
+        // Si se llama desde ruta PUT nueva (Request body)
+        $request = request();
+        if ($request->has('nombre') && $id !== null) {
+            try {
+                $request->validate([
+                    'nombre' => 'required|string',
+                    'apellido' => 'required|string',
+                    'cedula' => 'required|string',
+                    'telefono' => 'required|string',
+                    'especialidad' => 'nullable|string'
+                ]);
 
+                $doctor = App\Doctor::findOrFail($id);
+                $doctor->nombre = $request->nombre;
+                $doctor->apellido = $request->apellido;
+                $doctor->dni = $request->cedula;
+                $doctor->numero_telefono = $request->telefono;
+                $doctor->especialidad = $request->especialidad;
+                $doctor->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Doctor actualizado correctamente',
+                    'doctor' => $doctor
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => 'Error al actualizar doctor',
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+        }
+        
+        return response()->json(['error' => 'Parámetros inválidos'], 400);
     }
 
 

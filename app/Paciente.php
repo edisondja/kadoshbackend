@@ -17,6 +17,11 @@ class Paciente extends Model
         return 'posts_index';
     }
 
+    public function odontograma()
+    {
+        return $this->hasOne('App\Models\Odontograma','paciente_id');
+    }
+
     public function estatus()
     {
         return $this->hasMany('App\Factura','id_paciente');
@@ -26,6 +31,11 @@ class Paciente extends Model
 
         return $this->belongsTo('App\Doctor','id_doctor');
 
+    }
+
+    public function recetas()
+    {
+        return $this->hasMany(Receta::class, 'id_paciente');
     }
 
 

@@ -52,12 +52,14 @@ class DatabaseSeeder extends Seeder
 
             $procedimiento = new Procedimiento();
             $procedimiento->nombre = "Extraccion de molares";
+            $procedimiento->color ="red";
             $procedimiento->precio = 2500;
             $procedimiento->estado = 'activo';
             $procedimiento->save();
             
             $procedimiento = new Procedimiento();
             $procedimiento->nombre = "Limpieza Dental";
+            $procedimiento->color ="green";
             $procedimiento->precio = 900;
             $procedimiento->estado = 'activo';
             $procedimiento->save();
@@ -65,6 +67,7 @@ class DatabaseSeeder extends Seeder
 
             $procedimiento = new Procedimiento();
             $procedimiento->nombre = "Endondocia";
+            $procedimiento->color ="blue";
             $procedimiento->precio = 25000;
             $procedimiento->estado = 'activo';
             $procedimiento->save(); 

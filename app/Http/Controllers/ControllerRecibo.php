@@ -85,10 +85,23 @@ class ControllerRecibo extends Controller
         $total          = $request->input('total', 0);
         $procedimientos = $request->input('procedimientos', []);
 
+        // Obtener configuración para el formato de número
+        $config = App\Config::first();
+        $tipoNumero = $config ? $config->tipo_numero_factura : 'comprobante';
+        $prefijo = $config && $config->prefijo_factura ? $config->prefijo_factura : '';
+        
         // Obtener el último recibo
         $ultimo_recibo = App\Recibo::orderBy('id', 'desc')->first();
         $numero = $ultimo_recibo ? ($ultimo_recibo->id + 1) : 1;
-        $codigo = "B02" . str_pad($numero, 7, "0", STR_PAD_LEFT);
+        
+        // Generar código según configuración
+        if ($tipoNumero === 'factura' && $prefijo) {
+            // Formato: "NO 22 FACTURA" o similar
+            $codigo = $prefijo . " FACTURA " . str_pad($numero, 7, "0", STR_PAD_LEFT);
+        } else {
+            // Formato: "COMPROBANTE" o "B02..."
+            $codigo = $prefijo ? $prefijo . str_pad($numero, 7, "0", STR_PAD_LEFT) : "B02" . str_pad($numero, 7, "0", STR_PAD_LEFT);
+        }
 
         // Crear nuevo recibo
         $recibo = new App\Recibo();
@@ -230,17 +243,36 @@ class ControllerRecibo extends Controller
         $desde = $fecha_inicial . ' ' . $tiempo_inicial;
         $hasta = $fecha_final . ' ' . $tiempo_final;
 
-        // Total de monto (no necesita relaciones)
+        // Total de monto (incluye servicios y ventas)
         $total = App\Recibo::whereBetween('fecha_pago', [$desde, $hasta])->sum('monto');
 
-        // Recibos con factura y paciente (a través de factura)
+        // Recibos con factura y paciente (a través de factura) - incluye servicios y ventas
         $recibos = App\Recibo::with(['factura.paciente', 'factura.doctor'])
+            ->whereHas('factura', function($query) {
+                // Incluir tanto servicios como ventas
+            })
             ->whereBetween('fecha_pago', [$desde, $hasta])
             ->get();
 
+        // Separar recibos de servicios y ventas
+        $recibosServicios = $recibos->filter(function($recibo) {
+            return !$recibo->factura || ($recibo->factura->tipo_factura ?? 'servicio') === 'servicio';
+        });
+
+        $recibosVentas = $recibos->filter(function($recibo) {
+            return $recibo->factura && ($recibo->factura->tipo_factura ?? 'servicio') === 'venta';
+        });
+
+        $totalServicios = $recibosServicios->sum('monto');
+        $totalVentas = $recibosVentas->sum('monto');
+
         return [
             'monto_total' => (int) $total,
-            'recibos' => $recibos
+            'total_servicios' => (int) $totalServicios,
+            'total_ventas' => (int) $totalVentas,
+            'recibos' => $recibos,
+            'recibos_servicios' => $recibosServicios->values(),
+            'recibos_ventas' => $recibosVentas->values()
         ];
     }
 

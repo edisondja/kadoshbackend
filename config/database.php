@@ -56,7 +56,7 @@ return [
         'tenant' => [ 
             'driver' => 'mysql',
             'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3307'),
+            'port' => env('DB_PORT', '3306'),
             'database' => null,  // se setea dinámicamente
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
@@ -69,7 +69,7 @@ return [
         'mysql' => [
         'driver' => 'mysql',
         'host' => env('DB_HOST', 'localhost'),
-        'port' => env('DB_PORT', '3307'),
+        'port' => env('DB_PORT', '3306'),
         'database' => env('DB_DATABASE', 'odontoed'),
         'username' => env('DB_USERNAME', 'root'),
         'password' => env('DB_PASSWORD', ''),

@@ -4,27 +4,27 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateOdontogramasTable extends Migration
+class CreateSalariosDoctoresTable extends Migration
 {
     /**
      * Run the migrations.
      *
      * @return void
      */
-   public function up()
+    public function up()
     {
-        Schema::create('odontogramas', function (Blueprint $table) {
+        Schema::create('salarios_doctores', function (Blueprint $table) {
             $table->increments('id');
-            $table->unsignedInteger('paciente_id');
             $table->unsignedInteger('doctor_id');
-            $table->string('dibujo_odontograma');
-            $table->string('estado');
-            $table->foreign('paciente_id')->references('id')->on('pacientes')->onDelete('cascade');
             $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
+            $table->decimal('salario', 10, 2);
+            $table->date('fecha_inicio');
+            $table->date('fecha_fin')->nullable();
+            $table->boolean('activo')->default(true);
+            $table->text('comentarios')->nullable();
             $table->timestamps();
         });
     }
-
 
     /**
      * Reverse the migrations.
@@ -33,6 +33,6 @@ class CreateOdontogramasTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('odontogramas');
+        Schema::dropIfExists('salarios_doctores');
     }
 }

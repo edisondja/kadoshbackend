@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Config;
+use App\Config;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -44,11 +44,19 @@ class ConfigController extends Controller
         $config = Config::findOrFail($id);
         $data = $request->all();
 
+        // Manejar campos booleanos
+        if (isset($data['usar_google_calendar'])) {
+            $data['usar_google_calendar'] = filter_var($data['usar_google_calendar'], FILTER_VALIDATE_BOOLEAN);
+        }
+
         if ($request->hasFile('ruta_logo')) {
             if ($config->ruta_logo) {
                 Storage::disk('public')->delete($config->ruta_logo);
             }
             $data['ruta_logo'] = $request->file('ruta_logo')->store('configs', 'public');
+        } else {
+            // Si no se envía un nuevo archivo, mantener el existente
+            unset($data['ruta_logo']);
         }
 
         if ($request->hasFile('ruta_favicon')) {
@@ -56,6 +64,9 @@ class ConfigController extends Controller
                 Storage::disk('public')->delete($config->ruta_favicon);
             }
             $data['ruta_favicon'] = $request->file('ruta_favicon')->store('configs', 'public');
+        } else {
+            // Si no se envía un nuevo archivo, mantener el existente
+            unset($data['ruta_favicon']);
         }
 
         $config->update($data);

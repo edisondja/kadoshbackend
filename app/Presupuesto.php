@@ -8,6 +8,10 @@ class Presupuesto extends Model
 {
     
     protected $fillable = [
+        'nombre',
+        'factura',
+        'paciente_id',
+        'doctor_id',
         'pdf',
         'email',
         'asunto',

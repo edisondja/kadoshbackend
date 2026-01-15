@@ -63,8 +63,49 @@ public function cargar_presupuesto($id_presupuesto)
     }   
 
     public function actualizar_presupuesto(Request $data){
+        try {
+            // Validar que el presupuesto existe
+            $presupuesto = Presupuesto::find($data->presupuesto_id);
+            
+            if (!$presupuesto) {
+                return response()->json([
+                    'message' => 'Error: Presupuesto no encontrado'
+                ], 404);
+            }
 
+            // Validar que los datos requeridos estén presentes
+            if (!$data->has('data')) {
+                return response()->json([
+                    'message' => 'Error: Los datos del presupuesto son requeridos'
+                ], 400);
+            }
 
+            $datosPresupuesto = $data->data;
+            
+            // Actualizar el presupuesto
+            $json_factura = json_encode($datosPresupuesto);
+            $presupuesto->nombre = $datosPresupuesto["nombre"] ?? $presupuesto->nombre;
+            $presupuesto->factura = $json_factura;
+            
+            // Actualizar doctor_id si viene en los datos
+            if (isset($datosPresupuesto["id_doctor"])) {
+                $presupuesto->doctor_id = $datosPresupuesto["id_doctor"];
+            }
+            
+            $presupuesto->save();
+
+            return response()->json([
+                'message' => 'Presupuesto actualizado correctamente',
+                'presupuesto' => $presupuesto
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Error al actualizar presupuesto: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al actualizar el presupuesto',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
         public function enviarPresupuesto(Request $request)

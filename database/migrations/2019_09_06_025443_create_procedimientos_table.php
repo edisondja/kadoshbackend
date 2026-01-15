@@ -17,6 +17,7 @@ class CreateProcedimientosTable extends Migration
             $table->increments('id');
             $table->string("nombre");
             $table->string('estado');
+            $table->string("color");
             $table->integer("precio");            
             $table->timestamps();
         });

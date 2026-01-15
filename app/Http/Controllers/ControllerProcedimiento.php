@@ -36,12 +36,12 @@ class ControllerProcedimiento extends Controller
         $procedimiento = new App\Procedimiento();
         $procedimiento->nombre = $data->nombre;
         $procedimiento->precio = $data->precio;
+        $procedimiento->color = $data->color;
+        $procedimiento->comision = $data->comision ?? 0;
         $procedimiento->estado = 'activo';
         $procedimiento->save();
 
     }
-
- 
     public function show($id)
     {
         $procedimiento = App\Procedimiento::find($id);
@@ -53,9 +53,10 @@ class ControllerProcedimiento extends Controller
         $procedimiento = App\Procedimiento::find($data->id);
         $procedimiento->nombre = $data->nombre;
         $procedimiento->precio = $data->precio;
+        $procedimiento->color = $data->color;
+        $procedimiento->comision = $data->comision ?? 0;
         $procedimiento->save();
-            
-    }
+  }
 
     public function buscarProcedimiento($buscar){
     
@@ -76,13 +77,12 @@ class ControllerProcedimiento extends Controller
     }
 
     public function eliminar_procedimiento_lista($id_procedimiento,$id_factura,$total){
-
+        
             //DB::table('historial_ps')->where('id','=',$id_procedimiento)->delete();
             App\historial_p::find($id_procedimiento)->delete();
             $factura = App\Factura::find($id_factura);  
             $calculo = ($factura->precio_estatus - $total);
             $factura->precio_estatus = $calculo;
-           
             $factura->save();
             return "success";
     }

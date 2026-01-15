@@ -7,9 +7,11 @@
     "require": {
         "php": ">=7.1.8",
         "alexmg86/laravel-sub-query": "^1.9",
+        "doctrine/dbal": "^2.13",
         "dompdf/dompdf": "dev-master as 0.7.0",
         "fideloper/proxy": "~3.3",
         "firebase/php-jwt": "^5.2",
+        "google/apiclient": "^2.14",
         "laravel/framework": "5.5.*",
         "laravel/tinker": "~1.0"
     },
