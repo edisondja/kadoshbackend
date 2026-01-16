@@ -47,7 +47,7 @@ for DB_NAME in $ALL_DATABASES; do
         echo "🔧 Corrigiendo: $DB_NAME"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
-        mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < fix_odontogramas_produccion.sql 2>&1 | grep -v "Using a password"
+        mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < fix_odontogramas_produccion_v2.sql 2>&1 | grep -v "Using a password"
         
         if [ ${PIPESTATUS[0]} -eq 0 ]; then
             echo "✅ Corrección aplicada correctamente a $DB_NAME"

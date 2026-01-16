@@ -1,5 +1,5 @@
 -- =====================================================
--- SCRIPT DE CORRECCIÓN PARA ODONTOGRAMAS EN PRODUCCIÓN
+-- SCRIPT DE CORRECCIÓN PARA ODONTOGRAMAS EN PRODUCCIÓN V2
 -- Fecha: 2026-01-16
 -- Autor: Edison De Jesus Abreu
 -- Email: edisondja@gmail.com
@@ -14,46 +14,7 @@ SET FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO';
 
 -- =====================================================
--- 1. VERIFICAR Y CREAR TABLA odontogramas
--- =====================================================
-
-CREATE TABLE IF NOT EXISTS `odontogramas` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `paciente_id` int(10) unsigned NOT NULL,
-  `doctor_id` int(10) unsigned NOT NULL,
-  `dibujo_odontograma` longtext NOT NULL,
-  `estado` varchar(255) NOT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `odontogramas_paciente_id_foreign` (`paciente_id`),
-  KEY `odontogramas_doctor_id_foreign` (`doctor_id`),
-  CONSTRAINT `odontogramas_paciente_id_foreign` FOREIGN KEY (`paciente_id`) REFERENCES `pacientes` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `odontogramas_doctor_id_foreign` FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =====================================================
--- 2. VERIFICAR Y CREAR TABLA odontograma_detalles
--- =====================================================
-
-CREATE TABLE IF NOT EXISTS `odontograma_detalles` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `odontograma_id` int(10) unsigned NOT NULL,
-  `diente` varchar(255) NOT NULL,
-  `cara` varchar(255) DEFAULT NULL,
-  `tipo` varchar(255) NOT NULL,
-  `descripcion` varchar(255) DEFAULT NULL,
-  `precio` decimal(8,2) NOT NULL DEFAULT '0.00',
-  `color` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `odontograma_detalles_odontograma_id_foreign` (`odontograma_id`),
-  CONSTRAINT `odontograma_detalles_odontograma_id_foreign` FOREIGN KEY (`odontograma_id`) REFERENCES `odontogramas` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =====================================================
--- 3. PROCEDIMIENTOS PARA AGREGAR COLUMNAS FALTANTES
+-- 1. PROCEDIMIENTOS PARA AGREGAR/MODIFICAR COLUMNAS
 -- =====================================================
 
 DELIMITER $$
@@ -107,47 +68,78 @@ END$$
 DELIMITER ;
 
 -- =====================================================
--- 4. CORREGIR TABLA odontogramas
+-- 2. VERIFICAR Y CREAR TABLA odontogramas
 -- =====================================================
 
--- Primero verificar si la columna existe, si no existe agregarla, si existe modificarla
-SET @col_exists = (SELECT COUNT(*) FROM information_schema.COLUMNS 
-    WHERE TABLE_SCHEMA = DATABASE() 
-    AND TABLE_NAME = 'odontogramas' 
-    AND COLUMN_NAME = 'dibujo_odontograma');
-    
-IF @col_exists = 0 THEN
-    -- La columna no existe, agregarla
-    CALL add_column_if_not_exists('odontogramas', 'dibujo_odontograma', 'longtext NOT NULL AFTER `doctor_id`');
-ELSE
-    -- La columna existe, modificarla a longtext
-    CALL modify_column_if_exists('odontogramas', 'dibujo_odontograma', 'longtext NOT NULL');
-END IF;
+CREATE TABLE IF NOT EXISTS `odontogramas` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `paciente_id` int(10) unsigned NOT NULL,
+  `doctor_id` int(10) unsigned NOT NULL,
+  `dibujo_odontograma` longtext NOT NULL,
+  `estado` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `odontogramas_paciente_id_foreign` (`paciente_id`),
+  KEY `odontogramas_doctor_id_foreign` (`doctor_id`),
+  CONSTRAINT `odontogramas_paciente_id_foreign` FOREIGN KEY (`paciente_id`) REFERENCES `pacientes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `odontogramas_doctor_id_foreign` FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 3. VERIFICAR Y CREAR TABLA odontograma_detalles
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS `odontograma_detalles` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `odontograma_id` int(10) unsigned NOT NULL,
+  `diente` varchar(255) NOT NULL,
+  `cara` varchar(255) DEFAULT NULL,
+  `tipo` varchar(255) NOT NULL,
+  `descripcion` varchar(255) DEFAULT NULL,
+  `precio` decimal(8,2) NOT NULL DEFAULT '0.00',
+  `color` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `odontograma_detalles_odontograma_id_foreign` (`odontograma_id`),
+  CONSTRAINT `odontograma_detalles_odontograma_id_foreign` FOREIGN KEY (`odontograma_id`) REFERENCES `odontogramas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- 4. CORREGIR TABLA odontogramas (si ya existe)
+-- =====================================================
+
+-- Agregar columna dibujo_odontograma si no existe
+CALL add_column_if_not_exists('odontogramas', 'dibujo_odontograma', 'longtext NOT NULL');
+
+-- Si la columna ya existe, modificarla a longtext
+CALL modify_column_if_exists('odontogramas', 'dibujo_odontograma', 'longtext NOT NULL');
 
 -- Asegurar que estado existe
-CALL add_column_if_not_exists('odontogramas', 'estado', 'varchar(255) NOT NULL DEFAULT \'activo\' AFTER `dibujo_odontograma`');
+CALL add_column_if_not_exists('odontogramas', 'estado', 'varchar(255) NOT NULL DEFAULT \'activo\'');
 
 -- Asegurar que created_at y updated_at existen
 CALL add_column_if_not_exists('odontogramas', 'created_at', 'timestamp NULL DEFAULT NULL');
 CALL add_column_if_not_exists('odontogramas', 'updated_at', 'timestamp NULL DEFAULT NULL');
 
 -- =====================================================
--- 5. CORREGIR TABLA odontograma_detalles
+-- 5. CORREGIR TABLA odontograma_detalles (si ya existe)
 -- =====================================================
 
 -- Asegurar que todas las columnas necesarias existen
-CALL add_column_if_not_exists('odontograma_detalles', 'odontograma_id', 'int(10) unsigned NOT NULL AFTER `id`');
-CALL add_column_if_not_exists('odontograma_detalles', 'diente', 'varchar(255) NOT NULL AFTER `odontograma_id`');
-CALL add_column_if_not_exists('odontograma_detalles', 'cara', 'varchar(255) DEFAULT NULL AFTER `diente`');
-CALL add_column_if_not_exists('odontograma_detalles', 'tipo', 'varchar(255) NOT NULL AFTER `cara`');
-CALL add_column_if_not_exists('odontograma_detalles', 'descripcion', 'varchar(255) DEFAULT NULL AFTER `tipo`');
-CALL add_column_if_not_exists('odontograma_detalles', 'precio', 'decimal(8,2) NOT NULL DEFAULT \'0.00\' AFTER `descripcion`');
-CALL add_column_if_not_exists('odontograma_detalles', 'color', 'varchar(255) DEFAULT NULL AFTER `precio`');
+CALL add_column_if_not_exists('odontograma_detalles', 'odontograma_id', 'int(10) unsigned NOT NULL');
+CALL add_column_if_not_exists('odontograma_detalles', 'diente', 'varchar(255) NOT NULL');
+CALL add_column_if_not_exists('odontograma_detalles', 'cara', 'varchar(255) DEFAULT NULL');
+CALL add_column_if_not_exists('odontograma_detalles', 'tipo', 'varchar(255) NOT NULL');
+CALL add_column_if_not_exists('odontograma_detalles', 'descripcion', 'varchar(255) DEFAULT NULL');
+CALL add_column_if_not_exists('odontograma_detalles', 'precio', 'decimal(8,2) NOT NULL DEFAULT \'0.00\'');
+CALL add_column_if_not_exists('odontograma_detalles', 'color', 'varchar(255) DEFAULT NULL');
 CALL add_column_if_not_exists('odontograma_detalles', 'created_at', 'timestamp NULL DEFAULT NULL');
 CALL add_column_if_not_exists('odontograma_detalles', 'updated_at', 'timestamp NULL DEFAULT NULL');
 
 -- =====================================================
--- 6. VERIFICAR Y CREAR ÍNDICES Y FOREIGN KEYS
+-- 6. VERIFICAR Y CREAR ÍNDICES (si no existen)
 -- =====================================================
 
 -- Índices para odontogramas
@@ -179,7 +171,11 @@ IF @index_exists = 0 THEN
     ALTER TABLE `odontograma_detalles` ADD KEY `odontograma_detalles_odontograma_id_foreign` (`odontograma_id`);
 END IF;
 
--- Foreign keys (solo si las tablas referenciadas existen)
+-- =====================================================
+-- 7. VERIFICAR Y CREAR FOREIGN KEYS (si no existen)
+-- =====================================================
+
+-- Foreign key para odontogramas -> pacientes
 SET @fk_exists = (SELECT COUNT(*) FROM information_schema.KEY_COLUMN_USAGE 
     WHERE TABLE_SCHEMA = DATABASE() 
     AND TABLE_NAME = 'odontogramas' 
@@ -195,6 +191,7 @@ IF @fk_exists = 0 THEN
     END IF;
 END IF;
 
+-- Foreign key para odontogramas -> doctors
 SET @fk_exists = (SELECT COUNT(*) FROM information_schema.KEY_COLUMN_USAGE 
     WHERE TABLE_SCHEMA = DATABASE() 
     AND TABLE_NAME = 'odontogramas' 
@@ -210,6 +207,7 @@ IF @fk_exists = 0 THEN
     END IF;
 END IF;
 
+-- Foreign key para odontograma_detalles -> odontogramas
 SET @fk_exists = (SELECT COUNT(*) FROM information_schema.KEY_COLUMN_USAGE 
     WHERE TABLE_SCHEMA = DATABASE() 
     AND TABLE_NAME = 'odontograma_detalles' 
@@ -234,12 +232,4 @@ SET FOREIGN_KEY_CHECKS=1;
 
 -- =====================================================
 -- FIN DEL SCRIPT
--- =====================================================
--- 
--- Verificación rápida:
--- SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH 
--- FROM information_schema.COLUMNS 
--- WHERE TABLE_SCHEMA = DATABASE() 
--- AND TABLE_NAME IN ('odontogramas', 'odontograma_detalles')
--- ORDER BY TABLE_NAME, ORDINAL_POSITION;
 -- =====================================================
