@@ -6,10 +6,12 @@ use Illuminate\Http\Request;
 use App\Receta;
 use App\Paciente;
 use App\Doctor;
+use App\Config;
 use DB;
 use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
-use PDF;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 class ControllerReceta extends Controller
 {
@@ -205,26 +207,69 @@ class ControllerReceta extends Controller
         try {
             $receta = Receta::with(['doctor', 'paciente'])->findOrFail($id);
             
-            // Obtener configuración de la clínica (si existe la tabla)
-            $config = null;
-            try {
-                if (Schema::hasTable('configuracion')) {
-                    $config = DB::table('configuracion')->first();
+            // Obtener configuración de la clínica
+            $config = Config::first();
+            
+            // Convertir logo a base64 si existe
+            $logoBase64 = null;
+            if ($config && $config->ruta_logo) {
+                // Intentar diferentes rutas posibles
+                $possiblePaths = [
+                    storage_path('app/public/' . $config->ruta_logo),
+                    public_path('storage/' . $config->ruta_logo),
+                    public_path($config->ruta_logo),
+                    storage_path('app/' . $config->ruta_logo)
+                ];
+                
+                $logoPath = null;
+                foreach ($possiblePaths as $path) {
+                    if (file_exists($path)) {
+                        $logoPath = $path;
+                        break;
+                    }
                 }
-            } catch (\Exception $e) {
-                // Si no existe la tabla, usar valores por defecto
+                
+                if ($logoPath) {
+                    try {
+                        $logoData = file_get_contents($logoPath);
+                        $logoInfo = pathinfo($logoPath);
+                        $logoExtension = strtolower($logoInfo['extension'] ?? 'png');
+                        $mimeType = 'image/' . ($logoExtension === 'jpg' ? 'jpeg' : $logoExtension);
+                        $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoData);
+                    } catch (\Exception $e) {
+                        \Log::warning('Error al leer logo: ' . $e->getMessage());
+                    }
+                } else {
+                    \Log::warning('Logo no encontrado en ninguna ruta. Ruta en BD: ' . $config->ruta_logo);
+                }
             }
             
             $data = [
                 'receta' => $receta,
                 'config' => $config,
+                'logoBase64' => $logoBase64,
                 'fecha_impresion' => Carbon::now()->format('d/m/Y H:i')
             ];
 
-            $pdf = PDF::loadView('receta_pdf', $data);
+            // Renderizar la vista
+            $html = view('receta_pdf', $data)->render();
             
-            return $pdf->download('receta-' . $receta->codigo_receta . '.pdf');
+            // Configurar opciones de DomPDF
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
+            $options->set('defaultFont', 'Arial');
+            
+            // Crear instancia de DomPDF
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            
+            return $dompdf->stream('receta-' . $receta->codigo_receta . '.pdf', ['Attachment' => true]);
         } catch (\Exception $e) {
+            \Log::error('Error al generar PDF de receta: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'error' => 'Error al generar PDF',
                 'message' => $e->getMessage()
@@ -240,26 +285,77 @@ class ControllerReceta extends Controller
         try {
             $receta = Receta::with(['doctor', 'paciente'])->findOrFail($id);
             
-            // Obtener configuración de la clínica (si existe la tabla)
-            $config = null;
-            try {
-                if (Schema::hasTable('configuracion')) {
-                    $config = DB::table('configuracion')->first();
+            // Obtener configuración de la clínica
+            $config = Config::first();
+            
+            // Log para debugging
+            if (!$config) {
+                \Log::warning('No se encontró configuración de la clínica');
+            } else {
+                \Log::info('Configuración encontrada: ' . ($config->nombre_clinica ?? $config->nombre ?? 'Sin nombre'));
+                \Log::info('Ruta logo: ' . ($config->ruta_logo ?? 'Sin logo'));
+            }
+            
+            // Convertir logo a base64 si existe
+            $logoBase64 = null;
+            if ($config && $config->ruta_logo) {
+                // Intentar diferentes rutas posibles
+                $possiblePaths = [
+                    storage_path('app/public/' . $config->ruta_logo),
+                    public_path('storage/' . $config->ruta_logo),
+                    public_path($config->ruta_logo),
+                    storage_path('app/' . $config->ruta_logo)
+                ];
+                
+                $logoPath = null;
+                foreach ($possiblePaths as $path) {
+                    if (file_exists($path)) {
+                        $logoPath = $path;
+                        break;
+                    }
                 }
-            } catch (\Exception $e) {
-                // Si no existe la tabla, usar valores por defecto
+                
+                if ($logoPath) {
+                    try {
+                        $logoData = file_get_contents($logoPath);
+                        $logoInfo = pathinfo($logoPath);
+                        $logoExtension = strtolower($logoInfo['extension'] ?? 'png');
+                        $mimeType = 'image/' . ($logoExtension === 'jpg' ? 'jpeg' : $logoExtension);
+                        $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoData);
+                    } catch (\Exception $e) {
+                        \Log::warning('Error al leer logo: ' . $e->getMessage());
+                    }
+                } else {
+                    \Log::warning('Logo no encontrado en ninguna ruta. Ruta en BD: ' . $config->ruta_logo);
+                }
             }
             
             $data = [
                 'receta' => $receta,
                 'config' => $config,
+                'logoBase64' => $logoBase64,
                 'fecha_impresion' => Carbon::now()->format('d/m/Y H:i')
             ];
 
-            $pdf = PDF::loadView('receta_pdf', $data);
+            // Renderizar la vista
+            $html = view('receta_pdf', $data)->render();
             
-            return $pdf->stream('receta-' . $receta->codigo_receta . '.pdf');
+            // Configurar opciones de DomPDF
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
+            $options->set('defaultFont', 'Arial');
+            
+            // Crear instancia de DomPDF
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            
+            return $dompdf->stream('receta-' . $receta->codigo_receta . '.pdf', ['Attachment' => false]);
         } catch (\Exception $e) {
+            \Log::error('Error al generar PDF de receta: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'error' => 'Error al generar PDF',
                 'message' => $e->getMessage()
@@ -279,29 +375,75 @@ class ControllerReceta extends Controller
 
             $receta = Receta::with(['doctor', 'paciente'])->findOrFail($id);
             
-            // Obtener configuración de la clínica (si existe la tabla)
-            $config = null;
-            try {
-                if (Schema::hasTable('configuracion')) {
-                    $config = DB::table('configuracion')->first();
+            // Obtener configuración de la clínica
+            $config = Config::first();
+            
+            // Convertir logo a base64 si existe
+            $logoBase64 = null;
+            if ($config && $config->ruta_logo) {
+                // Intentar diferentes rutas posibles
+                $possiblePaths = [
+                    storage_path('app/public/' . $config->ruta_logo),
+                    public_path('storage/' . $config->ruta_logo),
+                    public_path($config->ruta_logo),
+                    storage_path('app/' . $config->ruta_logo)
+                ];
+                
+                $logoPath = null;
+                foreach ($possiblePaths as $path) {
+                    if (file_exists($path)) {
+                        $logoPath = $path;
+                        break;
+                    }
                 }
-            } catch (\Exception $e) {
-                // Si no existe la tabla, usar valores por defecto
+                
+                if ($logoPath) {
+                    try {
+                        $logoData = file_get_contents($logoPath);
+                        $logoInfo = pathinfo($logoPath);
+                        $logoExtension = strtolower($logoInfo['extension'] ?? 'png');
+                        $mimeType = 'image/' . ($logoExtension === 'jpg' ? 'jpeg' : $logoExtension);
+                        $logoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($logoData);
+                    } catch (\Exception $e) {
+                        \Log::warning('Error al leer logo: ' . $e->getMessage());
+                    }
+                } else {
+                    \Log::warning('Logo no encontrado en ninguna ruta. Ruta en BD: ' . $config->ruta_logo);
+                }
             }
             
             $data = [
                 'receta' => $receta,
                 'config' => $config,
+                'logoBase64' => $logoBase64,
                 'fecha_impresion' => Carbon::now()->format('d/m/Y H:i')
             ];
 
-            $pdf = PDF::loadView('receta_pdf', $data);
+            // Renderizar la vista
+            $html = view('receta_pdf', $data)->render();
+            
+            // Configurar opciones de DomPDF
+            $options = new Options();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
+            $options->set('defaultFont', 'Arial');
+            
+            // Crear instancia de DomPDF
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            
+            // Obtener el contenido del PDF
+            $pdfOutput = $dompdf->output();
             
             // Enviar email con PDF adjunto
-            \Mail::send('emails.receta', $data, function($message) use ($request, $receta, $pdf) {
+            \Mail::send('emails.receta', $data, function($message) use ($request, $receta, $pdfOutput) {
                 $message->to($request->email)
                         ->subject('Receta Médica - ' . $receta->codigo_receta)
-                        ->attachData($pdf->output(), 'receta-' . $receta->codigo_receta . '.pdf');
+                        ->attachData($pdfOutput, 'receta-' . $receta->codigo_receta . '.pdf', [
+                            'mime' => 'application/pdf',
+                        ]);
             });
 
             return response()->json([

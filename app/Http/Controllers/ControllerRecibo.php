@@ -9,6 +9,7 @@ use App;
 use Carbon\Carbon;
 use App\Mail\KadoshNotificacion;
 use App\Mail\ReciboMailable;
+use App\Helpers\AuditoriaHelper;
 
 
 class ControllerRecibo extends Controller
@@ -49,17 +50,66 @@ class ControllerRecibo extends Controller
 
     }
 
-    public function eliminar_recibo($id_recibo,$id_factura){
+    public function eliminar_recibo(Request $request, $id_recibo, $id_factura){
+        try {
+            // Validar clave secreta
+            $claveSecreta = $request->input('clave_secreta');
+            $config = App\Config::first();
+            
+            if (!$config || !$config->clave_secreta) {
+                return response()->json([
+                    'error' => 'Error de configuración',
+                    'message' => 'No se ha configurado una clave secreta. Por favor configúrela primero.'
+                ], 400);
+            }
 
-        $recibo = DB::table('recibos')->where('id',$id_recibo)->get();   
-        $restablecer = $recibo[0]->monto;
+            if ($claveSecreta !== $config->clave_secreta) {
+                return response()->json([
+                    'error' => 'Clave secreta incorrecta',
+                    'message' => 'La clave secreta proporcionada no es correcta. No se puede eliminar el recibo.'
+                ], 403);
+            }
 
-        $factura = App\Factura::find($id_factura);
-        $factura->precio_estatus = $factura->precio_estatus + $restablecer;
-        $factura->save();
+            $recibo = DB::table('recibos')->where('id',$id_recibo)->get();   
+            if ($recibo->isEmpty()) {
+                return response()->json([
+                    'error' => 'Recibo no encontrado',
+                    'message' => 'El recibo especificado no existe.'
+                ], 404);
+            }
 
-        $recibo = App\Recibo::find($id_recibo)->delete();
+            $restablecer = $recibo[0]->monto;
 
+            $factura = App\Factura::find($id_factura);
+            if ($factura) {
+                $factura->precio_estatus = $factura->precio_estatus + $restablecer;
+                $factura->save();
+            }
+
+            // Registrar en auditoría
+            $usuarioId = $request->input('usuario_id') ?? $request->header('usuario_id') ?? null;
+            if ($usuarioId) {
+                AuditoriaHelper::registrar(
+                    $usuarioId,
+                    'Recibos',
+                    'Eliminar Recibo',
+                    "Recibo #{$id_recibo} eliminado. Monto restaurado: RD$ " . number_format($restablecer, 2) . " a factura #{$id_factura}"
+                );
+            }
+
+            App\Recibo::find($id_recibo)->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Recibo eliminado correctamente'
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error('Error al eliminar recibo: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al eliminar recibo',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
 
@@ -95,9 +145,14 @@ class ControllerRecibo extends Controller
         $numero = $ultimo_recibo ? ($ultimo_recibo->id + 1) : 1;
         
         // Generar código según configuración
-        if ($tipoNumero === 'factura' && $prefijo) {
-            // Formato: "NO 22 FACTURA" o similar
-            $codigo = $prefijo . " FACTURA " . str_pad($numero, 7, "0", STR_PAD_LEFT);
+        if ($tipoNumero === 'factura') {
+            // Formato: "NO 22" + número (sin la palabra FACTURA)
+            if ($prefijo) {
+                $codigo = $prefijo . " " . str_pad($numero, 7, "0", STR_PAD_LEFT);
+            } else {
+                // Si no hay prefijo, usar formato estándar "NO" + número
+                $codigo = "NO " . str_pad($numero, 7, "0", STR_PAD_LEFT);
+            }
         } else {
             // Formato: "COMPROBANTE" o "B02..."
             $codigo = $prefijo ? $prefijo . str_pad($numero, 7, "0", STR_PAD_LEFT) : "B02" . str_pad($numero, 7, "0", STR_PAD_LEFT);
@@ -145,6 +200,17 @@ class ControllerRecibo extends Controller
         $factura = App\Factura::find($id_factura);
         $factura->precio_estatus -= $monto;
         $factura->save();
+
+        // Registrar en auditoría
+        $usuarioId = $request->input('usuario_id') ?? $request->header('usuario_id') ?? null;
+        if ($usuarioId) {
+            AuditoriaHelper::registrar(
+                $usuarioId,
+                'Recibos',
+                'Crear Recibo',
+                "Recibo #{$recibo->id} creado (Código: {$codigo}) para factura ID: {$id_factura}, Monto: RD$ " . number_format($monto, 2) . ", Tipo de pago: {$recibo->tipo_de_pago}"
+            );
+        }
 
         return response()->json(['status' => 'ok', 'mensaje' => 'Pago registrado con éxito.']);
     }

@@ -11,18 +11,26 @@
         }
         .header {
             text-align: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            border-bottom: 3px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .header img {
+            display: block;
+            margin: 0 auto 15px auto;
         }
         .header h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #333;
+            margin: 10px 0;
+            font-size: 26px;
+            color: #2c3e50;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         .header p {
             margin: 5px 0;
-            color: #666;
+            color: #555;
+            font-size: 11px;
         }
         .info-section {
             margin-bottom: 20px;
@@ -88,13 +96,44 @@
 </head>
 <body>
     <div class="header">
-        @if($config && $config->logo)
-            <img src="{{ public_path('storage/' . $config->logo) }}" alt="Logo" style="max-height: 80px; margin-bottom: 10px;">
+        @if($logoBase64)
+            <img src="{{ $logoBase64 }}" alt="Logo" style="max-height: 80px; margin-bottom: 15px;">
+        @elseif($config && $config->ruta_logo)
+            <img src="{{ public_path($config->ruta_logo) }}" alt="Logo" style="max-height: 80px; margin-bottom: 15px;">
         @endif
-        <h1>{{ $config->nombre_clinica ?? 'CLÍNICA DENTAL' }}</h1>
-        <p>{{ $config->direccion ?? '' }}</p>
-        <p>Tel: {{ $config->telefono ?? '' }} | Email: {{ $config->email ?? '' }}</p>
-        <h2 style="margin-top: 15px; font-size: 18px;">RECETA MÉDICA</h2>
+        <h1 style="margin-top: 10px; margin-bottom: 10px;">{{ $config->nombre_clinica ?? ($config->nombre ?? 'CLÍNICA DENTAL') }}</h1>
+        @if($config && ($config->direccion_clinica || $config->telefono_clinica || $config->email_clinica))
+            <p style="margin: 5px 0;">
+                @if($config->direccion_clinica)
+                    {{ $config->direccion_clinica }}
+                @endif
+            </p>
+            <p style="margin: 5px 0;">
+                @if($config->telefono_clinica)
+                    Tel: {{ $config->telefono_clinica }}
+                @endif
+                @if($config->telefono_clinica && $config->email_clinica)
+                    | 
+                @endif
+                @if($config->email_clinica)
+                    Email: {{ $config->email_clinica }}
+                @endif
+            </p>
+        @elseif($config)
+            <p style="margin: 5px 0;">{{ $config->direccion ?? '' }}</p>
+            <p style="margin: 5px 0;">
+                @if($config->telefono)
+                    Tel: {{ $config->telefono }}
+                @endif
+                @if($config->telefono && $config->email)
+                    | 
+                @endif
+                @if($config->email)
+                    Email: {{ $config->email }}
+                @endif
+            </p>
+        @endif
+        <h2 style="margin-top: 20px; font-size: 18px; color: #333; border-top: 2px solid #333; padding-top: 15px;">RECETA MÉDICA</h2>
     </div>
 
     <div class="info-section">
@@ -177,7 +216,7 @@
 
     <div class="footer">
         <p>Receta generada el {{ $fecha_impresion }}</p>
-        <p>{{ $config->nombre_clinica ?? 'Clínica Dental' }} - Todos los derechos reservados</p>
+        <p>{{ $config->nombre_clinica ?? ($config->nombre ?? 'Clínica Dental') }} - Todos los derechos reservados</p>
     </div>
 </body>
 </html>

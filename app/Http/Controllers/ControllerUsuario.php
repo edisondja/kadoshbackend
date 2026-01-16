@@ -120,5 +120,116 @@ class ControllerUsuario extends Controller
 
     }
 
+    /**
+     * Exportar todos los usuarios a JSON
+     */
+    public function exportar_usuarios()
+    {
+        try {
+            $usuarios = App\Usuario::all();
+            
+            // Convertir a array (sin incluir la clave por seguridad)
+            $data = $usuarios->map(function($usuario) {
+                return [
+                    'usuario' => $usuario->usuario,
+                    'nombre' => $usuario->nombre,
+                    'apellido' => $usuario->apellido,
+                    'roll' => $usuario->roll
+                    // No exportamos la clave por seguridad
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'total' => $data->count(),
+                'fecha_exportacion' => \Carbon\Carbon::now()->format('Y-m-d H:i:s')
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Error al exportar usuarios',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Importar usuarios desde JSON
+     */
+    public function importar_usuarios(Request $request)
+    {
+        try {
+            $request->validate([
+                'datos' => 'required|array',
+                'datos.*.usuario' => 'required|string',
+                'datos.*.nombre' => 'required|string',
+                'datos.*.apellido' => 'required|string',
+                'datos.*.roll' => 'required|string|in:Administrador,Doctor,Secretaria',
+                'datos.*.clave' => 'nullable|string' // Clave opcional para importación
+            ]);
+
+            $datos = $request->datos;
+            $importados = 0;
+            $errores = [];
+
+            foreach ($datos as $index => $dato) {
+                try {
+                    // Verificar si el usuario ya existe
+                    $existe = App\Usuario::where('usuario', $dato['usuario'])->first();
+
+                    if ($existe) {
+                        // Actualizar usuario existente
+                        $existe->nombre = $dato['nombre'];
+                        $existe->apellido = $dato['apellido'];
+                        $existe->roll = $dato['roll'];
+                        if (!empty($dato['clave'])) {
+                            $existe->clave = $dato['clave'];
+                        }
+                        $existe->save();
+                        $importados++;
+                    } else {
+                        // Crear nuevo usuario
+                        $usuario = new App\Usuario();
+                        $usuario->usuario = $dato['usuario'];
+                        $usuario->nombre = $dato['nombre'];
+                        $usuario->apellido = $dato['apellido'];
+                        $usuario->roll = $dato['roll'];
+                        $usuario->clave = $dato['clave'] ?? '123456'; // Clave por defecto si no se proporciona
+                        $usuario->save();
+                        $importados++;
+                    }
+                } catch (\Exception $e) {
+                    $errores[] = [
+                        'fila' => $index + 1,
+                        'error' => $e->getMessage(),
+                        'datos' => $dato
+                    ];
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Importación completada",
+                'importados' => $importados,
+                'total' => count($datos),
+                'errores' => $errores
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Error de validación',
+                'message' => $e->getMessage(),
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Error al importar usuarios',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
    
 }

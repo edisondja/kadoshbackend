@@ -25,7 +25,7 @@ Route::middleware(['tenant'])->group(function () {
 	Route::post('/api/guardar_paciente','Paciente@guardar');
 	Route::get('/api/paciente','Paciente@index');	
 	Route::get('/api/paciente/{id_paciente}','Paciente@show');
-	Route::get('/api/borrar_paciente/{id_paciente}','Paciente@destroy');
+	Route::delete('/api/borrar_paciente/{id_paciente}','Paciente@destroy');
 	Route::post('/api/actualizar_foto_paciente','Paciente@actualizar_foto_paciente');
 	Route::get('/api/notificar_cumple','Paciente@notificar_cumple');
 	Route::post('/api/actualizar_paciente','Paciente@update');
@@ -33,6 +33,8 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/consultar_deuda/{id_paciente}','Paciente@deuda_paciente');
 	Route::get('/api/cargar_generos_pacientes','Paciente@cargar_generos');
 	Route::get('/api/cantidad_de_pacientes','Paciente@cantidad_de_pacientes');
+	Route::get('/api/exportar_pacientes','Paciente@exportar_pacientes');
+	Route::post('/api/importar_pacientes','Paciente@importar_pacientes');
 
 	///API DOCTORES
 	Route::get('/api/doctores/','ControllerDoctor@index');
@@ -43,6 +45,15 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/cargar_doctor/{id_doctor}','ControllerDoctor@cargar_doctor');
 	Route::get('/api/crear_doctor/{nombre}/{apellido}/{cedula}/{telefono}','ControllerDoctor@create');
 	Route::get('/api/buscando_doctor/{nombre}','ControllerDoctor@buscando_doctor');
+
+	// Especialidades
+	Route::get('/api/listar_especialidades','ControllerEspecialidad@listarEspecialidades');
+	Route::get('/api/listar_todas_especialidades','ControllerEspecialidad@listarTodasEspecialidades');
+	Route::get('/api/obtener_especialidad/{id}','ControllerEspecialidad@obtenerEspecialidad');
+	Route::post('/api/crear_especialidad','ControllerEspecialidad@crearEspecialidad');
+	Route::put('/api/actualizar_especialidad/{id}','ControllerEspecialidad@actualizarEspecialidad');
+	Route::delete('/api/eliminar_especialidad/{id}','ControllerEspecialidad@eliminarEspecialidad');
+	Route::post('/api/activar_especialidad/{id}','ControllerEspecialidad@activarEspecialidad');
 
 	/// API  
 	Route::get('/api/citas', 'ControllerCita@index');
@@ -57,7 +68,7 @@ Route::middleware(['tenant'])->group(function () {
 	///API FACTURAS
 	Route::post('/api/crear_factura','ControllerFactura@create');
 	Route::get('/api/buscar_facutura/{id_factura}','ControllerFactura@buscar_factura');
-	Route::get('/api/eliminar_factura/{id_factura}','ControllerFactura@eliminar_factura');
+	Route::delete('/api/eliminar_factura/{id_factura}','ControllerFactura@eliminar_factura');
 	Route::get('/api/editar_factura/{id_factura}','ControllerFactura@edit');
 	Route::post('/api/editando_factura/','ControllerFactura@update');
 	Route::get('/api/cargar_procedimientos_de_factura/{id}','ControllerFactura@cargar_procedimientos_factura');
@@ -79,7 +90,7 @@ Route::middleware(['tenant'])->group(function () {
 	//RECIBOS
 	Route::post('/api/pagar_recibo', 'ControllerRecibo@pagar_recibo');
 	Route::get('/api/actualizar_recibo/{id_recibo}','ControllerRecibo@actualizar_recibo');
-	Route::get('/api/eliminar_recibo/{id_recibo}/{id_facutara}','ControllerRecibo@eliminar_recibo');
+	Route::delete('/api/eliminar_recibo/{id_recibo}/{id_factura}','ControllerRecibo@eliminar_recibo');
 	Route::get('/api/cargar_recibos/{id_factura}','ControllerRecibo@cargar_recibos');
 	Route::get('/api/cargar_recibo/{id_recibo}','ControllerRecibo@cargar_recibo');
 	Route::get('/api/imprimir_recibo/{id_recibo}/{id_factura}','ControllerRecibo@imprimir_recibo');
@@ -183,6 +194,8 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/cantidad_de_usuario','ControllerUsuario@cantidad_usuario');
 	Route::get('/api/cargar_usuarios','ControllerUsuario@cargar_usuarios');
 	Route::get('/api/cargar_usuario/{id_usuario}','ControllerUsuario@cargar_usuario');
+	Route::get('/api/exportar_usuarios','ControllerUsuario@exportar_usuarios');
+	Route::post('/api/importar_usuarios','ControllerUsuario@importar_usuarios');
 
 
     //Agregar Notas a pacientes
@@ -212,12 +225,11 @@ Route::middleware(['tenant'])->group(function () {
 	Route::post('/api/enviar_presupuesto','ControllerPresupuesto@enviarPresupuesto');
 
 	//Configuracion
-
-	Route::get('api/configs', [ConfigController::class, 'index']);              // Obtener todos
-	Route::get('api/configs/{id}', [ConfigController::class, 'show']);          // Obtener uno por ID
-	Route::post('api/configs', [ConfigController::class, 'store']);             // Crear nuevo
-	Route::post('api/configs/{id}', [ConfigController::class, 'update']);       // Actualizar (POST o PUT)
-	Route::delete('api/configs/{id}', [ConfigController::class, 'destroy']);    // Eliminar
+	Route::get('/api/configs', 'ConfigController@index');              // Obtener todos
+	Route::get('/api/configs/{id}', 'ConfigController@show');          // Obtener uno por ID
+	Route::post('/api/configs', 'ConfigController@store');             // Crear nuevo
+	Route::post('/api/configs/{id}', 'ConfigController@update');       // Actualizar (POST o PUT)
+	Route::delete('/api/configs/{id}', 'ConfigController@destroy');    // Eliminar
 	 
 
 	 //Ficha Medica

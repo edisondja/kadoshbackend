@@ -17,7 +17,7 @@ class Config extends Model
         'nombre_clinica', 'direccion_clinica', 'telefono_clinica',
         'rnc_clinica', 'email_clinica', 'tipo_numero_factura',
         'prefijo_factura', 'usar_google_calendar', 'google_calendar_id',
-        'recordatorio_minutos'
+        'recordatorio_minutos', 'clave_secreta'
     ];
 
 }
