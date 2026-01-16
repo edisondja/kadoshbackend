@@ -47,7 +47,7 @@ for DB_NAME in $ALL_DATABASES; do
         echo "📦 Aplicando migraciones a: $DB_NAME"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
-        mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < migraciones_nuevas.sql 2>&1
+        mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < migraciones_nuevas_final.sql 2>&1
         
         if [ $? -eq 0 ]; then
             echo "✅ Migraciones aplicadas correctamente a $DB_NAME"
