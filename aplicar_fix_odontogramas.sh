@@ -47,6 +47,10 @@ for DB_NAME in $ALL_DATABASES; do
         echo "🔧 Corrigiendo: $DB_NAME"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
+        echo "  Aplicando fix de columnas..."
+        mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < fix_odontogramas_columnas.sql 2>&1 | grep -v "Using a password"
+        
+        echo "  Aplicando fix de estructura..."
         mysql -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" < fix_odontogramas_produccion_v2.sql 2>&1 | grep -v "Using a password"
         
         if [ ${PIPESTATUS[0]} -eq 0 ]; then
