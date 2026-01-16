@@ -38,6 +38,7 @@ Route::middleware(['tenant'])->group(function () {
 
 	///API DOCTORES
 	Route::get('/api/doctores/','ControllerDoctor@index');
+	Route::get('/api/doctores_todos/','ControllerDoctor@indexAll'); // Para administración (incluye inactivos)
 	Route::get('/api/eliminar_doctor/{id}','ControllerDoctor@destroy');
 	Route::get('/api/actualizar_doctor/{nombre}/{apellido}/{cedula}/{telefono}/{id}','ControllerDoctor@edit');
 	Route::post('/api/crear_doctor_completo','ControllerDoctor@create');
@@ -45,6 +46,8 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/cargar_doctor/{id_doctor}','ControllerDoctor@cargar_doctor');
 	Route::get('/api/crear_doctor/{nombre}/{apellido}/{cedula}/{telefono}','ControllerDoctor@create');
 	Route::get('/api/buscando_doctor/{nombre}','ControllerDoctor@buscando_doctor');
+	Route::post('/api/desactivar_doctor','ControllerDoctor@desactivar_doctor');
+	Route::post('/api/activar_doctor','ControllerDoctor@activar_doctor');
 
 	// Especialidades
 	Route::get('/api/listar_especialidades','ControllerEspecialidad@listarEspecialidades');

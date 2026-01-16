@@ -89,13 +89,26 @@ class ControllerPuntoVenta extends Controller
             DB::beginTransaction();
 
             // Crear factura de tipo "venta"
-            $factura = Factura::create([
+            $facturaData = [
                 'id_doctor' => $request->id_doctor ?? 1, // Doctor por defecto o el que se envíe
                 'id_paciente' => $request->id_paciente ?? 1, // Paciente genérico o el que se envíe
                 'precio_estatus' => $request->monto_total,
-                'tipo_de_pago' => $request->tipo_pago ?? 'efectivo',
-                'tipo_factura' => 'venta'
-            ]);
+                'tipo_de_pago' => $request->tipo_pago ?? 'efectivo'
+            ];
+            
+            // Intentar incluir tipo_factura, pero si la columna no existe, intentar sin ella
+            try {
+                $factura = Factura::create(array_merge($facturaData, ['tipo_factura' => 'venta']));
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Si el error es por columna no encontrada (tipo_factura), intentar sin ella
+                if (strpos($e->getMessage(), 'tipo_factura') !== false || $e->getCode() == '42S22') {
+                    \Log::info('La columna tipo_factura no existe, creando factura sin ella');
+                    $factura = Factura::create($facturaData);
+                } else {
+                    // Si es otro error, relanzarlo
+                    throw $e;
+                }
+            }
 
             // Registrar productos vendidos en historial_ps
             foreach ($request->productos as $item) {

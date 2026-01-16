@@ -15,8 +15,14 @@ class ControllerDoctor extends Controller
      */
     public function index()
     {
-        
-        $doctors = DB::table('doctors')->orderBy('id','desc')->get();
+        // Filtrar solo doctores activos (estado = true o 1)
+        $doctors = DB::table('doctors')
+            ->where(function($query) {
+                $query->where('estado', true)
+                      ->orWhere('estado', 1);
+            })
+            ->orderBy('id','desc')
+            ->get();
 
         return $doctors;
     }
@@ -31,12 +37,13 @@ class ControllerDoctor extends Controller
     {
         // Si se llama desde ruta GET antigua (parámetros en URL)
         if ($nombre !== null && $apellido !== null && $cedula !== null && $telefono !== null) {
-            $doctor = new App\Doctor();
-            $doctor->nombre = $nombre;
-            $doctor->apellido = $apellido;
-            $doctor->dni = $cedula;
-            $doctor->numero_telefono = $telefono;
-            $doctor->save();
+                $doctor = new App\Doctor();
+                $doctor->nombre = $nombre;
+                $doctor->apellido = $apellido;
+                $doctor->dni = $cedula;
+                $doctor->numero_telefono = $telefono;
+                $doctor->estado = true; // Activo por defecto
+                $doctor->save();
             return response()->json(['success' => true, 'doctor' => $doctor]);
         }
         
@@ -58,6 +65,7 @@ class ControllerDoctor extends Controller
                 $doctor->dni = $request->cedula;
                 $doctor->numero_telefono = $request->telefono;
                 $doctor->especialidad = $request->especialidad;
+                $doctor->estado = true; // Activo por defecto
                 $doctor->save();
 
                 return response()->json([
@@ -95,11 +103,17 @@ class ControllerDoctor extends Controller
      */
     public function buscando_doctor($nombre)
     {
-    
-        $data = DB::table("doctors")->where("nombre","like","%$nombre%")->take(20)->get();
+        // Filtrar solo doctores activos
+        $data = DB::table("doctors")
+            ->where("nombre","like","%$nombre%")
+            ->where(function($query) {
+                $query->where('estado', true)
+                      ->orWhere('estado', 1);
+            })
+            ->take(20)
+            ->get();
 
         return $data;
-
     }
 
     public function cargar_doctor($id){
@@ -170,11 +184,51 @@ class ControllerDoctor extends Controller
 
     public function desactivar_doctor(Request $request)
     {
-        //
-        $doctor = App\Doctor::find($request->id_doctor);
-        $doctor->estado= false;
-        $doctor->save();
+        try {
+            $doctor = App\Doctor::findOrFail($request->id_doctor);
+            $doctor->estado = false;
+            $doctor->save();
 
+            return response()->json([
+                'success' => true,
+                'message' => 'Doctor desactivado correctamente',
+                'doctor' => $doctor
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al desactivar doctor',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function activar_doctor(Request $request)
+    {
+        try {
+            $doctor = App\Doctor::findOrFail($request->id_doctor);
+            $doctor->estado = true;
+            $doctor->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Doctor activado correctamente',
+                'doctor' => $doctor
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al activar doctor',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Listar todos los doctores (incluyendo inactivos) - Solo para administración
+     */
+    public function indexAll()
+    {
+        $doctors = DB::table('doctors')->orderBy('id','desc')->get();
+        return $doctors;
     }
 
 

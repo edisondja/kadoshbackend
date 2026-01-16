@@ -9,6 +9,7 @@ class Odontograma extends Model
     protected $fillable = [
         'paciente_id',
         'doctor_id',
+        'id_doctor', // Para compatibilidad con producción
         'dibujo_odontograma',
         'estado',
     ];

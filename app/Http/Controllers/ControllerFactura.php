@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use DB;
 use App;
 use App\Factura;
@@ -72,13 +73,47 @@ class ControllerFactura extends Controller
             }
 
             // Crear la factura
-            $id_factura = DB::table("facturas")->insertGetId([
+            $facturaData = [
                 'id_doctor' => $id_doctor,
                 'id_paciente' => $id_paciente,
                 'precio_estatus' => $total,
-                'tipo_de_pago' => $data->input('tipo_de_pago') ?? null,
+                'tipo_de_pago' => $data->input('tipo_de_pago') ?? null
+            ];
+            
+            // Intentar incluir tipo_factura, pero si la columna no existe, intentar sin ella
+            $facturaDataWithTipo = array_merge($facturaData, [
                 'tipo_factura' => $data->input('tipo_factura') ?? 'servicio'
             ]);
+            
+            try {
+                $id_factura = DB::table("facturas")->insertGetId($facturaDataWithTipo);
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Si el error es por columna no encontrada (tipo_factura), intentar sin ella
+                $errorMessage = $e->getMessage();
+                $errorCode = $e->getCode();
+                
+                // Verificar múltiples formas del código de error y el mensaje
+                if (strpos($errorMessage, 'tipo_factura') !== false || 
+                    strpos($errorMessage, 'Unknown column') !== false ||
+                    strpos($errorMessage, '42S22') !== false ||
+                    strpos($errorMessage, 'Column not found') !== false ||
+                    $errorCode == 42 || 
+                    $errorCode == '42S22' ||
+                    (is_string($errorCode) && strpos($errorCode, '42S22') !== false)) {
+                    
+                    \Log::info('La columna tipo_factura no existe, creando factura sin ella. Error: ' . $errorMessage);
+                    try {
+                        $id_factura = DB::table("facturas")->insertGetId($facturaData);
+                    } catch (\Exception $retryException) {
+                        // Si el segundo intento también falla, relanzar el error original
+                        \Log::error('Error al crear factura sin tipo_factura: ' . $retryException->getMessage());
+                        throw $retryException;
+                    }
+                } else {
+                    // Si es otro error, relanzarlo
+                    throw $e;
+                }
+            }
 
             // Registrar en auditoría
             $usuarioId = $data->input('usuario_id') ?? $data->header('usuario_id') ?? null;
@@ -128,9 +163,85 @@ class ControllerFactura extends Controller
             ], 201);
 
         } catch (\Illuminate\Database\QueryException $e) {
-            \Log::error('Error al crear factura: ' . $e->getMessage());
+            $errorMessage = $e->getMessage();
+            $errorCode = $e->getCode();
+            
+            \Log::error('Error al crear factura: ' . $errorMessage);
             \Log::error('SQL: ' . $e->getSql());
             \Log::error('Bindings: ' . json_encode($e->getBindings()));
+            \Log::error('Error Code: ' . $errorCode);
+            
+            // Verificar si es un error por columna tipo_factura no encontrada
+            if (strpos($errorMessage, 'tipo_factura') !== false || 
+                strpos($errorMessage, 'Unknown column') !== false ||
+                strpos($errorMessage, '42S22') !== false ||
+                strpos($errorMessage, 'Column not found') !== false) {
+                
+                \Log::info('Intentando crear factura sin tipo_factura debido a columna faltante');
+                
+                try {
+                    // Intentar crear la factura sin tipo_factura
+                    $facturaDataFallback = [
+                        'id_doctor' => $data->input('id_doctor'),
+                        'id_paciente' => $data->input('id_paciente'),
+                        'precio_estatus' => $data->input('total'),
+                        'tipo_de_pago' => $data->input('tipo_de_pago') ?? null
+                    ];
+                    
+                    $id_factura = DB::table("facturas")->insertGetId($facturaDataFallback);
+                    
+                    // Procesar procedimientos si existen
+                    $procedimientos = $data->input('procedimientos');
+                    if ($procedimientos && is_array($procedimientos) && count($procedimientos) > 0) {
+                        $procedimientosx = $procedimientos[0];
+                        $cantidad = count($procedimientosx);
+                        $array_new = [];
+                
+                        for($i=0; $i<$cantidad; $i++){
+                            $procedimiento = DB::table('procedimientos')->where('id', $procedimientosx[$i]['id_procedimiento'])->first();
+                            if (!$procedimiento) {
+                                \Log::warning('Procedimiento no encontrado: ' . $procedimientosx[$i]['id_procedimiento']);
+                                continue;
+                            }
+
+                            $array_new[] = [
+                                'id_factura' => $id_factura,
+                                'total' => $procedimientosx[$i]['total'] ?? 0,
+                                'cantidad' => $procedimientosx[$i]['cantidad'] ?? 1,
+                                'id_procedimiento' => $procedimientosx[$i]['id_procedimiento']
+                            ];
+                        }
+
+                        if (count($array_new) > 0) {
+                            DB::table('historial_ps')->insert($array_new);
+                        }
+                    }
+                    
+                    // Registrar en auditoría
+                    $usuarioId = $data->input('usuario_id') ?? $data->header('usuario_id') ?? null;
+                    if ($usuarioId) {
+                        AuditoriaHelper::registrar(
+                            $usuarioId,
+                            'Facturas',
+                            'Crear Factura',
+                            "Factura #{$id_factura} creada para paciente ID: {$data->input('id_paciente')}, Doctor ID: {$data->input('id_doctor')}, Total: RD$ " . number_format($data->input('total'), 2)
+                        );
+                    }
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Factura guardada con éxito',
+                        'id_factura' => $id_factura
+                    ], 201);
+                    
+                } catch (\Exception $fallbackException) {
+                    \Log::error('Error en intento fallback de crear factura: ' . $fallbackException->getMessage());
+                    return response()->json([
+                        'error' => 'Error al guardar factura',
+                        'message' => $fallbackException->getMessage()
+                    ], 500);
+                }
+            }
             
             // Verificar si es un error de foreign key
             if ($e->getCode() == 23000) {

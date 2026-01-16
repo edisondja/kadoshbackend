@@ -9,6 +9,8 @@ use App\Doctor;
 use App\Paciente;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ControllerOdontograma extends Controller
 {
@@ -61,12 +63,71 @@ class ControllerOdontograma extends Controller
                 $dibujoOdontograma = substr($dibujoOdontograma, 0, 10000000);
             }
 
-            $odontograma = Odontograma::create([
-                'doctor_id' => $idDoctor,
-                'paciente_id' => $idPaciente,
-                'dibujo_odontograma' => $dibujoOdontograma,
-                'estado' => 'activo',
-            ]);
+            // Determinar qué columna usar para el doctor (doctor_id o id_doctor)
+            $useDoctorId = true;
+            try {
+                $columnExists = DB::selectOne("
+                    SELECT COUNT(*) as count 
+                    FROM information_schema.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = 'odontogramas' 
+                    AND COLUMN_NAME = 'doctor_id'
+                ");
+                $useDoctorId = $columnExists && $columnExists->count > 0;
+            } catch (\Exception $e) {
+                // Si falla la verificación, intentar con id_doctor
+                \Log::warning('No se pudo verificar si existe la columna doctor_id: ' . $e->getMessage());
+                $useDoctorId = false;
+            }
+
+            // Intentar crear con doctor_id, si falla intentar con id_doctor
+            try {
+                $odontogramaData = [
+                    'paciente_id' => $idPaciente,
+                    'dibujo_odontograma' => $dibujoOdontograma,
+                    'estado' => 'activo',
+                ];
+                
+                if ($useDoctorId) {
+                    $odontogramaData['doctor_id'] = $idDoctor;
+                } else {
+                    $odontogramaData['id_doctor'] = $idDoctor;
+                }
+                
+                $odontograma = Odontograma::create($odontogramaData);
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Si el error es por columna doctor_id no encontrada, intentar con id_doctor
+                $errorMessage = $e->getMessage();
+                if (strpos($errorMessage, 'doctor_id') !== false || 
+                    strpos($errorMessage, 'Unknown column') !== false ||
+                    strpos($errorMessage, '42S22') !== false) {
+                    
+                    \Log::info('La columna doctor_id no existe, intentando con id_doctor');
+                    try {
+                        $odontograma = Odontograma::create([
+                            'id_doctor' => $idDoctor,
+                            'paciente_id' => $idPaciente,
+                            'dibujo_odontograma' => $dibujoOdontograma,
+                            'estado' => 'activo',
+                        ]);
+                    } catch (\Exception $fallbackException) {
+                        // Si también falla, usar inserción directa
+                        \Log::error('Error al crear odontograma con id_doctor: ' . $fallbackException->getMessage());
+                        $id_odontograma = DB::table('odontogramas')->insertGetId([
+                            'id_doctor' => $idDoctor,
+                            'paciente_id' => $idPaciente,
+                            'dibujo_odontograma' => $dibujoOdontograma,
+                            'estado' => 'activo',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        $odontograma = Odontograma::find($id_odontograma);
+                    }
+                } else {
+                    // Si es otro error, relanzarlo
+                    throw $e;
+                }
+            }
 
             // Si hay detalles (procedimientos), guardarlos
             if ($request->has('detalles') && is_array($request->detalles) && count($request->detalles) > 0) {

@@ -36,6 +36,7 @@ class ControllerFichaMedica extends Controller
             'otros_habitos' => 'nullable|string|max:255',
             'alergias' => 'nullable|string|max:255',
             'alergias_detalle' => 'nullable|string',
+            'observaciones' => 'nullable|string',
         ]);
 
 

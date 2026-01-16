@@ -19,7 +19,8 @@ class FichaMedica extends Model
         'alcohol',
         'otros_habitos',
         'alergias',
-        'alergias_detalle'
+        'alergias_detalle',
+        'observaciones'
     ];
 
 
