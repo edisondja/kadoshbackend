@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Script de Despliegue de Migraciones Multi-Tenant - Kadosh
 # Uso: ./deploy_migrations_multi_tenant.sh
@@ -24,7 +24,7 @@ PROJECT_DIR=$(pwd)
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 SUCCESS_COUNT=0
 FAILED_COUNT=0
-FAILED_DBS=()
+FAILED_DBS=""
 
 # Verificar que estamos en el directorio correcto
 if [ ! -f "artisan" ]; then
@@ -34,7 +34,7 @@ if [ ! -f "artisan" ]; then
 fi
 
 # Crear directorio de backups si no existe
-mkdir -p $BACKUP_DIR
+mkdir -p "$BACKUP_DIR"
 
 echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
 echo -e "${BLUE}  CONFIGURACIÓN MULTI-TENANT${NC}"
@@ -49,21 +49,30 @@ echo ""
 
 # Opción 1: Listar bases de datos automáticamente
 echo -e "${YELLOW}🔍 Obteniendo lista de bases de datos...${NC}"
-ALL_DATABASES=$(mysql -u $DB_USER -p$DB_PASS -e "SHOW DATABASES;" 2>/dev/null | grep -v "Database\|information_schema\|performance_schema\|mysql\|sys")
+ALL_DATABASES=$(mysql -u "$DB_USER" -p"$DB_PASS" -e "SHOW DATABASES;" 2>/dev/null | grep -v -E "Database|information_schema|performance_schema|mysql|sys" || true)
 
 # Opción 2: Permitir especificar patrón
 echo ""
 echo -e "${CYAN}Bases de datos encontradas:${NC}"
+if [ -z "$ALL_DATABASES" ]; then
+    echo -e "${RED}No se encontraron bases de datos${NC}"
+    exit 1
+fi
 echo "$ALL_DATABASES" | nl
 echo ""
 read -p "¿Usar todas las bases de datos? (s/n): " -n 1 -r
 echo ""
 
-if [[ $REPLY =~ ^[Nn]$ ]]; then
+if [[ ! $REPLY =~ ^[Ss]$ ]]; then
     echo ""
     read -p "Ingresa el patrón para filtrar bases de datos (ej: kadosh_, tenant_): " DB_PATTERN
     if [ ! -z "$DB_PATTERN" ]; then
-        ALL_DATABASES=$(echo "$ALL_DATABASES" | grep "$DB_PATTERN")
+        ALL_DATABASES=$(echo "$ALL_DATABASES" | grep "$DB_PATTERN" || true)
+    fi
+    
+    if [ -z "$ALL_DATABASES" ]; then
+        echo -e "${RED}No se encontraron bases de datos con ese patrón${NC}"
+        exit 1
     fi
     
     echo ""
@@ -101,30 +110,32 @@ process_database() {
     echo -e "${YELLOW}📦 Creando backup de '$DB_NAME'...${NC}"
     BACKUP_FILE="$BACKUP_DIR/backup_${DB_NAME}_${TIMESTAMP}.sql"
     
-    mysqldump -u $DB_USER -p$DB_PASS $DB_NAME > $BACKUP_FILE 2>/dev/null
+    mysqldump -u "$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$BACKUP_FILE" 2>/dev/null
     
     if [ $? -eq 0 ]; then
-        BACKUP_SIZE=$(du -h $BACKUP_FILE | cut -f1)
+        BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
         echo -e "${GREEN}✅ Backup creado: $BACKUP_SIZE${NC}"
     else
         echo -e "${RED}❌ Error al crear backup de '$DB_NAME'${NC}"
         FAILED_COUNT=$((FAILED_COUNT + 1))
-        FAILED_DBS+=("$DB_NAME (backup falló)")
+        FAILED_DBS="$FAILED_DBS$DB_NAME (backup falló)\n"
         return 1
     fi
     
     # Actualizar .env temporalmente para esta base de datos
     if [ -f ".env" ]; then
-        # Guardar .env original
-        cp .env .env.backup_$TIMESTAMP
+        # Guardar .env original (solo la primera vez)
+        if [ ! -f ".env.backup_$TIMESTAMP" ]; then
+            cp .env ".env.backup_$TIMESTAMP"
+        fi
         
         # Actualizar DB_DATABASE en .env
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            # macOS
-            sed -i '' "s/DB_DATABASE=.*/DB_DATABASE=$DB_NAME/" .env
+        if [[ "$OSTYPE" == "darwin"* ]] || [[ "$OSTYPE" == "freebsd"* ]]; then
+            # macOS/FreeBSD
+            sed -i '' "s/^DB_DATABASE=.*/DB_DATABASE=$DB_NAME/" .env
         else
             # Linux
-            sed -i "s/DB_DATABASE=.*/DB_DATABASE=$DB_NAME/" .env
+            sed -i "s/^DB_DATABASE=.*/DB_DATABASE=$DB_NAME/" .env
         fi
     else
         echo -e "${RED}❌ No se encontró archivo .env${NC}"
@@ -133,11 +144,11 @@ process_database() {
     
     # Verificar estado de migraciones
     echo -e "${YELLOW}🔍 Verificando estado de migraciones...${NC}"
-    php artisan migrate:status > /dev/null 2>&1
+    php artisan migrate:status > /dev/null 2>&1 || true
     
     # Aplicar migraciones
     echo -e "${YELLOW}🚀 Aplicando migraciones...${NC}"
-    php artisan migrate --force > /tmp/migrate_${DB_NAME}.log 2>&1
+    php artisan migrate --force > "/tmp/migrate_${DB_NAME}.log" 2>&1
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✅ Migraciones aplicadas correctamente${NC}"
@@ -154,19 +165,8 @@ process_database() {
         echo -e "${RED}❌ Error al aplicar migraciones${NC}"
         echo -e "${YELLOW}💡 Revisa el log: /tmp/migrate_${DB_NAME}.log${NC}"
         FAILED_COUNT=$((FAILED_COUNT + 1))
-        FAILED_DBS+=("$DB_NAME (migración falló)")
-        
-        # Restaurar .env original
-        if [ -f ".env.backup_$TIMESTAMP" ]; then
-            mv .env.backup_$TIMESTAMP .env
-        fi
-        
+        FAILED_DBS="$FAILED_DBS$DB_NAME (migración falló)\n"
         return 1
-    fi
-    
-    # Restaurar .env original
-    if [ -f ".env.backup_$TIMESTAMP" ]; then
-        mv .env.backup_$TIMESTAMP .env
     fi
     
     return 0
@@ -174,7 +174,7 @@ process_database() {
 
 # Procesar cada base de datos
 DB_NUM=0
-while IFS= read -r DB_NAME; do
+echo "$ALL_DATABASES" | while IFS= read -r DB_NAME; do
     if [ ! -z "$DB_NAME" ]; then
         DB_NUM=$((DB_NUM + 1))
         process_database "$DB_NAME" $DB_NUM $DB_COUNT
@@ -182,7 +182,13 @@ while IFS= read -r DB_NAME; do
         # Pequeña pausa entre bases de datos
         sleep 1
     fi
-done <<< "$ALL_DATABASES"
+done
+
+# Restaurar .env original al final
+if [ -f ".env.backup_$TIMESTAMP" ]; then
+    mv ".env.backup_$TIMESTAMP" .env
+    echo -e "${GREEN}✅ Archivo .env restaurado${NC}"
+fi
 
 # Resumen final
 echo ""
@@ -196,9 +202,9 @@ echo ""
 
 if [ $FAILED_COUNT -gt 0 ]; then
     echo -e "${RED}Bases de datos con errores:${NC}"
-    for failed_db in "${FAILED_DBS[@]}"; do
-        echo -e "${RED}  • $failed_db${NC}"
-    done
+    if [ ! -z "$FAILED_DBS" ]; then
+        echo -e "${RED}$FAILED_DBS${NC}" | sed 's/^/  • /'
+    fi
     echo ""
     echo -e "${YELLOW}💡 Para restaurar un backup específico:${NC}"
     echo -e "${YELLOW}   mysql -u $DB_USER -p nombre_db < backups/backup_nombre_db_${TIMESTAMP}.sql${NC}"
