@@ -42,8 +42,12 @@ echo -e "${BLUE}═════════════════════�
 echo ""
 
 # Solicitar credenciales de base de datos
-read -p "Ingresa el usuario de MySQL: " DB_USER
-read -sp "Ingresa la contraseña de MySQL: " DB_PASS
+printf "Ingresa el usuario de MySQL: "
+read DB_USER
+printf "Ingresa la contraseña de MySQL: "
+stty -echo 2>/dev/null || true
+read DB_PASS
+stty echo 2>/dev/null || true
 echo ""
 echo ""
 
@@ -60,12 +64,13 @@ if [ -z "$ALL_DATABASES" ]; then
 fi
 echo "$ALL_DATABASES" | nl
 echo ""
-read -p "¿Usar todas las bases de datos? (s/n): " -n 1 -r
-echo ""
+printf "¿Usar todas las bases de datos? (s/n): "
+read REPLY
 
-if [[ ! $REPLY =~ ^[Ss]$ ]]; then
+if [ "$REPLY" != "s" ] && [ "$REPLY" != "S" ]; then
     echo ""
-    read -p "Ingresa el patrón para filtrar bases de datos (ej: kadosh_, tenant_): " DB_PATTERN
+    printf "Ingresa el patrón para filtrar bases de datos (ej: kadosh_, tenant_): "
+    read DB_PATTERN
     if [ ! -z "$DB_PATTERN" ]; then
         ALL_DATABASES=$(echo "$ALL_DATABASES" | grep "$DB_PATTERN" || true)
     fi
@@ -79,9 +84,10 @@ if [[ ! $REPLY =~ ^[Ss]$ ]]; then
     echo -e "${CYAN}Bases de datos que se procesarán:${NC}"
     echo "$ALL_DATABASES" | nl
     echo ""
-    read -p "¿Continuar con estas bases de datos? (s/n): " -n 1 -r
+    printf "¿Continuar con estas bases de datos? (s/n): "
+    read REPLY
     echo ""
-    if [[ ! $REPLY =~ ^[Ss]$ ]]; then
+    if [ "$REPLY" != "s" ] && [ "$REPLY" != "S" ]; then
         echo -e "${YELLOW}⚠️  Despliegue cancelado por el usuario${NC}"
         exit 0
     fi
