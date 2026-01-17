@@ -49,7 +49,26 @@ public function cargar_presupuesto($id_presupuesto)
         return response()->json(['error' => 'Presupuesto no encontrado'], 404);
     }
 
-    return $presupuesto->factura;
+    // Parsear la factura (procedimientos) y devolver el objeto completo
+    $factura = json_decode($presupuesto->factura, true);
+    
+    // Si factura es null o no es un array, intentar parsear de nuevo
+    if (!is_array($factura)) {
+        $factura = [];
+    }
+    
+    return response()->json([
+        'id' => $presupuesto->id,
+        'nombre' => $presupuesto->nombre,
+        'paciente_id' => $presupuesto->paciente_id,
+        'doctor_id' => $presupuesto->doctor_id,
+        'total' => $factura['total'] ?? ($presupuesto->total ?? 0),
+        'procedimientos' => $factura['procedimientos'] ?? ($factura['lista_procedimiento'] ?? []),
+        'factura' => $presupuesto->factura, // Mantener factura original para compatibilidad
+        'created_at' => $presupuesto->created_at ? $presupuesto->created_at->toDateTimeString() : null,
+        'updated_at' => $presupuesto->updated_at ? $presupuesto->updated_at->toDateTimeString() : null,
+        'fecha' => $presupuesto->created_at ? $presupuesto->created_at->format('Y-m-d H:i:s') : null
+    ]);
 }
 
 

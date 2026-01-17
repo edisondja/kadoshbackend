@@ -15,15 +15,8 @@ class ControllerDoctor extends Controller
      */
     public function index()
     {
-        try {
-            // Filtrar solo doctores activos (estado = true o 1)
-            $doctors = DB::table('doctors')
-                ->where(function($query) {
-                    $query->where('estado', true)
-                          ->orWhere('estado', 1);
-                })
-                ->orderBy('id','desc')
-                ->get();
+        
+        $doctors = DB::table('doctors')->orderBy('id','desc')->get();
 
             return $doctors;
         } catch (\Exception $e) {
