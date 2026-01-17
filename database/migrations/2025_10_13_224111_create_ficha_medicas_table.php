@@ -29,6 +29,7 @@ class CreateFichaMedicasTable extends Migration
             $table->string('antecedentes_familiares')->nullable();
             $table->string('alergias')->nullable();
             $table->string('alergias_detalle')->nullable();
+            $table->string('observaciones')->nullable();
             $table->timestamps();
         });
     }

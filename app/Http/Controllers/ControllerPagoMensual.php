@@ -138,7 +138,14 @@ class ControllerPagoMensual extends Controller
                 ->first();
 
             if (!$pago) {
-                return response()->json(['message' => 'No hay pagos pendientes'], 404);
+                // Retornar 200 con null en lugar de 404 para evitar errores en consola
+                return response()->json([
+                    'pago' => null,
+                    'dias_restantes' => null,
+                    'en_alerta' => false,
+                    'fecha_vencimiento' => null,
+                    'message' => 'No hay pagos pendientes'
+                ], 200);
             }
 
             $diasRestantes = $hoy->diffInDays($pago->fecha_vencimiento, false);

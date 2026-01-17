@@ -37,10 +37,11 @@ class ControllerDoctor extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create($nombre = null, $apellido = null, $cedula = null, $telefono = null)
+    public function create(Request $request, $nombre = null, $apellido = null, $cedula = null, $telefono = null)
     {
         // Si se llama desde ruta GET antigua (parámetros en URL)
         if ($nombre !== null && $apellido !== null && $cedula !== null && $telefono !== null) {
+            try {
                 $doctor = new App\Doctor();
                 $doctor->nombre = $nombre;
                 $doctor->apellido = $apellido;
@@ -48,36 +49,9 @@ class ControllerDoctor extends Controller
                 $doctor->numero_telefono = $telefono;
                 $doctor->estado = true; // Activo por defecto
                 $doctor->save();
-            return response()->json(['success' => true, 'doctor' => $doctor]);
-        }
-        
-        // Si se llama desde ruta POST nueva (Request body)
-        $request = request();
-        if ($request->has('nombre')) {
-            try {
-                $request->validate([
-                    'nombre' => 'required|string',
-                    'apellido' => 'required|string',
-                    'cedula' => 'required|string',
-                    'telefono' => 'required|string',
-                    'especialidad' => 'nullable|string'
-                ]);
-
-                $doctor = new App\Doctor();
-                $doctor->nombre = $request->nombre;
-                $doctor->apellido = $request->apellido;
-                $doctor->dni = $request->cedula;
-                $doctor->numero_telefono = $request->telefono;
-                $doctor->especialidad = $request->especialidad;
-                $doctor->estado = true; // Activo por defecto
-                $doctor->save();
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Doctor creado correctamente',
-                    'doctor' => $doctor
-                ]);
+                return response()->json(['success' => true, 'doctor' => $doctor]);
             } catch (\Exception $e) {
+                \Log::error('Error al crear doctor (GET): ' . $e->getMessage());
                 return response()->json([
                     'error' => 'Error al crear doctor',
                     'message' => $e->getMessage()
@@ -85,7 +59,46 @@ class ControllerDoctor extends Controller
             }
         }
         
-        return response()->json(['error' => 'Parámetros inválidos'], 400);
+        // Si se llama desde ruta POST nueva (Request body)
+        try {
+            $request->validate([
+                'nombre' => 'required|string|max:255',
+                'apellido' => 'required|string|max:255',
+                'cedula' => 'required|string|max:255',
+                'telefono' => 'required|string|max:255',
+                'especialidad' => 'nullable|string|max:255'
+            ]);
+
+            $doctor = App\Doctor::create([
+                'nombre' => $request->nombre,
+                'apellido' => $request->apellido,
+                'dni' => $request->cedula,
+                'numero_telefono' => $request->telefono,
+                'especialidad' => $request->especialidad ?? null,
+                'estado' => true // Activo por defecto
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Doctor creado correctamente',
+                'doctor' => $doctor
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error' => 'Error de validación',
+                'message' => $e->getMessage(),
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error al crear doctor (POST): ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Error al crear doctor',
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
     }
 
     /**
