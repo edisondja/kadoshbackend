@@ -15,16 +15,27 @@ class ControllerDoctor extends Controller
      */
     public function index()
     {
-        // Filtrar solo doctores activos (estado = true o 1)
-        $doctors = DB::table('doctors')
-            ->where(function($query) {
-                $query->where('estado', true)
-                      ->orWhere('estado', 1);
-            })
-            ->orderBy('id','desc')
-            ->get();
+        try {
+            // Filtrar solo doctores activos (estado = true o 1)
+            $doctors = DB::table('doctors')
+                ->where(function($query) {
+                    $query->where('estado', true)
+                          ->orWhere('estado', 1);
+                })
+                ->orderBy('id','desc')
+                ->get();
 
-        return $doctors;
+            return $doctors;
+        } catch (\Exception $e) {
+            \Log::error('Error al cargar doctores: ' . $e->getMessage());
+            // Si falla, intentar sin filtro de estado
+            try {
+                return DB::table('doctors')->orderBy('id','desc')->get();
+            } catch (\Exception $e2) {
+                \Log::error('Error al cargar doctores sin filtro: ' . $e2->getMessage());
+                return [];
+            }
+        }
     }
 
     /**
@@ -103,17 +114,31 @@ class ControllerDoctor extends Controller
      */
     public function buscando_doctor($nombre)
     {
-        // Filtrar solo doctores activos
-        $data = DB::table("doctors")
-            ->where("nombre","like","%$nombre%")
-            ->where(function($query) {
-                $query->where('estado', true)
-                      ->orWhere('estado', 1);
-            })
-            ->take(20)
-            ->get();
+        try {
+            // Buscar doctores activos por nombre
+            $data = DB::table("doctors")
+                ->where("nombre","like","%$nombre%")
+                ->where(function($query) {
+                    $query->where('estado', true)
+                          ->orWhere('estado', 1);
+                })
+                ->take(20)
+                ->get();
 
-        return $data;
+            return $data;
+        } catch (\Exception $e) {
+            \Log::error('Error al buscar doctor: ' . $e->getMessage());
+            // Si falla, intentar sin filtro de estado
+            try {
+                return DB::table("doctors")
+                    ->where("nombre","like","%$nombre%")
+                    ->take(20)
+                    ->get();
+            } catch (\Exception $e2) {
+                \Log::error('Error al buscar doctor sin filtro: ' . $e2->getMessage());
+                return [];
+            }
+        }
     }
 
     public function cargar_doctor($id){
@@ -185,7 +210,16 @@ class ControllerDoctor extends Controller
     public function desactivar_doctor(Request $request)
     {
         try {
-            $doctor = App\Doctor::findOrFail($request->id_doctor);
+            $doctorId = $request->id_doctor;
+            
+            if (!$doctorId) {
+                return response()->json([
+                    'error' => 'Error al desactivar doctor',
+                    'message' => 'ID de doctor no proporcionado'
+                ], 400);
+            }
+
+            $doctor = App\Doctor::findOrFail($doctorId);
             $doctor->estado = false;
             $doctor->save();
 
@@ -195,6 +229,7 @@ class ControllerDoctor extends Controller
                 'doctor' => $doctor
             ]);
         } catch (\Exception $e) {
+            \Log::error('Error al desactivar doctor: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Error al desactivar doctor',
                 'message' => $e->getMessage()
@@ -205,7 +240,16 @@ class ControllerDoctor extends Controller
     public function activar_doctor(Request $request)
     {
         try {
-            $doctor = App\Doctor::findOrFail($request->id_doctor);
+            $doctorId = $request->id_doctor;
+            
+            if (!$doctorId) {
+                return response()->json([
+                    'error' => 'Error al activar doctor',
+                    'message' => 'ID de doctor no proporcionado'
+                ], 400);
+            }
+
+            $doctor = App\Doctor::findOrFail($doctorId);
             $doctor->estado = true;
             $doctor->save();
 
@@ -215,6 +259,7 @@ class ControllerDoctor extends Controller
                 'doctor' => $doctor
             ]);
         } catch (\Exception $e) {
+            \Log::error('Error al activar doctor: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Error al activar doctor',
                 'message' => $e->getMessage()
@@ -227,8 +272,13 @@ class ControllerDoctor extends Controller
      */
     public function indexAll()
     {
-        $doctors = DB::table('doctors')->orderBy('id','desc')->get();
-        return $doctors;
+        try {
+            $doctors = DB::table('doctors')->orderBy('id','desc')->get();
+            return $doctors;
+        } catch (\Exception $e) {
+            \Log::error('Error en indexAll: ' . $e->getMessage());
+            return [];
+        }
     }
 
 
