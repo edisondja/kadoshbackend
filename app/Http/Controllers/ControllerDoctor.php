@@ -15,8 +15,12 @@ class ControllerDoctor extends Controller
      */
     public function index()
     {
-        
-        $doctors = DB::table('doctors')->orderBy('id','desc')->get();
+        try {
+            $doctors = DB::table('doctors')
+                ->where('estado', true)
+                ->orWhere('estado', 1)
+                ->orderBy('id','desc')
+                ->get();
 
             return $doctors;
         } catch (\Exception $e) {
