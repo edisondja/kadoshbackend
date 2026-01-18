@@ -220,10 +220,10 @@ Route::middleware(['tenant'])->group(function () {
 
 	Route::post('/api/crear_presupuesto','ControllerPresupuesto@create');
 	Route::get('/api/cargar_presupuestos/{paciente_id}','ControllerPresupuesto@cargar_presupuestos');
+	Route::get('/api/listar_todos_presupuestos','ControllerPresupuesto@listar_todos_presupuestos');
 	Route::get('/api/cargar_presupuesto/{id_presupuesto}','ControllerPresupuesto@cargar_presupuesto');
 	Route::post('/api/eliminar_presupuesto','ControllerPresupuesto@eliminar_prespuesto');
 	Route::post('/api/actualizar_presupuesto','ControllerPresupuesto@actualizar_presupuesto');
-	Route::get('/api/buscar_presupuesto/{buscar}','ControllerPresupuesto@buscar_presupuesto');
 	Route::get('/api/buscar_presupuesto/{buscar}','ControllerPresupuesto@buscar_presupuesto');
 	Route::post('/api/enviar_presupuesto','ControllerPresupuesto@enviarPresupuesto');
 

@@ -28,6 +28,25 @@ class ControllerPresupuesto extends Controller
 
     }
 
+    /**
+     * Listar todos los presupuestos (no filtrados por paciente)
+     */
+    public function listar_todos_presupuestos(){    
+        try {
+            $presupuestos = Presupuesto::with('paciente')
+                ->orderBy('id', 'desc')
+                ->get();
+
+            return response()->json($presupuestos);
+        } catch (\Exception $e) {
+            \Log::error('Error al listar todos los presupuestos: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al listar presupuestos',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function buscar_presupuesto($buscar){
 
