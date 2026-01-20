@@ -34,18 +34,30 @@
         }
         .info-section {
             margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fafafa;
+            border-radius: 5px;
         }
         .info-row {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
+            justify-content: flex-start;
+            margin-bottom: 12px;
+            align-items: flex-start;
+            min-height: 20px;
+            page-break-inside: avoid;
         }
         .info-label {
             font-weight: bold;
-            width: 150px;
+            width: 180px;
+            min-width: 180px;
+            flex-shrink: 0;
+            color: #333;
         }
         .info-value {
             flex: 1;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            padding-left: 10px;
         }
         .medicamentos-table {
             width: 100%;
@@ -165,7 +177,13 @@
         </div>
         <div class="info-row">
             <span class="info-label">Doctor:</span>
-            <span class="info-value">Dr. {{ $receta->doctor->nombre }} {{ $receta->doctor->apellido ?? '' }}</span>
+            <span class="info-value">
+                @php
+                    $doctor = $receta->doctor;
+                    $titulo = ($doctor->sexo === 'F' || $doctor->sexo === 'Femenino' || $doctor->sexo === 'femenino') ? 'Dra.' : 'Dr.';
+                @endphp
+                {{ $titulo }} {{ $doctor->nombre }} {{ $doctor->apellido ?? '' }}
+            </span>
         </div>
     </div>
 
@@ -176,8 +194,9 @@
     </div>
     @endif
 
-    <h3 style="margin-top: 20px;">MEDICAMENTOS PRESCRITOS:</h3>
-    <table class="medicamentos-table">
+    @if($receta->medicamentos && is_array($receta->medicamentos) && count($receta->medicamentos) > 0)
+    <h3 style="margin-top: 20px; page-break-before: avoid;">MEDICAMENTOS PRESCRITOS:</h3>
+    <table class="medicamentos-table" style="page-break-inside: avoid;">
         <thead>
             <tr>
                 <th>Medicamento</th>
@@ -190,27 +209,32 @@
         <tbody>
             @foreach($receta->medicamentos as $medicamento)
             <tr>
-                <td>{{ $medicamento['nombre'] }}</td>
-                <td>{{ $medicamento['cantidad'] }}</td>
-                <td>{{ $medicamento['dosis'] }}</td>
-                <td>{{ $medicamento['frecuencia'] }}</td>
-                <td>{{ $medicamento['duracion'] }}</td>
+                <td>{{ $medicamento['nombre'] ?? '' }}</td>
+                <td>{{ $medicamento['cantidad'] ?? '' }}</td>
+                <td>{{ $medicamento['dosis'] ?? '' }}</td>
+                <td>{{ $medicamento['frecuencia'] ?? '' }}</td>
+                <td>{{ $medicamento['duracion'] ?? '' }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
+    @endif
 
     @if($receta->indicaciones)
-    <div class="indicaciones">
-        <h3>INDICACIONES ADICIONALES:</h3>
-        <p>{{ $receta->indicaciones }}</p>
+    <div class="indicaciones" style="margin-top: 20px; page-break-inside: avoid;">
+        <h3>INDICACIONES MÉDICAS:</h3>
+        <p style="white-space: pre-wrap; word-wrap: break-word; line-height: 1.6; margin: 0;">{{ $receta->indicaciones }}</p>
     </div>
     @endif
 
-    <div class="firma">
+    <div class="firma" style="margin-top: 40px; page-break-inside: avoid;">
         <div class="firma-line">
-            <strong>Dr. {{ $receta->doctor->nombre }} {{ $receta->doctor->apellido ?? '' }}</strong><br>
-            {{ $receta->doctor->especialidad ?? 'Odontólogo' }}
+            @php
+                $doctor = $receta->doctor;
+                $titulo = ($doctor->sexo === 'F' || $doctor->sexo === 'Femenino' || $doctor->sexo === 'femenino') ? 'Dra.' : 'Dr.';
+            @endphp
+            <strong>{{ $titulo }} {{ $doctor->nombre }} {{ $doctor->apellido ?? '' }}</strong><br>
+            {{ $doctor->especialidad ?? 'Odontólogo' }}
         </div>
     </div>
 

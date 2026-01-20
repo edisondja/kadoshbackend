@@ -12,6 +12,7 @@ class Doctor extends Model
         'dni',
         'numero_telefono',
         'especialidad',
+        'sexo',
         'estado'
     ];
 

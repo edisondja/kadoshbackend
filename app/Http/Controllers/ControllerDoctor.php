@@ -70,7 +70,8 @@ class ControllerDoctor extends Controller
                 'apellido' => 'required|string|max:255',
                 'cedula' => 'required|string|max:255',
                 'telefono' => 'required|string|max:255',
-                'especialidad' => 'nullable|string|max:255'
+                'especialidad' => 'nullable|string|max:255',
+                'sexo' => 'nullable|string|in:M,F'
             ]);
 
             $doctor = App\Doctor::create([
@@ -79,6 +80,7 @@ class ControllerDoctor extends Controller
                 'dni' => $request->cedula,
                 'numero_telefono' => $request->telefono,
                 'especialidad' => $request->especialidad ?? null,
+                'sexo' => $request->sexo ?? null,
                 'estado' => true // Activo por defecto
             ]);
 
@@ -189,7 +191,8 @@ class ControllerDoctor extends Controller
                     'apellido' => 'required|string',
                     'cedula' => 'required|string',
                     'telefono' => 'required|string',
-                    'especialidad' => 'nullable|string'
+                    'especialidad' => 'nullable|string',
+                    'sexo' => 'nullable|string|in:M,F'
                 ]);
 
                 $doctor = App\Doctor::findOrFail($id);
@@ -198,6 +201,9 @@ class ControllerDoctor extends Controller
                 $doctor->dni = $request->cedula;
                 $doctor->numero_telefono = $request->telefono;
                 $doctor->especialidad = $request->especialidad;
+                if ($request->has('sexo')) {
+                    $doctor->sexo = $request->sexo;
+                }
                 $doctor->save();
 
                 return response()->json([

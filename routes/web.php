@@ -18,6 +18,15 @@
 	//Route::get('/api/eliminar_usuario/{id}','LoginContorller@AactualizarUsuario');
 	//Route::get('/api/consultar_usuarios','LoginController@CargarUsuarios');
 
+	//API ADMINISTRACIÓN DE TENANTS (Fuera del middleware tenant para acceso desde BD principal)
+	Route::get('/api/tenants', 'ControllerTenant@index');
+	Route::get('/api/tenants/{id}', 'ControllerTenant@show');
+	Route::post('/api/tenants', 'ControllerTenant@store');
+	Route::post('/api/tenants/{id}', 'ControllerTenant@update');
+	Route::put('/api/tenants/{id}', 'ControllerTenant@update');
+	Route::delete('/api/tenants/{id}', 'ControllerTenant@destroy');
+	Route::get('/api/tenants/verificar/{subdominio}', 'ControllerTenant@verificarEstado');
+
 	//API PACIENTES READY
 	
 Route::middleware(['tenant'])->group(function () {

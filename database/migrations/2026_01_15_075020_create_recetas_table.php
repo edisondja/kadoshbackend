@@ -19,7 +19,7 @@ class CreateRecetasTable extends Migration
             $table->foreign('id_paciente')->references('id')->on('pacientes')->onDelete('cascade');
             $table->unsignedInteger('id_doctor');
             $table->foreign('id_doctor')->references('id')->on('doctors')->onDelete('cascade');
-            $table->text('medicamentos'); // JSON con lista de medicamentos
+            $table->text('medicamentos')->nullable(); // JSON con lista de medicamentos (NULL cuando se usa texto libre)
             $table->text('indicaciones')->nullable();
             $table->text('diagnostico')->nullable();
             $table->date('fecha');

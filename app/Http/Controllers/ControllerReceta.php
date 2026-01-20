@@ -58,20 +58,47 @@ class ControllerReceta extends Controller
     public function crearReceta(Request $request)
     {
         try {
-            // Validar campos requeridos
-            $request->validate([
+            // Determinar si se está usando texto libre (indicaciones con contenido)
+            $usarTextoLibre = !empty($request->indicaciones) && trim($request->indicaciones) !== '';
+            
+            // Validar campos requeridos según el modo
+            $rules = [
                 'id_paciente' => 'required|integer|exists:pacientes,id',
                 'id_doctor' => 'required|integer|exists:doctors,id',
-                'medicamentos' => 'required|array|min:1',
-                'medicamentos.*.nombre' => 'required|string',
-                'medicamentos.*.cantidad' => 'required|string',
-                'medicamentos.*.dosis' => 'required|string',
-                'medicamentos.*.frecuencia' => 'required|string',
-                'medicamentos.*.duracion' => 'required|string',
                 'indicaciones' => 'nullable|string',
                 'diagnostico' => 'nullable|string',
                 'fecha' => 'nullable|date'
-            ]);
+            ];
+            
+            if ($usarTextoLibre) {
+                // Si usa texto libre, los medicamentos son completamente opcionales
+                // NO validar medicamentos en absoluto - pueden ser null, no estar presentes, o ser array vacío
+                // No agregar reglas de validación para medicamentos
+            } else {
+                // Si no usa texto libre, los medicamentos son requeridos
+                $rules['medicamentos'] = 'required|array|min:1';
+                $rules['medicamentos.*.nombre'] = 'required|string';
+                $rules['medicamentos.*.cantidad'] = 'required|string';
+                $rules['medicamentos.*.dosis'] = 'required|string';
+                $rules['medicamentos.*.frecuencia'] = 'required|string';
+                $rules['medicamentos.*.duracion'] = 'required|string';
+            }
+            
+            $request->validate($rules);
+            
+            // Validación adicional SOLO si NO usa texto libre
+            if (!$usarTextoLibre) {
+                // Si no usa texto libre, debe haber al menos un medicamento
+                if (empty($request->medicamentos) || !is_array($request->medicamentos) || count($request->medicamentos) === 0) {
+                    return response()->json([
+                        'error' => 'Error de validación',
+                        'message' => 'Debe agregar al menos un medicamento',
+                        'errors' => ['medicamentos' => ['Debe agregar al menos un medicamento']]
+                    ], 422);
+                }
+            }
+            // Si usa texto libre, NO validar medicamentos en absoluto - pueden estar ausentes, ser null, o array vacío
+            // El texto libre es una alternativa completa a los medicamentos individuales
 
             // Verificar que el paciente existe
             $paciente = Paciente::find($request->id_paciente);
@@ -103,7 +130,12 @@ class ControllerReceta extends Controller
             $receta = new Receta();
             $receta->id_paciente = $request->id_paciente;
             $receta->id_doctor = $request->id_doctor;
-            $receta->medicamentos = $request->medicamentos; // El mutator convertirá a JSON
+            // Si usa texto libre, guardar null; si no, guardar los medicamentos
+            if ($usarTextoLibre) {
+                $receta->medicamentos = null; // Guardar null cuando se usa texto libre
+            } else {
+                $receta->medicamentos = $request->medicamentos ?? []; // Guardar medicamentos si no usa texto libre
+            }
             $receta->indicaciones = $request->indicaciones ?? null;
             $receta->diagnostico = $request->diagnostico ?? null;
             $receta->fecha = $fecha;
@@ -144,20 +176,58 @@ class ControllerReceta extends Controller
         try {
             $receta = Receta::findOrFail($id);
 
-            $request->validate([
-                'medicamentos' => 'required|array|min:1',
-                'medicamentos.*.nombre' => 'required|string',
-                'medicamentos.*.cantidad' => 'required|string',
-                'medicamentos.*.dosis' => 'required|string',
-                'medicamentos.*.frecuencia' => 'required|string',
-                'medicamentos.*.duracion' => 'required|string',
+            // Determinar si se está usando texto libre (indicaciones con contenido)
+            $usarTextoLibre = !empty($request->indicaciones) && trim($request->indicaciones) !== '';
+            
+            // Validar campos requeridos según el modo
+            $rules = [
                 'indicaciones' => 'nullable|string',
                 'diagnostico' => 'nullable|string',
                 'fecha' => 'nullable|date'
-            ]);
-
+            ];
+            
+            if ($usarTextoLibre) {
+                // Si usa texto libre, los medicamentos son completamente opcionales
+                // NO validar medicamentos en absoluto - pueden ser null, no estar presentes, o ser array vacío
+                // No agregar reglas de validación para medicamentos
+            } else {
+                // Si no usa texto libre, los medicamentos son requeridos
+                $rules['medicamentos'] = 'required|array|min:1';
+                $rules['medicamentos.*.nombre'] = 'required|string';
+                $rules['medicamentos.*.cantidad'] = 'required|string';
+                $rules['medicamentos.*.dosis'] = 'required|string';
+                $rules['medicamentos.*.frecuencia'] = 'required|string';
+                $rules['medicamentos.*.duracion'] = 'required|string';
+            }
+            
+            $request->validate($rules);
+            
+            // Validación adicional SOLO si NO usa texto libre
+            if (!$usarTextoLibre) {
+                // Si no usa texto libre, debe haber al menos un medicamento
+                if (empty($request->medicamentos) || !is_array($request->medicamentos) || count($request->medicamentos) === 0) {
+                    return response()->json([
+                        'error' => 'Error de validación',
+                        'message' => 'Debe agregar al menos un medicamento',
+                        'errors' => ['medicamentos' => ['Debe agregar al menos un medicamento']]
+                    ], 422);
+                }
+            }
+            // Si usa texto libre, NO validar medicamentos en absoluto - pueden estar ausentes, ser null, o array vacío
+            // El texto libre es una alternativa completa a los medicamentos individuales
+            
+            // Preparar valor de medicamentos
+            $medicamentosValue = null;
+            if ($usarTextoLibre) {
+                // Si usa texto libre, siempre guardar null
+                $medicamentosValue = null;
+            } else {
+                // Si no usa texto libre, guardar los medicamentos
+                $medicamentosValue = $request->medicamentos ?? [];
+            }
+            
             $receta->update([
-                'medicamentos' => $request->medicamentos,
+                'medicamentos' => $medicamentosValue, // null si usa texto libre, array si no
                 'indicaciones' => $request->indicaciones,
                 'diagnostico' => $request->diagnostico,
                 'fecha' => $request->fecha ?? $receta->fecha

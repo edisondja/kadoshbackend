@@ -26,6 +26,8 @@ class Kernel extends ConsoleKernel
     {
         
          $schedule->command('estados:enviar-diarios')->everyMinute();
+         // Verificar vencimientos de tenants cada hora
+         $schedule->command('tenants:verificar-vencimientos')->hourly();
 
     }
 
