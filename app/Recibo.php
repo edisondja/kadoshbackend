@@ -14,4 +14,9 @@ class Recibo extends Model
          return $this->belongsTo('App\Factura','id_factura');
 
     }
+
+    public function doctorGanancias()
+    {
+        return $this->hasMany(DoctorGananciaRecibo::class, 'id_recibo');
+    }
 }

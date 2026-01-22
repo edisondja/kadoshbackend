@@ -49,10 +49,9 @@ Antes de aplicar las migraciones, asegúrate de:
 
 ```bash
 # Conectarse al servidor
-ssh usuario@tu-servidor.com
-
+ssh  root@64.225.119.91
 # Crear backup
-mysqldump -u usuario_db -p nombre_base_datos > backup_$(date +%Y%m%d_%H%M%S).sql
+mysqldump -u usuario_db -p tenant_service > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # O con compresión
 mysqldump -u usuario_db -p nombre_base_datos | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz

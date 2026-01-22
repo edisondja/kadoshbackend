@@ -10,6 +10,7 @@ use App\Empleado;
 use App\Factura;
 use App\Recibo;
 use App\Historial_p;
+use App\DoctorGananciaRecibo;
 use DB;
 use Carbon\Carbon;
 
@@ -54,69 +55,95 @@ class ControllerNomina extends Controller
                 $totalClinica = 0;
                 $recibosGenerados = 0;
                 $detalleProcedimientos = [];
+                $totalGananciasManuales = 0; // Ganancias asignadas manualmente por recibo
+                $totalGananciasClinicaManuales = 0;
 
+                // Obtener ganancias asignadas manualmente por recibo en el período
+                $gananciasManuales = DoctorGananciaRecibo::where('id_doctor', $doctor->id)
+                    ->whereHas('recibo', function($query) use ($fecha_inicio, $fecha_fin) {
+                        $query->whereBetween('fecha_pago', [$fecha_inicio, $fecha_fin]);
+                    })
+                    ->with('recibo')
+                    ->get();
+
+                // Obtener IDs de recibos con ganancias manuales para excluirlos del cálculo por procedimientos
+                $recibosIdsConGanancia = $gananciasManuales->pluck('id_recibo')->toArray();
+                
                 foreach ($facturas as $factura) {
                     foreach ($factura->recibos as $recibo) {
                         if ($recibo->fecha_pago >= $fecha_inicio && $recibo->fecha_pago <= $fecha_fin) {
                             $recibosGenerados++;
                             $totalIngresos += $recibo->monto;
 
-                            // Obtener procedimientos del recibo
-                            $procedimientosRecibo = json_decode($recibo->procedimientos, true);
-                            
-                            if (is_array($procedimientosRecibo)) {
-                                foreach ($procedimientosRecibo as $proc) {
-                                    $procedimientoId = $proc['id'] ?? $proc['id_procedimiento'] ?? null;
-                                    $cantidad = $proc['cantidad'] ?? 1;
-                                    
-                                    if ($procedimientoId) {
-                                        $procedimiento = Procedimiento::find($procedimientoId);
-                                        if ($procedimiento) {
-                                            $comision = $procedimiento->calcularComision($cantidad);
-                                            $totalComisiones += $comision;
-                                            
-                                            // Agregar al detalle
-                                            if (!isset($detalleProcedimientos[$procedimientoId])) {
-                                                $detalleProcedimientos[$procedimientoId] = [
-                                                    'nombre' => $procedimiento->nombre,
-                                                    'cantidad' => 0,
-                                                    'precio_unitario' => $procedimiento->precio,
-                                                    'comision_porcentaje' => $procedimiento->comision ?? 0,
-                                                    'total_comision' => 0
-                                                ];
+                            // Si el recibo tiene ganancia asignada manualmente, usar esos valores
+                            if (in_array($recibo->id, $recibosIdsConGanancia)) {
+                                $gananciaManual = $gananciasManuales->where('id_recibo', $recibo->id)->first();
+                                if ($gananciaManual) {
+                                    $totalGananciasManuales += $gananciaManual->ganancia_doctor;
+                                    $totalGananciasClinicaManuales += $gananciaManual->ganancia_clinica;
+                                }
+                            } else {
+                                // Si no tiene ganancia manual, calcular por procedimientos
+                                // Obtener procedimientos del recibo
+                                $procedimientosRecibo = json_decode($recibo->procedimientos, true);
+                                
+                                if (is_array($procedimientosRecibo)) {
+                                    foreach ($procedimientosRecibo as $proc) {
+                                        $procedimientoId = $proc['id'] ?? $proc['id_procedimiento'] ?? null;
+                                        $cantidad = $proc['cantidad'] ?? 1;
+                                        
+                                        if ($procedimientoId) {
+                                            $procedimiento = Procedimiento::find($procedimientoId);
+                                            if ($procedimiento) {
+                                                $comision = $procedimiento->calcularComision($cantidad);
+                                                $totalComisiones += $comision;
+                                                
+                                                // Agregar al detalle
+                                                if (!isset($detalleProcedimientos[$procedimientoId])) {
+                                                    $detalleProcedimientos[$procedimientoId] = [
+                                                        'nombre' => $procedimiento->nombre,
+                                                        'cantidad' => 0,
+                                                        'precio_unitario' => $procedimiento->precio,
+                                                        'comision_porcentaje' => $procedimiento->comision ?? 0,
+                                                        'total_comision' => 0
+                                                    ];
+                                                }
+                                                $detalleProcedimientos[$procedimientoId]['cantidad'] += $cantidad;
+                                                $detalleProcedimientos[$procedimientoId]['total_comision'] += $comision;
                                             }
-                                            $detalleProcedimientos[$procedimientoId]['cantidad'] += $cantidad;
-                                            $detalleProcedimientos[$procedimientoId]['total_comision'] += $comision;
                                         }
                                     }
                                 }
-                            }
 
-                            // También buscar en historial_ps si existe
-                            $historialProcedimientos = Historial_p::where('id_factura', $factura->id)->get();
-                            foreach ($historialProcedimientos as $hist) {
-                                $procedimiento = Procedimiento::find($hist->id_procedimiento);
-                                if ($procedimiento) {
-                                    $comision = $procedimiento->calcularComision($hist->cantidad);
-                                    $totalComisiones += $comision;
-                                    
-                                    if (!isset($detalleProcedimientos[$hist->id_procedimiento])) {
-                                        $detalleProcedimientos[$hist->id_procedimiento] = [
-                                            'nombre' => $procedimiento->nombre,
-                                            'cantidad' => 0,
-                                            'precio_unitario' => $procedimiento->precio,
-                                            'comision_porcentaje' => $procedimiento->comision ?? 0,
-                                            'total_comision' => 0
-                                        ];
+                                // También buscar en historial_ps si existe
+                                $historialProcedimientos = Historial_p::where('id_factura', $factura->id)->get();
+                                foreach ($historialProcedimientos as $hist) {
+                                    $procedimiento = Procedimiento::find($hist->id_procedimiento);
+                                    if ($procedimiento) {
+                                        $comision = $procedimiento->calcularComision($hist->cantidad);
+                                        $totalComisiones += $comision;
+                                        
+                                        if (!isset($detalleProcedimientos[$hist->id_procedimiento])) {
+                                            $detalleProcedimientos[$hist->id_procedimiento] = [
+                                                'nombre' => $procedimiento->nombre,
+                                                'cantidad' => 0,
+                                                'precio_unitario' => $procedimiento->precio,
+                                                'comision_porcentaje' => $procedimiento->comision ?? 0,
+                                                'total_comision' => 0
+                                            ];
+                                        }
+                                        $detalleProcedimientos[$hist->id_procedimiento]['cantidad'] += $hist->cantidad;
+                                        $detalleProcedimientos[$hist->id_procedimiento]['total_comision'] += $comision;
                                     }
-                                    $detalleProcedimientos[$hist->id_procedimiento]['cantidad'] += $hist->cantidad;
-                                    $detalleProcedimientos[$hist->id_procedimiento]['total_comision'] += $comision;
                                 }
                             }
                         }
                     }
                 }
 
+                // Sumar ganancias manuales a las comisiones totales
+                $totalComisiones += $totalGananciasManuales;
+                // Calcular ganancias de la clínica: ingresos totales - ganancias del doctor (manuales + por procedimientos)
                 $totalClinica = $totalIngresos - $totalComisiones;
 
                 if ($totalIngresos > 0 || $recibosGenerados > 0) {

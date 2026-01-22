@@ -244,10 +244,24 @@ class Paciente extends Controller
     }
 
     public function deuda_paciente($id_paciente){
+        try {
+            $deuda = DB::table("facturas")
+                ->where('id_paciente', '=', $id_paciente)
+                ->sum('precio_estatus');
 
-        $deuda=DB::table("facturas")->where('id_paciente','=',$id_paciente)->sum('precio_estatus');
+            // Si no hay facturas o la suma es null, retornar 0
+            $deuda_total = $deuda ? (float)$deuda : 0;
 
-        return  ['deuda_total'=>number_format($deuda, 2, '.', ',')];
+            return response()->json([
+                'deuda_total' => $deuda_total
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al consultar la deuda',
+                'message' => $e->getMessage(),
+                'deuda_total' => 0
+            ], 500);
+        }
     }
 
     public function cargar_generos(){

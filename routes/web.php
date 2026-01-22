@@ -173,6 +173,12 @@ Route::middleware(['tenant'])->group(function () {
 	Route::put('/api/marcar_pago_nomina_pagado/{id}','ControllerNomina@marcarComoPagado');
 	Route::get('/api/detalle_comisiones/{doctor_id}/{fecha_i}/{fecha_f}','ControllerNomina@obtenerDetalleComisiones');
 
+	//Ganancias de Doctores por Recibo
+	Route::get('/api/listar_recibos_ganancias','ControllerDoctorGanancias@listarRecibos');
+	Route::post('/api/asignar_ganancia_recibo','ControllerDoctorGanancias@asignarGanancia');
+	Route::delete('/api/eliminar_ganancia_recibo/{id}','ControllerDoctorGanancias@eliminarGanancia');
+	Route::get('/api/ganancias_doctor/{doctor_id}/{fecha_i}/{fecha_f}','ControllerDoctorGanancias@obtenerGananciasDoctor');
+
 	//Punto de Venta
 	Route::get('/api/listar_productos','ControllerPuntoVenta@listarProductos');
 	Route::post('/api/guardar_producto','ControllerPuntoVenta@guardarProducto');
