@@ -103,6 +103,10 @@
             Le enviamos adjunto el presupuesto solicitado.
         </p>
 
+        <p style="font-style: italic; color: #666;">
+            Presupuesto sujeto a cambios.
+        </p>
+
         <p>
             Si necesita alguna modificación o desea proceder, puede contactarnos en cualquier momento.
         </p>
