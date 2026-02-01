@@ -48,7 +48,7 @@ class ConfigController extends Controller
                 $data['ruta_favicon'] = $data['ruta_favicon'] ?? '';
             }
 
-            // Asegurar que los campos requeridos tengan valores por defecto si no se proporcionan
+            // Asegurar que los campos requeridos tengan valores por defecto si no se proporcionan (evitar NULL)
             $data['descripcion'] = $data['descripcion'] ?? '';
             $data['email'] = $data['email'] ?? '';
             $data['numero_empresa'] = $data['numero_empresa'] ?? '';
@@ -59,6 +59,13 @@ class ConfigController extends Controller
             $data['api_token_google'] = $data['api_token_google'] ?? '';
             $data['api_instagram'] = $data['api_instagram'] ?? '';
             $data['token_instagram'] = $data['token_instagram'] ?? '';
+            $data['nombre_clinica'] = $data['nombre_clinica'] ?? '';
+            $data['direccion_clinica'] = $data['direccion_clinica'] ?? '';
+            $data['telefono_clinica'] = $data['telefono_clinica'] ?? '';
+            $data['rnc_clinica'] = $data['rnc_clinica'] ?? '';
+            $data['email_clinica'] = $data['email_clinica'] ?? '';
+            $data['prefijo_factura'] = $data['prefijo_factura'] ?? '';
+            $data['google_calendar_id'] = $data['google_calendar_id'] ?? '';
 
             // Manejar campos booleanos
             if (isset($data['usar_google_calendar'])) {

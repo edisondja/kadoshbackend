@@ -72,6 +72,8 @@ class Paciente extends Controller
         $paciente->sexo = $data->sexo;
         $paciente->save();
 
+        return response()->json($paciente);
+
         /*
         formData.append("foto_paciente", imagefile.files[0]);
         formData.append("nombre",document.getElementById("nombre").value);
