@@ -19,13 +19,22 @@ class ControllerPresupuesto extends Controller
      */
     public function cargar_presupuestos($paciente_id){    
 
-        $presupuesto = Presupuesto::with('paciente')
-        ->where('paciente_id', $paciente_id)
-        ->orderBy('id', 'desc')
-        ->get();
+        $presupuestos = Presupuesto::with(['paciente', 'doctor'])
+            ->where('paciente_id', $paciente_id)
+            ->orderBy('id', 'desc')
+            ->get();
 
-        return $presupuesto;
+        // Asegurar que cada presupuesto incluya el doctor (cargar si falta y exponer nombre)
+        $presupuestos->each(function ($presupuesto) {
+            if (!$presupuesto->relationLoaded('doctor') && $presupuesto->doctor_id) {
+                $presupuesto->load('doctor');
+            }
+            if ($presupuesto->doctor === null && $presupuesto->doctor_id) {
+                $presupuesto->setRelation('doctor', \App\Doctor::find($presupuesto->doctor_id));
+            }
+        });
 
+        return response()->json($presupuestos);
     }
 
     /**
@@ -51,9 +60,15 @@ class ControllerPresupuesto extends Controller
     public function buscar_presupuesto($buscar){
 
 
-        $presupuesto = Presupuesto::where("nombre","like","$buscar%")->get();
-        
-        return $presupuesto;
+        $presupuestos = Presupuesto::with(['paciente', 'doctor'])->where("nombre","like","$buscar%")->get();
+
+        $presupuestos->each(function ($presupuesto) {
+            if ($presupuesto->doctor === null && $presupuesto->doctor_id) {
+                $presupuesto->setRelation('doctor', \App\Doctor::find($presupuesto->doctor_id));
+            }
+        });
+
+        return response()->json($presupuestos);
 
 
     }
