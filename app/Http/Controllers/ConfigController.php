@@ -66,11 +66,16 @@ class ConfigController extends Controller
             $data['email_clinica'] = $data['email_clinica'] ?? '';
             $data['prefijo_factura'] = $data['prefijo_factura'] ?? '';
             $data['google_calendar_id'] = $data['google_calendar_id'] ?? '';
+            $data['mensaje_cumpleanos'] = $data['mensaje_cumpleanos'] ?? '';
+            $data['recordatorio_minutos'] = isset($data['recordatorio_minutos']) ? (int) $data['recordatorio_minutos'] : 30;
 
             // Manejar campos booleanos
             if (isset($data['usar_google_calendar'])) {
                 $data['usar_google_calendar'] = filter_var($data['usar_google_calendar'], FILTER_VALIDATE_BOOLEAN);
             }
+
+            // Solo enviar al modelo los campos que existen en fillable (evitar columnas inexistentes)
+            $data = array_intersect_key($data, array_flip((new Config)->getFillable()));
 
             $config = Config::create($data);
 
@@ -151,6 +156,14 @@ class ConfigController extends Controller
                 // Si no se envía un nuevo archivo, mantener el existente
                 unset($data['ruta_favicon']);
             }
+
+            $data['mensaje_cumpleanos'] = $data['mensaje_cumpleanos'] ?? '';
+            if (array_key_exists('recordatorio_minutos', $data)) {
+                $data['recordatorio_minutos'] = (int) $data['recordatorio_minutos'];
+            }
+
+            // Solo enviar al modelo los campos que existen en fillable (evitar columnas inexistentes)
+            $data = array_intersect_key($data, array_flip($config->getFillable()));
 
             $config->update($data);
 

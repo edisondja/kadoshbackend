@@ -184,7 +184,7 @@ class ControllerRecibo extends Controller
                 break;
                 
             case 'tj':
-                $recibo->tipo_de_pago = "Pago tarjeto";
+                $recibo->tipo_de_pago = "Pago tarjeta";
                 $recibo->concepto_pago = "Procesador de pagos";
                 break;
                     

@@ -260,6 +260,8 @@ Route::middleware(['tenant'])->group(function () {
 
 	 //Odontogramas
 	 Route::post('/api/crear_odontograma','ControllerOdontograma@CrearOdontograma');
+	 Route::put('/api/actualizar_odontograma/{id}','ControllerOdontograma@ActualizarOdontograma');
+	 Route::post('/api/actualizar_odontograma/{id}','ControllerOdontograma@ActualizarOdontograma');
 	 Route::delete('/api/eliminar_odontograma/{id}','ControllerOdontograma@EliminarOdontograma');
 	 Route::get('/api/ver_odontograma/{id}','ControllerOdontograma@VerOdontograma');
 	 Route::get('/api/listar_odontogramas','ControllerOdontograma@ListarOdontogramas');
@@ -279,6 +281,7 @@ Route::middleware(['tenant'])->group(function () {
 	 Route::get('/api/estadisticas_logs/{usuario_id?}','ControllerAuditoria@ObtenerEstadisticasLogs');
 	 Route::post('/api/crear_log','ControllerAuditoria@CrearLog');
 
-
+	 // Soporte - mensajes al correo edisondja@gmail.com
+	 Route::post('/api/soporte/enviar','ControllerSoporte@enviarMensaje');
 
 });

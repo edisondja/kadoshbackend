@@ -216,5 +216,63 @@ class ControllerOdontograma extends Controller
         return response()->json($odontogramas, 200);
     }
 
+    /**
+     * Actualizar un odontograma existente (dibujo y/o detalles).
+     */
+    public function ActualizarOdontograma($id, Request $request)
+    {
+        try {
+            $odontograma = Odontograma::find($id);
+            if (!$odontograma) {
+                return response()->json(['message' => 'Odontograma no encontrado'], 404);
+            }
 
+            $dibujoOdontograma = $request->dibujo_odontograma ?? $request->dibujoOdontograma ?? null;
+            if ($dibujoOdontograma !== null) {
+                if (strlen($dibujoOdontograma) > 10000000) {
+                    $dibujoOdontograma = substr($dibujoOdontograma, 0, 10000000);
+                }
+                $odontograma->dibujo_odontograma = $dibujoOdontograma;
+            }
+
+            if ($request->has('estado')) {
+                $odontograma->estado = $request->estado;
+            }
+
+            $odontograma->save();
+
+            if ($request->has('detalles') && is_array($request->detalles)) {
+                Odontograma_detalles::where('odontograma_id', $id)->delete();
+                foreach ($request->detalles as $detalle) {
+                    Odontograma_detalles::create([
+                        'odontograma_id' => $odontograma->id,
+                        'diente' => $detalle['diente'] ?? '',
+                        'cara' => $detalle['cara'] ?? null,
+                        'tipo' => $detalle['tipo'] ?? 'procedimiento',
+                        'descripcion' => $detalle['descripcion'] ?? $detalle['nombre'] ?? '',
+                        'precio' => $detalle['precio'] ?? 0,
+                        'color' => $detalle['color'] ?? null
+                    ]);
+                }
+            }
+
+            $odontograma->load('detalles');
+
+            $usuarioId = $request->input('usuario_id') ?? null;
+            AuditoriaHelper::registrar(
+                $usuarioId,
+                'Odontogramas',
+                'Actualizar Odontograma',
+                "Odontograma #{$id} actualizado"
+            );
+
+            return response()->json($odontograma, 200);
+        } catch (\Exception $e) {
+            \Log::error('Error al actualizar odontograma: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al actualizar el odontograma',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -28,6 +28,7 @@ class CreateConfigsTable extends Migration
             $table->string("api_token_google");
             $table->string("api_instagram");
             $table->string("token_instagram");
+            $table->text('mensaje_cumpleanos')->nullable();
             $table->timestamps();
         });
     }
