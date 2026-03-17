@@ -8,15 +8,24 @@ El módulo de **Administración de Tenants** permite gestionar todos los cliente
 
 ## 🚀 Acceso al Módulo
 
-### Desde el Menú Principal
+El panel de administración de tenants es **independiente** del sistema por tenant: se accede por URL directa y con usuario administrador (no con el usuario del tenant).
 
-1. Inicia sesión en el sistema
-2. En el menú lateral, busca la opción **"Administrar Tenants"**
-3. Haz clic en el enlace o icono
+### URL de acceso
 
-**Ruta**: `/administrar_tenants`
+- **Ruta:** `/admin-tenants`
+- **Ejemplo local:** `http://localhost:8000/admin-tenants`
+- **Ejemplo producción:** `https://tudominio.com/admin-tenants` (acceder **sin** subdominio para no activar el tenant)
 
-**Icono**: `<i className="fas fa-building"></i>`
+### Credenciales
+
+- Usuario y contraseña de un **administrador** (tabla `admin_users` en la BD maestra).
+- Por defecto, tras ejecutar el seeder: usuario `admin`, contraseña `admin123`.
+
+### Documentación técnica
+
+Para ubicación de **tablas, modelos, controladores, vistas, rutas y middleware**, ver:
+
+- **`docs/ADMINISTRADOR_TENANTS_REFERENCIA.md`**
 
 ---
 

@@ -364,11 +364,34 @@ class ControllerRecibo extends Controller
 
             // Generar URL pública (requiere tener el enlace simbólico "storage" creado)
             $publicUrl = asset('storage/temp_recibos/' . $filename);
+            // URL de vista HTML (más amigable para WhatsApp, con botón descargar)
+            $viewUrl = url('/r/' . $filename);
 
-            return response()->json(['url' => $publicUrl], 200);
+            return response()->json(['url' => $publicUrl, 'view_url' => $viewUrl], 200);
         } else {
             return response()->json(['error' => 'No se recibió ningún archivo PDF'], 400);
         }
+    }
+
+    /**
+     * Vista pública simple para descargar/visualizar un recibo temporal.
+     * No requiere BD (solo lee archivo en /storage/temp_recibos).
+     */
+    public function ver_recibo_temp($filename)
+    {
+        // Validación básica de nombre para evitar traversal
+        if (!is_string($filename) || !preg_match('/^[a-zA-Z0-9._-]+\\.pdf$/', $filename)) {
+            abort(404);
+        }
+
+        $relative = 'public/temp_recibos/' . $filename;
+        $full = storage_path('app/' . $relative);
+        if (!file_exists($full)) {
+            abort(404);
+        }
+
+        $pdfUrl = asset('storage/temp_recibos/' . $filename);
+        return view('recibo_temp_publico', ['pdfUrl' => $pdfUrl, 'filename' => $filename]);
     }
 
     public function enviarRecibo(Request $request)

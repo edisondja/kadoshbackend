@@ -12,6 +12,12 @@ class TenantMiddleware
 {
     public function handle($request, Closure $next)
     {
+        // Panel de administración de tenants: siempre usar BD maestra (no aplicar lógica tenant)
+        $path = $request->path();
+        if ($path === 'admin-tenants' || strpos($path, 'api/admin') === 0) {
+            return $next($request);
+        }
+
         $host = $request->getHost(); // ej: clinica1.odontoed.com o odontoed.com
         $parts = explode('.', $host);
 

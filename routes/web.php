@@ -18,14 +18,28 @@
 	//Route::get('/api/eliminar_usuario/{id}','LoginContorller@AactualizarUsuario');
 	//Route::get('/api/consultar_usuarios','LoginController@CargarUsuarios');
 
-	//API ADMINISTRACIÓN DE TENANTS (Fuera del middleware tenant para acceso desde BD principal)
-	Route::get('/api/tenants', 'ControllerTenant@index');
-	Route::get('/api/tenants/{id}', 'ControllerTenant@show');
-	Route::post('/api/tenants', 'ControllerTenant@store');
-	Route::post('/api/tenants/{id}', 'ControllerTenant@update');
-	Route::put('/api/tenants/{id}', 'ControllerTenant@update');
-	Route::delete('/api/tenants/{id}', 'ControllerTenant@destroy');
-	Route::get('/api/tenants/verificar/{subdominio}', 'ControllerTenant@verificarEstado');
+	// Interfaz de administración de tenants (fuera del sistema tenant)
+	Route::get('/admin-tenants', function () {
+		return view('admin_tenants');
+	});
+
+	// API administrador (login fuera del tenant)
+	Route::post('/api/admin/login', 'ControllerAdminAuth@login');
+
+	// API administración de tenants (requiere login administrador)
+	Route::middleware(['admin'])->group(function () {
+		Route::get('/api/admin/me', 'ControllerAdminAuth@me');
+		Route::get('/api/tenants', 'ControllerTenant@index');
+		Route::get('/api/tenants/verificar/{subdominio}', 'ControllerTenant@verificarEstado');
+		Route::get('/api/tenants/{id}', 'ControllerTenant@show');
+		Route::post('/api/tenants', 'ControllerTenant@store');
+		Route::post('/api/tenants/{id}', 'ControllerTenant@update');
+		Route::put('/api/tenants/{id}', 'ControllerTenant@update');
+		Route::delete('/api/tenants/{id}', 'ControllerTenant@destroy');
+	});
+
+	// Vista pública para recibos temporales (WhatsApp)
+	Route::get('/r/{filename}', 'ControllerRecibo@ver_recibo_temp');
 
 	//API PACIENTES READY
 	
