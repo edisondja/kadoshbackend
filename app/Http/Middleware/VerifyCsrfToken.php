@@ -15,5 +15,9 @@ class VerifyCsrfToken extends Middleware
         '/api/login',
         '/api/crear_factura',
         '/api/editando_factura/',
+        // Chat de soporte: petición multipart desde SPA sin cookie CSRF del mismo dominio
+        '/api/soporte/enviar',
+        '/api/invitacion_paciente/registrar',
+        '/api/invitacion_paciente/crear',
     ];
 }

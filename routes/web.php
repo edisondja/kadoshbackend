@@ -45,6 +45,9 @@
 	
 Route::middleware(['tenant'])->group(function () {
 
+	// Fotos y archivos en storage/app/public (funciona aunque no exista el symlink public/storage)
+	Route::get('/storage/{archivo}', 'Paciente@servirArchivoPublico')->where('archivo', '[^/]+');
+
 	Route::post('/api/guardar_paciente','Paciente@guardar');
 	Route::get('/api/paciente','Paciente@index');	
 	Route::get('/api/paciente/{id_paciente}','Paciente@show');
@@ -54,10 +57,16 @@ Route::middleware(['tenant'])->group(function () {
 	Route::post('/api/actualizar_paciente','Paciente@update');
 	Route::get('/api/buscar_paciente/{nombre}','Paciente@buscando_paciente');
 	Route::get('/api/consultar_deuda/{id_paciente}','Paciente@deuda_paciente');
+	Route::get('/api/deudas_por_fecha','Paciente@listarDeudasPorFechas');
 	Route::get('/api/cargar_generos_pacientes','Paciente@cargar_generos');
 	Route::get('/api/cantidad_de_pacientes','Paciente@cantidad_de_pacientes');
 	Route::get('/api/exportar_pacientes','Paciente@exportar_pacientes');
 	Route::post('/api/importar_pacientes','Paciente@importar_pacientes');
+
+	// Invitación registro paciente (enlace de un solo uso)
+	Route::get('/api/invitacion_paciente/{token}', 'PacienteInvitacionController@verificar');
+	Route::post('/api/invitacion_paciente/registrar', 'PacienteInvitacionController@registrar');
+	Route::post('/api/invitacion_paciente/crear', 'PacienteInvitacionController@crear');
 
 	///API DOCTORES
 	Route::get('/api/doctores/','ControllerDoctor@index');

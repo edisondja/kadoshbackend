@@ -47,17 +47,12 @@ class Paciente extends Controller
     public function guardar(Request $data){
         //metodo para crear un paciente
 
-        if($data->hasFile("foto_paciente")){
-            
-            $archivo = $data->file('foto_paciente')->store("public");
-            $archivo = explode("/",$archivo);
-    
-        }else{
-
-            $archivo= array("0"=>"","1"=>"");
+        $nombreFoto = '';
+        if ($data->hasFile('foto_paciente')) {
+            $storedPath = $data->file('foto_paciente')->store('public');
+            $nombreFoto = basename(str_replace('\\', '/', $storedPath));
         }
 
- 
         $paciente = new App\Paciente();
         $paciente->nombre = $data->nombre;
         $paciente->apellido =  $data->apellido;
@@ -67,7 +62,7 @@ class Paciente extends Controller
         $paciente->correo_electronico = trim((string) ($data->correo_electronico ?? '')) ?: null;
         $paciente->fecha_de_ingreso = date("Y-m-d H:i:s");
         $paciente->fecha_nacimiento = !empty(trim((string) ($data->fecha_nacimiento ?? ''))) ? $data->fecha_nacimiento : '1900-01-01';
-        $paciente->foto_paciente = $archivo[1];
+        $paciente->foto_paciente = $nombreFoto;
         $paciente->nombre_tutor = $data->nombre_tutor;
         $paciente->sexo = $data->sexo;
         $paciente->save();
@@ -247,12 +242,11 @@ class Paciente extends Controller
 
     public function deuda_paciente($id_paciente){
         try {
-            $deuda = DB::table("facturas")
+            $deuda = DB::table('facturas')
                 ->where('id_paciente', '=', $id_paciente)
                 ->sum('precio_estatus');
 
-            // Si no hay facturas o la suma es null, retornar 0
-            $deuda_total = $deuda ? (float)$deuda : 0;
+            $deuda_total = $deuda !== null ? (float) $deuda : 0;
 
             return response()->json([
                 'deuda_total' => $deuda_total
@@ -262,6 +256,122 @@ class Paciente extends Controller
                 'error' => 'Error al consultar la deuda',
                 'message' => $e->getMessage(),
                 'deuda_total' => 0
+            ], 500);
+        }
+    }
+
+    /**
+     * Listado de deuda por paciente: mismas facturas que importan para deuda_paciente, pero solo las que tienen saldo.
+     * Incluye todas las facturas con precio_estatus > 0 y suma ese campo por paciente (igual criterio que consultar deuda).
+     * Opcional: fecha_desde + fecha_hasta acotan por fecha de creación de la factura.
+     */
+    public function listarDeudasPorFechas(Request $request)
+    {
+        $desde = $request->query('fecha_desde');
+        $hasta = $request->query('fecha_hasta');
+        $tieneDesde = $desde !== null && trim((string) $desde) !== '';
+        $tieneHasta = $hasta !== null && trim((string) $hasta) !== '';
+        $filtrarFecha = $tieneDesde || $tieneHasta;
+
+        $iniCarbon = null;
+        $finCarbon = null;
+
+        if ($filtrarFecha) {
+            if (!$tieneDesde || !$tieneHasta) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Para filtrar por fecha envíe fecha_desde y fecha_hasta, o ninguna para ver toda la deuda.',
+                ], 422);
+            }
+
+            $request->merge(['fecha_desde' => $desde, 'fecha_hasta' => $hasta]);
+            $request->validate([
+                'fecha_desde' => 'date',
+                'fecha_hasta' => 'date|after_or_equal:fecha_desde',
+            ], [
+                'fecha_hasta.after_or_equal' => 'La fecha final debe ser igual o posterior a la inicial.',
+            ]);
+
+            try {
+                $iniCarbon = Carbon::parse($desde)->startOfDay();
+                $finCarbon = Carbon::parse($hasta)->endOfDay();
+                if ($iniCarbon->diffInDays($finCarbon) > 731) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'El rango máximo permitido es 24 meses.',
+                    ], 422);
+                }
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Fechas no válidas.',
+                ], 422);
+            }
+        }
+
+        try {
+            $q = DB::table('facturas')
+                ->join('pacientes', 'facturas.id_paciente', '=', 'pacientes.id')
+                ->where('facturas.precio_estatus', '>', 0);
+
+            if ($filtrarFecha) {
+                $q->where('facturas.created_at', '>=', $iniCarbon)
+                    ->where('facturas.created_at', '<=', $finCarbon);
+            }
+
+            $rows = $q
+                ->select(
+                    'pacientes.id as id_paciente',
+                    'pacientes.id_doctor',
+                    'pacientes.nombre',
+                    'pacientes.apellido',
+                    'pacientes.cedula',
+                    'pacientes.telefono',
+                    DB::raw('SUM(facturas.precio_estatus) as deuda'),
+                    DB::raw('COUNT(facturas.id) as cantidad_facturas')
+                )
+                ->groupBy(
+                    'pacientes.id',
+                    'pacientes.id_doctor',
+                    'pacientes.nombre',
+                    'pacientes.apellido',
+                    'pacientes.cedula',
+                    'pacientes.telefono'
+                )
+                ->orderByDesc('deuda')
+                ->get();
+
+            $total = 0.0;
+            $pacientes = $rows->map(function ($r) use (&$total) {
+                $d = (float) $r->deuda;
+                $total += $d;
+
+                return [
+                    'id_paciente' => (int) $r->id_paciente,
+                    'id_doctor' => $r->id_doctor !== null ? (int) $r->id_doctor : null,
+                    'nombre' => $r->nombre,
+                    'apellido' => $r->apellido,
+                    'cedula' => $r->cedula,
+                    'telefono' => $r->telefono,
+                    'deuda' => $d,
+                    'cantidad_facturas' => (int) $r->cantidad_facturas,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'filtrar_por_fecha_creacion' => $filtrarFecha,
+                'fecha_desde' => $filtrarFecha ? $desde : null,
+                'fecha_hasta' => $filtrarFecha ? $hasta : null,
+                'total_deuda' => round($total, 2),
+                'total_pacientes' => $pacientes->count(),
+                'pacientes' => $pacientes,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al consultar deudas.',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -298,16 +408,38 @@ class Paciente extends Controller
     public function actualizar_foto_paciente(Request $data){
         
 
-        $archivo = $data->file('foto_paciente')->store("public");
-        $archivo = explode("/",$archivo);
+        $storedPath = $data->file('foto_paciente')->store('public');
+        $nombreArchivo = basename(str_replace('\\', '/', $storedPath));
 
         $paciente = App\Paciente::find($data->id);
-        $paciente->foto_paciente = $archivo[1];
+        $paciente->foto_paciente = $nombreArchivo;
         $paciente->save();
 
-        return $archivo[1];
+        return $nombreArchivo;
 
 
+    }
+
+    /**
+     * Sirve archivos de storage/app/public como /storage/{archivo}
+     * (respaldo si no existe el enlace simbólico public/storage → storage/app/public).
+     */
+    public function servirArchivoPublico($archivo)
+    {
+        $archivo = basename(str_replace('\\', '/', (string) $archivo));
+        if ($archivo === '' || $archivo === '.' || $archivo === '..') {
+            abort(404);
+        }
+
+        $full = storage_path('app/public/'.$archivo);
+        $root = realpath(storage_path('app/public'));
+        $real = realpath($full);
+
+        if ($root === false || $real === false || strpos($real, $root) !== 0 || !is_file($real)) {
+            abort(404);
+        }
+
+        return response()->file($real);
     }
 
     /**
@@ -439,6 +571,5 @@ class Paciente extends Controller
             ], 500);
         }
     }
-
 
 }
