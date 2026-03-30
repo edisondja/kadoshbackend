@@ -11,6 +11,8 @@ class Doctor extends Model
         'apellido',
         'dni',
         'numero_telefono',
+        'correo_electronico',
+        'id_usuario',
         'especialidad',
         'sexo',
         'estado'

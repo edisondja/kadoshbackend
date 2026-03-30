@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use DB;
 use Mail;
 use App;
@@ -397,39 +398,65 @@ class ControllerRecibo extends Controller
     public function enviarRecibo(Request $request)
     {
         try {
-            // Validar los datos recibidos
-      
+            // Validar insumos clave antes de enviar al SMTP
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'asunto' => 'required|string|max:191',
+                'pdf' => 'required|file|mimes:pdf|max:10240',
+            ], [
+                'email.required' => 'El paciente no tiene correo electrónico registrado.',
+                'email.email' => 'El correo del paciente no es válido.',
+                'pdf.required' => 'No se recibió el PDF del recibo.',
+                'pdf.mimes' => 'El archivo adjunto debe ser PDF.',
+                'pdf.max' => 'El PDF excede el tamaño permitido (10MB).',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
             // Obtener el contenido del PDF enviado desde el front
             $pdf = $request->file('pdf');
-
-            if (!$pdf) {
-                return response()->json(['error' => 'No se recibió el PDF'], 422);
-            }
 
             // Guardar el PDF temporalmente
             $pdfPath = $pdf->storeAs('public/temp_recibos', 'recibo_' . time() . '.pdf');
             $pdfFullPath = storage_path('app/' . $pdfPath);
-            //dra.felizcdko@gmail.com
+
+            // Config SMTP mínima (si faltan credenciales, enviar mensaje claro)
+            if (empty(config('mail.host')) || empty(config('mail.port'))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SMTP no configurado (MAIL_HOST/MAIL_PORT).',
+                ], 500);
+            }
+
             // Enviar correo
-            Mail::to($request->email)->send(new \App\Mail\ReciboMailable($request->asunto,
-                                                                          $pdfFullPath,
-                                                                          $request->nombre_compania,
-                                                                          $request->logo_compania,
-                                                                          $request->direccion_compania,
-                                                                          $request->telefono_compania
-                                                                        ));
+            Mail::to($request->email)->send(new \App\Mail\ReciboMailable(
+                $request->asunto,
+                $pdfFullPath,
+                $request->nombre_compania,
+                $request->logo_compania,
+                $request->direccion_compania,
+                $request->telefono_compania
+            ));
 
             // Eliminar el archivo temporal
             if (file_exists($pdfFullPath)) {
                 unlink($pdfFullPath);
             }
 
-            return response()->json(['message' => 'Recibo enviado correctamente'], 200);
+            return response()->json(['success' => true, 'message' => 'Recibo enviado correctamente'], 200);
 
         } catch (\Exception $e) {
             \Log::error('Error al enviar recibo: ' . $e->getMessage());
             return response()->json([
-                'error' => 'Error al enviar el recibo: ' . $e->getMessage()
+                'success' => false,
+                'message' => 'Error al enviar el recibo por correo.',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

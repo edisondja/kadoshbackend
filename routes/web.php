@@ -68,6 +68,10 @@ Route::middleware(['tenant'])->group(function () {
 	Route::post('/api/invitacion_paciente/registrar', 'PacienteInvitacionController@registrar');
 	Route::post('/api/invitacion_paciente/crear', 'PacienteInvitacionController@crear');
 
+	// Invitación registro odontólogo (enlace de un solo uso)
+	Route::get('/api/invitacion_doctor/{token}', 'DoctorInvitacionController@verificar');
+	Route::post('/api/invitacion_doctor/registrar', 'DoctorInvitacionController@registrar');
+
 	///API DOCTORES
 	Route::get('/api/doctores/','ControllerDoctor@index');
 	Route::get('/api/doctores_todos/','ControllerDoctor@indexAll'); // Para administración (incluye inactivos)
@@ -235,6 +239,9 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/cantidad_de_usuario','ControllerUsuario@cantidad_usuario');
 	Route::get('/api/cargar_usuarios','ControllerUsuario@cargar_usuarios');
 	Route::get('/api/cargar_usuario/{id_usuario}','ControllerUsuario@cargar_usuario');
+	Route::get('/api/listar_roles','ControllerUsuario@listar_roles');
+	Route::post('/api/guardar_rol','ControllerUsuario@guardar_rol');
+	Route::post('/api/eliminar_rol','ControllerUsuario@eliminar_rol');
 	Route::get('/api/exportar_usuarios','ControllerUsuario@exportar_usuarios');
 	Route::post('/api/importar_usuarios','ControllerUsuario@importar_usuarios');
 

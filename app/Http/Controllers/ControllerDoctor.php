@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
+use Mail;
 use DB;
 use App;
 
@@ -71,8 +74,12 @@ class ControllerDoctor extends Controller
                 'cedula' => 'required|string|max:255',
                 'telefono' => 'required|string|max:255',
                 'especialidad' => 'nullable|string|max:255',
-                'sexo' => 'nullable|string|in:M,F'
+                'sexo' => 'nullable|string|in:M,F',
+                'correo_electronico' => 'nullable|email|max:191',
+                'url_frontend' => 'nullable|string|max:512',
             ]);
+
+            $correoDoctor = trim((string) $request->input('correo_electronico', ''));
 
             $doctor = App\Doctor::create([
                 'nombre' => $request->nombre,
@@ -81,13 +88,17 @@ class ControllerDoctor extends Controller
                 'numero_telefono' => $request->telefono,
                 'especialidad' => $request->especialidad ?? null,
                 'sexo' => $request->sexo ?? null,
+                'correo_electronico' => $correoDoctor !== '' ? $correoDoctor : null,
                 'estado' => true // Activo por defecto
             ]);
+
+            $invitacion = $this->intentarInvitacionCorreoDoctor($request, $doctor, $correoDoctor);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Doctor creado correctamente',
-                'doctor' => $doctor
+                'doctor' => $doctor,
+                'invitacion_correo' => $invitacion,
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -325,5 +336,92 @@ class ControllerDoctor extends Controller
            return "doctor eliminado";
            
 
+    }
+
+    private function resolverUrlFrontendRegistro(Request $request)
+    {
+        $u = trim((string) $request->input('url_frontend', ''));
+        if ($u !== '' && preg_match('#^https?://#i', $u)) {
+            return rtrim($u, '/');
+        }
+        $env = rtrim((string) env('APP_FRONTEND_URL', ''), '/');
+        if ($env !== '') {
+            return $env;
+        }
+        $cfg = App\Config::first();
+        if ($cfg && !empty(trim((string) ($cfg->dominio ?? '')))) {
+            $d = trim($cfg->dominio);
+            if (!preg_match('#^https?://#i', $d)) {
+                $d = 'https://'.$d;
+            }
+
+            return rtrim($d, '/');
+        }
+
+        return null;
+    }
+
+    /**
+     * Crea token de invitación y envía correo al odontólogo (POST crear doctor).
+     *
+     * @param  string  $correoDoctor
+     * @return array{enviada: bool, motivo?: string, expira?: string}
+     */
+    private function intentarInvitacionCorreoDoctor(Request $request, $doctor, $correoDoctor)
+    {
+        $correoDoctor = trim((string) $correoDoctor);
+        if ($correoDoctor === '' || !filter_var($correoDoctor, FILTER_VALIDATE_EMAIL)) {
+            return ['enviada' => false, 'motivo' => 'sin_correo'];
+        }
+
+        $base = $this->resolverUrlFrontendRegistro($request);
+        if (!$base) {
+            return ['enviada' => false, 'motivo' => 'sin_url_frontend'];
+        }
+
+        $config = App\Config::first();
+        $nombreClinica = $config && !empty(trim((string) ($config->nombre_clinica ?? '')))
+            ? trim($config->nombre_clinica)
+            : (($config && !empty($config->nombre)) ? $config->nombre : 'la clínica');
+
+        $nombreDoctor = trim($doctor->nombre.' '.$doctor->apellido);
+        $dias = 14;
+
+        $token = Str::random(48);
+        $expiresAt = Carbon::now()->addDays($dias);
+
+        try {
+            DB::table('doctor_invitaciones')->insert([
+                'token' => $token,
+                'id_doctor' => (int) $doctor->id,
+                'expires_at' => $expiresAt,
+                'used_at' => null,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('doctor_invitaciones insert: '.$e->getMessage());
+
+            return ['enviada' => false, 'motivo' => 'error_invitacion'];
+        }
+
+        $enlace = $base.'/registro_doctor/'.$token;
+
+        try {
+            Mail::send('emails.invitacion_doctor', [
+                'nombreClinica' => $nombreClinica,
+                'nombreDoctor' => $nombreDoctor,
+                'enlaceRegistro' => $enlace,
+                'diasValidez' => $dias,
+            ], function ($m) use ($correoDoctor, $nombreClinica) {
+                $m->to($correoDoctor)->subject('Acceso al sistema - '.$nombreClinica);
+            });
+        } catch (\Exception $e) {
+            \Log::warning('No se pudo enviar correo invitación doctor: '.$e->getMessage());
+
+            return ['enviada' => false, 'motivo' => 'error_correo'];
+        }
+
+        return ['enviada' => true, 'expira' => $expiresAt->toIso8601String()];
     }
 }

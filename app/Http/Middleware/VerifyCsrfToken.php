@@ -19,5 +19,6 @@ class VerifyCsrfToken extends Middleware
         '/api/soporte/enviar',
         '/api/invitacion_paciente/registrar',
         '/api/invitacion_paciente/crear',
+        '/api/invitacion_doctor/registrar',
     ];
 }

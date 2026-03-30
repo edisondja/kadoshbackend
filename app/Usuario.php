@@ -12,8 +12,10 @@ class Usuario extends Model
         'usuario',
         'clave',
         'roll',
+        'id_rol',
         'nombre',
-        'apellido'
+        'apellido',
+        'permisos',
     ];
 
     public function pagosMensuales()
