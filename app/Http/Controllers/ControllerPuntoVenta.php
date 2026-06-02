@@ -83,6 +83,7 @@ class ControllerPuntoVenta extends Controller
                 'id_doctor' => 'nullable|integer|exists:doctors,id',
                 'id_paciente' => 'nullable|integer|exists:pacientes,id',
                 'tipo_pago' => 'nullable|string',
+                'moneda_pago' => 'nullable|string|max:3',
                 'monto_total' => 'required|numeric|min:0'
             ]);
 
@@ -137,6 +138,11 @@ class ControllerPuntoVenta extends Controller
                 ]);
             }
 
+            $monedaPago = strtoupper($request->input('moneda_pago', 'DOP'));
+            if (!preg_match('/^[A-Z]{3}$/', $monedaPago)) {
+                $monedaPago = 'DOP';
+            }
+
             // Crear recibo para la venta
             $recibo = Recibo::create([
                 'id_factura' => $factura->id,
@@ -146,6 +152,7 @@ class ControllerPuntoVenta extends Controller
                 'estado_actual' => $request->monto_total,
                 'concepto_pago' => 'Venta de productos',
                 'codigo_recibo' => 'VENT-' . str_pad($factura->id, 6, '0', STR_PAD_LEFT),
+                'codigo_confirmacion' => $monedaPago,
                 'fecha_pago' => Carbon::now(),
                 'procedimientos' => json_encode($request->productos)
             ]);

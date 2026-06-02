@@ -77,6 +77,7 @@ class ControllerDoctor extends Controller
                 'sexo' => 'nullable|string|in:M,F',
                 'correo_electronico' => 'nullable|email|max:191',
                 'url_frontend' => 'nullable|string|max:512',
+                'porcentaje_ingresos' => 'nullable|numeric|min:0|max:100',
             ]);
 
             $correoDoctor = trim((string) $request->input('correo_electronico', ''));
@@ -89,7 +90,8 @@ class ControllerDoctor extends Controller
                 'especialidad' => $request->especialidad ?? null,
                 'sexo' => $request->sexo ?? null,
                 'correo_electronico' => $correoDoctor !== '' ? $correoDoctor : null,
-                'estado' => true // Activo por defecto
+                'estado' => true, // Activo por defecto
+                'porcentaje_ingresos' => min(100, max(0, floatval($request->input('porcentaje_ingresos', 0)))),
             ]);
 
             $invitacion = $this->intentarInvitacionCorreoDoctor($request, $doctor, $correoDoctor);
@@ -203,7 +205,8 @@ class ControllerDoctor extends Controller
                     'cedula' => 'required|string',
                     'telefono' => 'required|string',
                     'especialidad' => 'nullable|string',
-                    'sexo' => 'nullable|string|in:M,F'
+                    'sexo' => 'nullable|string|in:M,F',
+                    'porcentaje_ingresos' => 'nullable|numeric|min:0|max:100',
                 ]);
 
                 $doctor = App\Doctor::findOrFail($id);
@@ -214,6 +217,9 @@ class ControllerDoctor extends Controller
                 $doctor->especialidad = $request->especialidad;
                 if ($request->has('sexo')) {
                     $doctor->sexo = $request->sexo;
+                }
+                if ($request->has('porcentaje_ingresos')) {
+                    $doctor->porcentaje_ingresos = min(100, max(0, floatval($request->porcentaje_ingresos)));
                 }
                 $doctor->save();
 

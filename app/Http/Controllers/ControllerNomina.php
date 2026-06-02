@@ -11,6 +11,7 @@ use App\Factura;
 use App\Recibo;
 use App\Historial_p;
 use App\DoctorGananciaRecibo;
+use App\SalarioDoctor;
 use DB;
 use Carbon\Carbon;
 
@@ -40,6 +41,17 @@ class ControllerNomina extends Controller
             $resultado = [];
 
             foreach ($doctores as $doctor) {
+                $porcentajeIngresos = floatval($doctor->porcentaje_ingresos ?? 0);
+                $salarioActivo = SalarioDoctor::where('doctor_id', $doctor->id)
+                    ->where('activo', true)
+                    ->where(function ($query) {
+                        $query->whereNull('fecha_fin')
+                            ->orWhere('fecha_fin', '>=', Carbon::now());
+                    })
+                    ->orderBy('fecha_inicio', 'desc')
+                    ->first();
+                $salarioBase = $salarioActivo ? floatval($salarioActivo->salario) : 0;
+
                 // Obtener facturas del doctor en el período
                 $facturas = Factura::where('id_doctor', $doctor->id)
                     ->whereHas('recibos', function($query) use ($fecha_inicio, $fecha_fin) {
@@ -57,6 +69,7 @@ class ControllerNomina extends Controller
                 $detalleProcedimientos = [];
                 $totalGananciasManuales = 0; // Ganancias asignadas manualmente por recibo
                 $totalGananciasClinicaManuales = 0;
+                $totalComisionesPorcentaje = 0;
 
                 // Obtener ganancias asignadas manualmente por recibo en el período
                 $gananciasManuales = DoctorGananciaRecibo::where('id_doctor', $doctor->id)
@@ -82,8 +95,10 @@ class ControllerNomina extends Controller
                                     $totalGananciasManuales += $gananciaManual->ganancia_doctor;
                                     $totalGananciasClinicaManuales += $gananciaManual->ganancia_clinica;
                                 }
+                            } elseif ($porcentajeIngresos > 0) {
+                                $totalComisionesPorcentaje += round($recibo->monto * $porcentajeIngresos / 100, 2);
                             } else {
-                                // Si no tiene ganancia manual, calcular por procedimientos
+                                // Si no tiene ganancia manual ni %, calcular por procedimientos
                                 // Obtener procedimientos del recibo
                                 $procedimientosRecibo = json_decode($recibo->procedimientos, true);
                                 
@@ -141,12 +156,12 @@ class ControllerNomina extends Controller
                     }
                 }
 
-                // Sumar ganancias manuales a las comisiones totales
-                $totalComisiones += $totalGananciasManuales;
+                // Sumar ganancias manuales y por porcentaje a las comisiones totales
+                $totalComisiones += $totalGananciasManuales + $totalComisionesPorcentaje;
                 // Calcular ganancias de la clínica: ingresos totales - ganancias del doctor (manuales + por procedimientos)
                 $totalClinica = $totalIngresos - $totalComisiones;
 
-                if ($totalIngresos > 0 || $recibosGenerados > 0) {
+                if ($totalIngresos > 0 || $recibosGenerados > 0 || $salarioBase > 0) {
                     $resultado[] = [
                         'doctor_id' => $doctor->id,
                         'nombre' => $doctor->nombre,
@@ -154,6 +169,9 @@ class ControllerNomina extends Controller
                         'monto' => $totalIngresos,
                         'ganancias_doctor' => $totalComisiones,
                         'ganancias_clinica' => $totalClinica,
+                        'salario_base' => $salarioBase,
+                        'porcentaje_ingresos' => $porcentajeIngresos,
+                        'total_a_pagar' => round($totalComisiones + $salarioBase, 2),
                         'recibos' => $recibosGenerados,
                         'detalle_procedimientos' => array_values($detalleProcedimientos)
                     ];

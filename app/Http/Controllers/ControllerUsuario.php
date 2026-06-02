@@ -91,6 +91,15 @@ class ControllerUsuario extends Controller
         return $arr;
     }
 
+    public function usuarioTienePermiso($usuario, $modulo)
+    {
+        if (!$usuario) {
+            return false;
+        }
+        $permisos = $this->normalizarPermisos($usuario->roll, $usuario->permisos, $usuario->id_rol ?? null);
+        return !empty($permisos[$modulo]);
+    }
+
 
     private function resolverIpCliente(Request $request)
     {

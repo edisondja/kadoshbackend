@@ -68,6 +68,9 @@ class ConfigController extends Controller
             $data['google_calendar_id'] = $data['google_calendar_id'] ?? '';
             $data['mensaje_cumpleanos'] = $data['mensaje_cumpleanos'] ?? '';
             $data['recordatorio_minutos'] = isset($data['recordatorio_minutos']) ? (int) $data['recordatorio_minutos'] : 30;
+            $data['formato_hora_citas'] = in_array($data['formato_hora_citas'] ?? '', ['24h', '12h'], true)
+                ? $data['formato_hora_citas']
+                : '12h';
 
             // Manejar campos booleanos
             if (isset($data['usar_google_calendar'])) {
@@ -160,6 +163,11 @@ class ConfigController extends Controller
             $data['mensaje_cumpleanos'] = $data['mensaje_cumpleanos'] ?? '';
             if (array_key_exists('recordatorio_minutos', $data)) {
                 $data['recordatorio_minutos'] = (int) $data['recordatorio_minutos'];
+            }
+            if (array_key_exists('formato_hora_citas', $data)) {
+                $data['formato_hora_citas'] = in_array($data['formato_hora_citas'], ['24h', '12h'], true)
+                    ? $data['formato_hora_citas']
+                    : '12h';
             }
 
             // Solo enviar al modelo los campos que existen en fillable (evitar columnas inexistentes)

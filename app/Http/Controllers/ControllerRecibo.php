@@ -126,6 +126,7 @@ class ControllerRecibo extends Controller
             'codigo_tarjeta'  => 'nullable|string',
             'total'           => 'nullable|numeric',
             'procedimientos'  => 'nullable|array',
+            'moneda_pago'     => 'nullable|string|max:3',
         ]);
 
         $id_factura     = $request->input('id_factura');
@@ -133,6 +134,10 @@ class ControllerRecibo extends Controller
         $tipo_de_pago   = $request->input('tipo_de_pago');
         $estado_actual  = $request->input('estado_actual');
         $concepto_pago  = $request->input('concepto_pago');
+        $moneda_pago    = strtoupper($request->input('moneda_pago', 'DOP'));
+        if (!preg_match('/^[A-Z]{3}$/', $moneda_pago)) {
+            $moneda_pago = 'DOP';
+        }
         $total          = $request->input('total', 0);
         $procedimientos = $request->input('procedimientos', []);
 
@@ -168,6 +173,7 @@ class ControllerRecibo extends Controller
         $recibo->procedimientos = json_encode($procedimientos);
         $recibo->estado_actual  = $estado_actual - $monto;
         $recibo->fecha_pago     = now();
+        $recibo->codigo_confirmacion = $moneda_pago;
 
         // Asignar tipo de pago y concepto
         switch ($tipo_de_pago ) {
@@ -202,6 +208,14 @@ class ControllerRecibo extends Controller
         $factura->precio_estatus -= $monto;
         $factura->save();
 
+        // Ganancia automática del doctor según % configurado sobre el pago
+        if ($factura && $factura->id_doctor) {
+            $doctor = App\Doctor::find($factura->id_doctor);
+            if ($doctor) {
+                $doctor->aplicarGananciaAutomaticaRecibo($recibo);
+            }
+        }
+
         // Registrar en auditoría
         $usuarioId = $request->input('usuario_id') ?? $request->header('usuario_id') ?? null;
         if ($usuarioId) {
@@ -209,7 +223,7 @@ class ControllerRecibo extends Controller
                 $usuarioId,
                 'Recibos',
                 'Crear Recibo',
-                "Recibo #{$recibo->id} creado (Código: {$codigo}) para factura ID: {$id_factura}, Monto: RD$ " . number_format($monto, 2) . ", Tipo de pago: {$recibo->tipo_de_pago}"
+                "Recibo #{$recibo->id} creado (Código: {$codigo}) para factura ID: {$id_factura}, Monto: {$moneda_pago} " . number_format($monto, 2) . ", Tipo de pago: {$recibo->tipo_de_pago}"
             );
         }
 
@@ -302,6 +316,62 @@ class ControllerRecibo extends Controller
         return $ingreso_de_dias;
     }
 
+    /**
+     * Procedimientos ligados a la factura (historial_ps).
+     */
+    protected function procedimientosDeFactura($idFactura)
+    {
+        if (!$idFactura) {
+            return [];
+        }
+
+        return DB::table('historial_ps')
+            ->join('procedimientos', 'historial_ps.id_procedimiento', '=', 'procedimientos.id')
+            ->where('historial_ps.id_factura', '=', $idFactura)
+            ->select(
+                'procedimientos.nombre',
+                'historial_ps.cantidad',
+                'historial_ps.total'
+            )
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'nombre' => $row->nombre ?? 'Procedimiento',
+                    'cantidad' => (int) ($row->cantidad ?? 1),
+                    'total' => (float) ($row->total ?? 0),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Procedimientos guardados en el recibo o, si no hay, los de la factura.
+     */
+    protected function procedimientosDelRecibo($recibo)
+    {
+        $raw = $recibo->procedimientos;
+        if ($raw) {
+            $decoded = is_string($raw) ? json_decode($raw, true) : $raw;
+            if (is_array($decoded) && count($decoded) > 0) {
+                $lista = [];
+                foreach ($decoded as $item) {
+                    $item = (array) $item;
+                    $lista[] = [
+                        'nombre' => $item['nombre'] ?? $item['descripcion'] ?? $item['producto'] ?? 'Item',
+                        'cantidad' => (int) ($item['cantidad'] ?? 1),
+                        'total' => (float) ($item['total'] ?? $item['precio'] ?? 0),
+                    ];
+                }
+                if (count($lista) > 0) {
+                    return $lista;
+                }
+            }
+        }
+
+        return $this->procedimientosDeFactura($recibo->id_factura);
+    }
+
    public function reporte_recibos($fecha_inicial, $fecha_final)
     {
         $tiempo_inicial = '00:00:00';
@@ -319,7 +389,11 @@ class ControllerRecibo extends Controller
                 // Incluir tanto servicios como ventas
             })
             ->whereBetween('fecha_pago', [$desde, $hasta])
-            ->get();
+            ->get()
+            ->map(function ($recibo) {
+                $recibo->procedimientos_factura = $this->procedimientosDelRecibo($recibo);
+                return $recibo;
+            });
 
         // Separar recibos de servicios y ventas
         $recibosServicios = $recibos->filter(function($recibo) {

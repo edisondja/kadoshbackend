@@ -65,7 +65,8 @@ class ControllerSalarioDoctor extends Controller
                 'salario' => 'required|numeric|min:0',
                 'fecha_inicio' => 'required|date',
                 'fecha_fin' => 'nullable|date|after:fecha_inicio',
-                'comentarios' => 'nullable|string'
+                'comentarios' => 'nullable|string',
+                'porcentaje_ingresos' => 'nullable|numeric|min:0|max:100'
             ]);
 
             DB::beginTransaction();
@@ -89,6 +90,14 @@ class ControllerSalarioDoctor extends Controller
             $salario->comentarios = $request->comentarios;
             $salario->activo = true;
             $salario->save();
+
+            if ($request->has('porcentaje_ingresos')) {
+                $doctor = Doctor::find($request->doctor_id);
+                if ($doctor) {
+                    $doctor->porcentaje_ingresos = min(100, max(0, floatval($request->porcentaje_ingresos)));
+                    $doctor->save();
+                }
+            }
 
             DB::commit();
 

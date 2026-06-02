@@ -34,9 +34,24 @@ class Paciente extends Controller
 
        // dd("Este es el token!!!".$request->bearerToken());
 
-        return App\Paciente::withSum('estatus:precio_estatus')->with('doctor')->take(30)->orderBy("id","desc")->get();
-        
-        
+        $perPage = (int) $request->query('per_page', 8);
+        $perPage = max(1, min($perPage, 100));
+        $page = max(1, (int) $request->query('page', 1));
+
+        $paginator = App\Paciente::withSum('estatus as estatus_precio_estatus_sum', 'precio_estatus')
+            ->with('doctor')
+            ->orderBy('id', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'data' => $paginator->items(),
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'from' => $paginator->firstItem(),
+            'to' => $paginator->lastItem(),
+        ]);
     }
 
     /**
@@ -45,44 +60,83 @@ class Paciente extends Controller
      * @return \Illuminate\Http\Response
      */
     public function guardar(Request $data){
-        //metodo para crear un paciente
-
-        $nombreFoto = '';
-        if ($data->hasFile('foto_paciente')) {
-            $storedPath = $data->file('foto_paciente')->store('public');
-            $nombreFoto = basename(str_replace('\\', '/', $storedPath));
+        try {
+            $data->validate([
+                'nombre' => 'required|string|max:191',
+                'apellido' => 'required|string|max:191',
+                'telefono' => 'required|string|max:50',
+                'id_doctor' => 'required|integer|min:1',
+                'sexo' => 'nullable|in:h,m',
+                'correo_electronico' => 'nullable|email|max:191',
+                'cedula' => 'nullable|string|max:50',
+                'fecha_nacimiento' => 'nullable|date',
+                'nombre_tutor' => 'nullable|string|max:191',
+                'foto_paciente' => 'nullable|image|max:5120',
+            ], [
+                'nombre.required' => 'El nombre del paciente es obligatorio.',
+                'apellido.required' => 'El apellido del paciente es obligatorio.',
+                'telefono.required' => 'El teléfono del paciente es obligatorio.',
+                'id_doctor.required' => 'Debe seleccionar el doctor que ingresa al paciente.',
+                'id_doctor.integer' => 'El doctor seleccionado no es válido.',
+                'correo_electronico.email' => 'El correo electrónico no es válido.',
+                'foto_paciente.image' => 'La foto debe ser una imagen válida.',
+                'foto_paciente.max' => 'La foto no puede superar 5 MB.',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first(),
+            ], 422);
         }
 
-        $paciente = new App\Paciente();
-        $paciente->nombre = $data->nombre;
-        $paciente->apellido =  $data->apellido;
-        $paciente->telefono = $data->telefono;
-        $paciente->id_doctor = $data->id_doctor;
-        $paciente->cedula = trim((string) ($data->cedula ?? '')) ?: '';
-        $paciente->correo_electronico = trim((string) ($data->correo_electronico ?? '')) ?: null;
-        $paciente->fecha_de_ingreso = date("Y-m-d H:i:s");
-        $paciente->fecha_nacimiento = !empty(trim((string) ($data->fecha_nacimiento ?? ''))) ? $data->fecha_nacimiento : '1900-01-01';
-        $paciente->foto_paciente = $nombreFoto;
-        $paciente->nombre_tutor = $data->nombre_tutor;
-        $paciente->sexo = $data->sexo;
-        $paciente->save();
+        if (!App\Doctor::where('id', (int) $data->id_doctor)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El doctor seleccionado no existe.',
+            ], 422);
+        }
 
-        return response()->json($paciente);
+        try {
+            $nombreFoto = '';
+            if ($data->hasFile('foto_paciente')) {
+                $storedPath = $data->file('foto_paciente')->store('public');
+                $nombreFoto = basename(str_replace('\\', '/', $storedPath));
+            }
 
-        /*
-        formData.append("foto_paciente", imagefile.files[0]);
-        formData.append("nombre",document.getElementById("nombre").value);
-        formData.append("apellido",document.getElementById("apellido").value);
-        formData.append("cedula",document.getElementById("cedula").value);
-        formData.append("telefono",document.getElementById("telefono").value);
-        formData.append("id_doctor",document.getElementById("doctores_select").value);
-        formData.append("fecha_nacimiento",document.getElementById("fecha_nacimiento").value);
-        formData.append("sexo",document.getElementById("sexo").value);
-        */
+            $sexo = trim((string) ($data->sexo ?? ''));
+            if (!in_array($sexo, ['h', 'm'], true)) {
+                $sexo = 'h';
+            }
 
+            $paciente = new App\Paciente();
+            $paciente->nombre = trim((string) $data->nombre);
+            $paciente->apellido = trim((string) $data->apellido);
+            $paciente->telefono = trim((string) $data->telefono);
+            $paciente->id_doctor = (int) $data->id_doctor;
+            $paciente->cedula = trim((string) ($data->cedula ?? '')) ?: '';
+            $paciente->correo_electronico = trim((string) ($data->correo_electronico ?? '')) ?: null;
+            $paciente->fecha_de_ingreso = date('Y-m-d H:i:s');
+            $paciente->fecha_nacimiento = !empty(trim((string) ($data->fecha_nacimiento ?? '')))
+                ? $data->fecha_nacimiento
+                : '1900-01-01';
+            $paciente->foto_paciente = $nombreFoto;
+            $paciente->nombre_tutor = trim((string) ($data->nombre_tutor ?? '')) ?: null;
+            $paciente->sexo = $sexo;
+            $paciente->save();
 
-        
-     
+            return response()->json([
+                'success' => true,
+                'message' => 'Paciente registrado correctamente.',
+                'paciente' => $paciente,
+            ] + $paciente->toArray());
+        } catch (\Exception $e) {
+            \Log::error('Error al guardar paciente: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo guardar el paciente. Verifique los datos e intente de nuevo.',
+            ], 500);
+        }
+
     }
 
     /**
@@ -442,17 +496,81 @@ class Paciente extends Controller
         return response()->file($real);
     }
 
+    private function denegarSiNoPuedeExportar(Request $request)
+    {
+        $usuarioId = $request->header('usuario_id') ?? $request->input('usuario_id');
+        if (!$usuarioId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sesión no válida. Inicie sesión nuevamente.'
+            ], 401);
+        }
+
+        $token = $request->bearerToken();
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sesión no válida. Inicie sesión nuevamente.'
+            ], 401);
+        }
+
+        try {
+            $decoded = JWT::decode($token, env('FIRMA_TOKEN'), ['HS256']);
+            if ((int) ($decoded->id ?? 0) !== (int) $usuarioId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sesión no válida para este usuario.'
+                ], 403);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sesión inválida o expirada.'
+            ], 401);
+        }
+
+        $usuario = App\Usuario::find($usuarioId);
+        $controllerUsuario = new ControllerUsuario();
+        if (!$usuario || !$controllerUsuario->usuarioTienePermiso($usuario, 'exportar_importar')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tiene permiso para exportar pacientes.'
+            ], 403);
+        }
+
+        return null;
+    }
+
     /**
      * Exportar todos los pacientes a JSON
      */
-    public function exportar_pacientes()
+    public function exportar_pacientes(Request $request)
     {
         try {
-            $pacientes = App\Paciente::all();
-            
-            // Convertir a array y remover timestamps si es necesario
-            $data = $pacientes->map(function($paciente) {
+            $denegado = $this->denegarSiNoPuedeExportar($request);
+            if ($denegado) {
+                return $denegado;
+            }
+
+            $pacientes = App\Paciente::with('doctor')->orderBy('id', 'desc')->get();
+
+            $data = $pacientes->map(function ($paciente) {
+                $doctor = $paciente->doctor;
+                $nombreDoctor = $doctor
+                    ? trim(($doctor->nombre ?? '') . ' ' . ($doctor->apellido ?? ''))
+                    : '';
+
+                $sexo = trim((string) ($paciente->sexo ?? ''));
+                if ($sexo === 'h') {
+                    $sexoLabel = 'Masculino';
+                } elseif ($sexo === 'm') {
+                    $sexoLabel = 'Femenino';
+                } else {
+                    $sexoLabel = $sexo;
+                }
+
                 return [
+                    'id' => $paciente->id,
                     'nombre' => $paciente->nombre,
                     'apellido' => $paciente->apellido,
                     'cedula' => $paciente->cedula,
@@ -460,10 +578,12 @@ class Paciente extends Controller
                     'correo_electronico' => $paciente->correo_electronico,
                     'fecha_nacimiento' => $paciente->fecha_nacimiento,
                     'fecha_de_ingreso' => $paciente->fecha_de_ingreso,
-                    'sexo' => $paciente->sexo,
+                    'sexo' => $sexo,
+                    'sexo_label' => $sexoLabel,
                     'nombre_tutor' => $paciente->nombre_tutor,
                     'id_doctor' => $paciente->id_doctor,
-                    'foto_paciente' => $paciente->foto_paciente
+                    'doctor' => $nombreDoctor,
+                    'foto_paciente' => $paciente->foto_paciente,
                 ];
             });
 
