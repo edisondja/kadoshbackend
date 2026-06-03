@@ -100,6 +100,27 @@ class ControllerUsuario extends Controller
         return !empty($permisos[$modulo]);
     }
 
+    private function guardarFotoUsuario(Request $data, $fotoActual = null)
+    {
+        if (!$data->hasFile('foto_usuario')) {
+            return $fotoActual;
+        }
+        $storedPath = $data->file('foto_usuario')->store('public');
+        return basename(str_replace('\\', '/', $storedPath));
+    }
+
+    private function permisosDesdeRequest(Request $data)
+    {
+        $permisos = $data->input('permisos');
+        if (is_string($permisos)) {
+            $decoded = json_decode($permisos, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+        return $permisos;
+    }
+
 
     private function resolverIpCliente(Request $request)
     {
@@ -252,6 +273,7 @@ class ControllerUsuario extends Controller
             'roll' => 'required|string|in:Administrador,Contable,Secretaria,Odontologo,Personalizado',
             'id_rol' => 'nullable|integer|min:1',
             'permisos' => 'nullable',
+            'foto_usuario' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         if (App\Usuario::where('usuario', trim((string) $data->usuario))->exists()) {
@@ -269,7 +291,8 @@ class ControllerUsuario extends Controller
             if (!$rolBd) return response()->json(['success' => false, 'message' => 'Rol no válido'], 422);
             $usuario->roll = 'Personalizado';
         }
-        $usuario->permisos = json_encode($this->normalizarPermisos($usuario->roll, $data->input('permisos'), $usuario->id_rol));
+        $usuario->foto_usuario = $this->guardarFotoUsuario($data);
+        $usuario->permisos = json_encode($this->normalizarPermisos($usuario->roll, $this->permisosDesdeRequest($data), $usuario->id_rol));
         if($usuario->save()){
             return response()->json(['success' => true, 'message' => 'Usuario registrado con exito']);
         }
@@ -289,6 +312,7 @@ class ControllerUsuario extends Controller
             'roll' => 'required|string|in:Administrador,Contable,Secretaria,Odontologo,Personalizado',
             'id_rol' => 'nullable|integer|min:1',
             'permisos' => 'nullable',
+            'foto_usuario' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
         $usuario = App\Usuario::find($data->id_usuario);
@@ -310,7 +334,8 @@ class ControllerUsuario extends Controller
             if (!$rolBd) return response()->json(['success' => false, 'message' => 'Rol no válido'], 422);
             $usuario->roll = 'Personalizado';
         }
-        $usuario->permisos = json_encode($this->normalizarPermisos($usuario->roll, $data->input('permisos'), $usuario->id_rol));
+        $usuario->foto_usuario = $this->guardarFotoUsuario($data, $usuario->foto_usuario);
+        $usuario->permisos = json_encode($this->normalizarPermisos($usuario->roll, $this->permisosDesdeRequest($data), $usuario->id_rol));
         if($usuario->save()){
             return response()->json(['success' => true, 'message' => 'Usuario actualizado con exito']);
         }

@@ -15,6 +15,7 @@ class Usuario extends Model
         'id_rol',
         'nombre',
         'apellido',
+        'foto_usuario',
         'permisos',
     ];
 

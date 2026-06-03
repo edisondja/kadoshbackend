@@ -5,14 +5,16 @@
 -- Motor: MySQL 5.7+ / MariaDB 10.2+
 -- Charset recomendado: utf8mb4
 --
--- Incluye:
---   1. doctors.porcentaje_ingresos      → % de ingresos del doctor en recibos
+-- CAMBIOS DE ESQUEMA (este script):
+--   1. doctors.porcentaje_ingresos      → % ingreso del doctor al pagar recibos
 --   2. configs.formato_hora_citas       → formato 12h / 24h en calendario de citas
---   3. pacientes.cedula nullable        → cédula opcional al registrar paciente
---   4. paciente_invitaciones (tabla)    → enlaces de un solo uso para registro público
+--   3. pacientes.cedula nullable          → cédula opcional al registrar paciente
+--   4. paciente_invitaciones (tabla)      → enlaces de un solo uso para invitar pacientes
 --
--- Nota: la alerta de inicio de sesión por correo NO requiere columnas nuevas;
---       usa configs.email_clinica o configs.email (ya existentes).
+-- SIN CAMBIOS DE ESQUEMA (solo código PHP/React):
+--   • Alerta de inicio de sesión por correo → usa configs.email_clinica / configs.email
+--   • Exportar pacientes a CSV              → usa permiso existente exportar_importar
+--     (tablas roles / role_modulos / usuarios.permisos — ver sección 5 opcional)
 -- =============================================================================
 
 SET NAMES utf8mb4;
@@ -20,7 +22,6 @@ SET @db := DATABASE();
 
 -- -----------------------------------------------------------------------------
 -- 1) doctors.porcentaje_ingresos
---    Porcentaje que gana el doctor automáticamente al pagar un recibo.
 -- -----------------------------------------------------------------------------
 SET @exist := (
   SELECT COUNT(*)
@@ -43,8 +44,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- -----------------------------------------------------------------------------
--- 2) configs.formato_hora_citas
---    Valores: ''12h'' (predeterminado) o ''24h''.
+-- 2) configs.formato_hora_citas  (valores: 12h | 24h)
 -- -----------------------------------------------------------------------------
 SET @exist := (
   SELECT COUNT(*)
@@ -79,7 +79,6 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
--- Normalizar valores vacíos o inválidos
 UPDATE `configs`
 SET `formato_hora_citas` = '12h'
 WHERE `formato_hora_citas` IS NULL
@@ -109,7 +108,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- -----------------------------------------------------------------------------
--- 4) paciente_invitaciones — registro de paciente por enlace (un solo uso)
+-- 4) paciente_invitaciones — registro público por enlace (un solo uso)
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `paciente_invitaciones` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -125,8 +124,21 @@ CREATE TABLE IF NOT EXISTS `paciente_invitaciones` (
   KEY `paciente_invitaciones_id_doctor_index` (`id_doctor`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- -----------------------------------------------------------------------------
+-- 5) OPCIONAL — Permiso exportar pacientes CSV (sin columnas nuevas)
+--    El módulo se llama: exportar_importar
+--    Reemplace @id_rol por el ID del rol que debe exportar (ej. 2).
+--    El usuario debe tener roll = 'Personalizado' e id_rol apuntando a ese rol,
+--    o ser Administrador (tiene todos los permisos por defecto).
+-- -----------------------------------------------------------------------------
+-- SET @id_rol := 2;
+--
+-- INSERT INTO `role_modulos` (`id_rol`, `modulo`, `permitido`, `created_at`, `updated_at`)
+-- VALUES (@id_rol, 'exportar_importar', 1, NOW(), NOW())
+-- ON DUPLICATE KEY UPDATE `permitido` = 1, `updated_at` = NOW();
+
 -- =============================================================================
--- VERIFICACIÓN (opcional — revisar resultado)
+-- VERIFICACIÓN
 -- =============================================================================
 SELECT 'doctors.porcentaje_ingresos' AS cambio,
        IF(COUNT(*) > 0, 'OK', 'FALTA') AS estado
@@ -155,7 +167,7 @@ FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'paciente_invitaciones';
 
 -- =============================================================================
--- REVERTIR (solo si necesita deshacer — ejecutar manualmente)
+-- REVERTIR (ejecutar manualmente solo si necesita deshacer)
 -- =============================================================================
 -- ALTER TABLE `doctors` DROP COLUMN `porcentaje_ingresos`;
 -- ALTER TABLE `configs` DROP COLUMN `formato_hora_citas`;

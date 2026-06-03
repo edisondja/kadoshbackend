@@ -41,6 +41,10 @@
 	// Vista pública para recibos temporales (WhatsApp)
 	Route::get('/r/{filename}', 'ControllerRecibo@ver_recibo_temp');
 
+	// Landing pública — solicitud de acceso (sin tenant)
+	Route::get('/api/landing/captcha', 'ControllerLandingAcceso@generarCaptcha');
+	Route::post('/api/landing/solicitar-acceso', 'ControllerLandingAcceso@solicitarAcceso')->middleware('throttle:5,1');
+
 	//API PACIENTES READY
 	
 Route::middleware(['tenant'])->group(function () {

@@ -530,8 +530,15 @@ class Paciente extends Controller
         }
 
         $usuario = App\Usuario::find($usuarioId);
-        $controllerUsuario = new ControllerUsuario();
-        if (!$usuario || !$controllerUsuario->usuarioTienePermiso($usuario, 'exportar_importar')) {
+        if (!$usuario) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario no encontrado.'
+            ], 403);
+        }
+
+        $controllerUsuario = app(ControllerUsuario::class);
+        if (!$controllerUsuario->usuarioTienePermiso($usuario, 'exportar_importar')) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tiene permiso para exportar pacientes.'

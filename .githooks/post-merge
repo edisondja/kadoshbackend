@@ -1,0 +1,15 @@
+#!/bin/bash
+# Se ejecuta después de git pull / git merge (post-merge).
+# Instalar una vez: ./scripts/install_git_hooks.sh
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$ROOT" || exit 0
+
+if [ -f "$ROOT/scripts/deploy_after_pull.sh" ]; then
+  bash "$ROOT/scripts/deploy_after_pull.sh" || {
+    echo ""
+    echo "⚠️  deploy_after_pull falló. Ejecute manualmente:"
+    echo "   cd $ROOT && ./scripts/deploy_after_pull.sh"
+    echo ""
+  }
+fi
