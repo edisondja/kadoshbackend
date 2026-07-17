@@ -38,7 +38,7 @@ class Paciente extends Controller
         $perPage = max(1, min($perPage, 100));
         $page = max(1, (int) $request->query('page', 1));
 
-        $paginator = App\Paciente::withSum('estatus as estatus_precio_estatus_sum', 'precio_estatus')
+        $paginator = App\Paciente::withSum('estatus:precio_estatus as estatus_precio_estatus_sum')
             ->with('doctor')
             ->orderBy('id', 'desc')
             ->paginate($perPage, ['*'], 'page', $page);
@@ -60,6 +60,10 @@ class Paciente extends Controller
      * @return \Illuminate\Http\Response
      */
     public function guardar(Request $data){
+        if (trim((string) $data->input('correo_electronico', '')) === '') {
+            $data->merge(['correo_electronico' => null]);
+        }
+
         try {
             $data->validate([
                 'nombre' => 'required|string|max:191',
@@ -273,7 +277,9 @@ class Paciente extends Controller
 
             $searchTerms = explode(' ', $q);
             
-            $query = App\Paciente::query()->withSum('estatus:precio_estatus')->with('doctor');
+            $query = App\Paciente::query()
+                ->withSum('estatus:precio_estatus as estatus_precio_estatus_sum')
+                ->with('doctor');
 
             foreach($searchTerms as $searchTerm){
                 $query->where(function($q) use ($searchTerm){

@@ -21,12 +21,20 @@ class TenantMiddleware
         $host = $request->getHost(); // ej: clinica1.odontoed.com o odontoed.com
         $parts = explode('.', $host);
 
-        //Si no hay subdominio, continuar con la conexión por defecto
-        if (count($parts) < 3 || $parts[0] === 'www') {
+        // Hosts de API / panel que NO son clínicas (usar BD por defecto del .env)
+        $subdominiosReservados = [
+            'www', 'api', 'demoserver', 'server', 'admin', 'app',
+        ];
+        if (count($parts) >= 3 && in_array(strtolower($parts[0]), $subdominiosReservados, true)) {
             return $next($request);
         }
 
-        // Extraer el subdominio (primer segmento)
+        // Si no hay subdominio, continuar con la conexión por defecto
+        if (count($parts) < 3) {
+            return $next($request);
+        }
+
+        // Extraer el subdominio (primer segmento) = clínica tenant
         $subdomain = $parts[0];
 
         // Verificar estado del tenant antes de permitir acceso

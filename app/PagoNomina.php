@@ -17,6 +17,10 @@ class PagoNomina extends Model
         'monto_comisiones',
         'salario_base',
         'total_pago',
+        'total_bruto',
+        'total_deducciones',
+        'neto_deposito',
+        'deducciones_detalle',
         'estado',
         'comentarios',
         'tipo'

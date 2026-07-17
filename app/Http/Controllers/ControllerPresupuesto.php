@@ -56,6 +56,51 @@ class ControllerPresupuesto extends Controller
         }
     }
 
+    /**
+     * Presupuestos de consulta (sin paciente registrado — estimación de precios).
+     */
+    public function listar_presupuestos_consulta()
+    {
+        try {
+            $presupuestos = Presupuesto::orderBy('id', 'desc')
+                ->get()
+                ->filter(function ($presupuesto) {
+                    if ($presupuesto->paciente_id === null || $presupuesto->paciente_id === '' || (int) $presupuesto->paciente_id === 0) {
+                        return true;
+                    }
+                    $factura = json_decode($presupuesto->factura, true);
+                    return is_array($factura) && ($factura['tipo'] ?? '') === 'consulta';
+                })
+                ->values()
+                ->map(function ($presupuesto) {
+                    $factura = json_decode($presupuesto->factura, true);
+                    if (!is_array($factura)) {
+                        $factura = [];
+                    }
+                    $presupuesto->tipo = $factura['tipo'] ?? 'consulta';
+                    $presupuesto->cliente_nombre = $factura['cliente_nombre'] ?? $presupuesto->nombre;
+                    $presupuesto->cliente_telefono = $factura['cliente_telefono'] ?? '';
+                    $presupuesto->cliente_correo = $factura['cliente_correo'] ?? '';
+                    $total = $factura['total'] ?? 0;
+                    if (!$total && !empty($factura['procedimientos']) && is_array($factura['procedimientos'])) {
+                        foreach ($factura['procedimientos'] as $proc) {
+                            $total += (float) ($proc['total'] ?? 0);
+                        }
+                    }
+                    $presupuesto->total = $total;
+                    return $presupuesto;
+                });
+
+            return response()->json($presupuestos);
+        } catch (\Exception $e) {
+            \Log::error('Error al listar presupuestos de consulta: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al listar estimaciones',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function buscar_presupuesto($buscar){
 
@@ -96,6 +141,10 @@ public function cargar_presupuesto($id_presupuesto)
         'nombre' => $presupuesto->nombre,
         'paciente_id' => $presupuesto->paciente_id,
         'doctor_id' => $presupuesto->doctor_id,
+        'tipo' => $factura['tipo'] ?? ($presupuesto->paciente_id ? 'paciente' : 'consulta'),
+        'cliente_nombre' => $factura['cliente_nombre'] ?? '',
+        'cliente_telefono' => $factura['cliente_telefono'] ?? '',
+        'cliente_correo' => $factura['cliente_correo'] ?? '',
         'total' => $factura['total'] ?? ($presupuesto->total ?? 0),
         'procedimientos' => $factura['procedimientos'] ?? ($factura['lista_procedimiento'] ?? []),
         'factura' => $presupuesto->factura, // Mantener factura original para compatibilidad
@@ -214,18 +263,44 @@ public function cargar_presupuesto($id_presupuesto)
      */
     public function create(Request $data)
     {
+        try {
+            if (!$data->has('data')) {
+                return response()->json(['message' => 'Datos del presupuesto requeridos'], 400);
+            }
 
-        $json_factura = json_encode($data->data);
-        $prespuesto = new Presupuesto();
-        $prespuesto->nombre =  $data->data["nombre"];
-        $prespuesto->factura = $json_factura;
-        $prespuesto->paciente_id = $data->data["id_paciente"];
-        $prespuesto->doctor_id = $data->data["id_doctor"];
-        $prespuesto->save();
+            $datos = $data->data;
+            if (empty($datos['nombre'])) {
+                return response()->json(['message' => 'El nombre del presupuesto es requerido'], 400);
+            }
+            if (empty($datos['id_doctor'])) {
+                return response()->json(['message' => 'Debe seleccionar un doctor'], 400);
+            }
+            if (empty($datos['procedimientos']) || !is_array($datos['procedimientos'])) {
+                return response()->json(['message' => 'Debe agregar al menos un procedimiento'], 400);
+            }
 
-        return $prespuesto;
+            $json_factura = json_encode($datos);
+            $prespuesto = new Presupuesto();
+            $prespuesto->nombre = $datos['nombre'] ?? 'Presupuesto';
+            $prespuesto->factura = $json_factura;
 
-    
+            $esConsulta = ($datos['tipo'] ?? '') === 'consulta';
+            $pacienteId = null;
+            if (!$esConsulta && !empty($datos['id_paciente'])) {
+                $pacienteId = (int) $datos['id_paciente'];
+            }
+            $prespuesto->paciente_id = $pacienteId;
+            $prespuesto->doctor_id = $datos['id_doctor'] ?? null;
+            $prespuesto->save();
+
+            return response()->json($prespuesto, 201);
+        } catch (\Exception $e) {
+            \Log::error('Error al crear presupuesto: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error al crear el presupuesto',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
  

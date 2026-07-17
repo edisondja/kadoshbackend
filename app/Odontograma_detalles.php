@@ -16,6 +16,8 @@ class Odontograma_detalles extends Model
         'descripcion',
         'precio',
         'color',
+        'card_pos_x_pct',
+        'card_pos_y_pct',
     ];
 
     public function odontograma()

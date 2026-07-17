@@ -139,7 +139,9 @@ class ControllerOdontograma extends Controller
                         'tipo' => $detalle['tipo'] ?? 'procedimiento',
                         'descripcion' => $detalle['descripcion'] ?? $detalle['nombre'] ?? '',
                         'precio' => $detalle['precio'] ?? 0,
-                        'color' => $detalle['color'] ?? null
+                        'color' => $detalle['color'] ?? null,
+                        'card_pos_x_pct' => $detalle['card_pos_x_pct'] ?? null,
+                        'card_pos_y_pct' => $detalle['card_pos_y_pct'] ?? null,
                     ]);
                 }
             }
@@ -251,7 +253,9 @@ class ControllerOdontograma extends Controller
                         'tipo' => $detalle['tipo'] ?? 'procedimiento',
                         'descripcion' => $detalle['descripcion'] ?? $detalle['nombre'] ?? '',
                         'precio' => $detalle['precio'] ?? 0,
-                        'color' => $detalle['color'] ?? null
+                        'color' => $detalle['color'] ?? null,
+                        'card_pos_x_pct' => $detalle['card_pos_x_pct'] ?? null,
+                        'card_pos_y_pct' => $detalle['card_pos_y_pct'] ?? null,
                     ]);
                 }
             }

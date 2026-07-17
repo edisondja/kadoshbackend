@@ -199,6 +199,7 @@ Route::middleware(['tenant'])->group(function () {
 	//Nominas
 	Route::get('/api/cargar_nomina/{fecha_i}/{fecha_f}','ControllerFinanciero@cargar_nomina');
 	Route::get('/api/calcular_nomina_doctores/{fecha_i}/{fecha_f}','ControllerNomina@calcularNominaDoctores');
+	Route::get('/api/calcular_nomina_empleados/{fecha_i}/{fecha_f}','ControllerNomina@calcularNominaEmpleados');
 	Route::post('/api/registrar_pago_nomina','ControllerNomina@registrarPagoNomina');
 	Route::get('/api/listar_pagos_nomina','ControllerNomina@listarPagosNomina');
 	Route::put('/api/marcar_pago_nomina_pagado/{id}','ControllerNomina@marcarComoPagado');
@@ -206,6 +207,7 @@ Route::middleware(['tenant'])->group(function () {
 
 	//Ganancias de Doctores por Recibo
 	Route::get('/api/listar_recibos_ganancias','ControllerDoctorGanancias@listarRecibos');
+	Route::get('/api/listar_doctores_ganancias_resumen','ControllerDoctorGanancias@listarDoctoresResumen');
 	Route::post('/api/asignar_ganancia_recibo','ControllerDoctorGanancias@asignarGanancia');
 	Route::delete('/api/eliminar_ganancia_recibo/{id}','ControllerDoctorGanancias@eliminarGanancia');
 	Route::get('/api/ganancias_doctor/{doctor_id}/{fecha_i}/{fecha_f}','ControllerDoctorGanancias@obtenerGananciasDoctor');
@@ -223,6 +225,13 @@ Route::middleware(['tenant'])->group(function () {
 	Route::post('/api/guardar_salario_doctor','ControllerSalarioDoctor@guardarSalario');
 	Route::get('/api/doctores_con_salarios','ControllerSalarioDoctor@listarDoctoresConSalarios');
 	Route::delete('/api/eliminar_salario_doctor/{id}','ControllerSalarioDoctor@eliminarSalario');
+
+	//Nómina empleados del sistema
+	Route::get('/api/listar_empleados_nomina','ControllerEmpleadoNomina@listarEmpleados');
+	Route::get('/api/usuarios_disponibles_empleado','ControllerEmpleadoNomina@listarUsuariosDisponibles');
+	Route::post('/api/guardar_empleado_nomina','ControllerEmpleadoNomina@guardarEmpleado');
+	Route::delete('/api/desactivar_empleado_nomina/{id}','ControllerEmpleadoNomina@desactivarEmpleado');
+	Route::post('/api/calcular_deducciones_empleado','ControllerEmpleadoNomina@calcularDeduccionesPreview');
 
 	//Recetas Médicas
 	Route::get('/api/listar_recetas_paciente/{id_paciente}','ControllerReceta@listarRecetasPaciente');
@@ -270,6 +279,7 @@ Route::middleware(['tenant'])->group(function () {
 	Route::post('/api/crear_presupuesto','ControllerPresupuesto@create');
 	Route::get('/api/cargar_presupuestos/{paciente_id}','ControllerPresupuesto@cargar_presupuestos');
 	Route::get('/api/listar_todos_presupuestos','ControllerPresupuesto@listar_todos_presupuestos');
+	Route::get('/api/listar_presupuestos_consulta','ControllerPresupuesto@listar_presupuestos_consulta');
 	Route::get('/api/cargar_presupuesto/{id_presupuesto}','ControllerPresupuesto@cargar_presupuesto');
 	Route::post('/api/eliminar_presupuesto','ControllerPresupuesto@eliminar_prespuesto');
 	Route::post('/api/actualizar_presupuesto','ControllerPresupuesto@actualizar_presupuesto');

@@ -121,6 +121,18 @@ class ControllerUsuario extends Controller
         return $permisos;
     }
 
+    /** Calcula y asigna el JSON de permisos en el modelo (antes y después de crear). */
+    private function guardarPermisosEnUsuario(App\Usuario $usuario, Request $data = null, $permisosRaw = null)
+    {
+        $permisosReq = $permisosRaw;
+        if ($data) {
+            $permisosReq = $this->permisosDesdeRequest($data);
+        }
+        $normalizados = $this->normalizarPermisos($usuario->roll, $permisosReq, $usuario->id_rol);
+        $usuario->permisos = json_encode($normalizados, JSON_UNESCAPED_UNICODE);
+        return $normalizados;
+    }
+
 
     private function resolverIpCliente(Request $request)
     {
@@ -292,12 +304,19 @@ class ControllerUsuario extends Controller
             $usuario->roll = 'Personalizado';
         }
         $usuario->foto_usuario = $this->guardarFotoUsuario($data);
-        $usuario->permisos = json_encode($this->normalizarPermisos($usuario->roll, $this->permisosDesdeRequest($data), $usuario->id_rol));
-        if($usuario->save()){
-            return response()->json(['success' => true, 'message' => 'Usuario registrado con exito']);
+        $this->guardarPermisosEnUsuario($usuario, $data);
+        if ($usuario->save()) {
+            // Tras crear: persistir permisos en BD (usuarios antiguos quedaban con NULL)
+            $this->guardarPermisosEnUsuario($usuario, $data);
+            $usuario->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuario registrado con exito',
+                'data' => $this->usuarioConPermisos($usuario),
+            ]);
         }
 
-
+        return response()->json(['success' => false, 'message' => 'No se pudo registrar el usuario'], 500);
     }
 
 
@@ -335,11 +354,16 @@ class ControllerUsuario extends Controller
             $usuario->roll = 'Personalizado';
         }
         $usuario->foto_usuario = $this->guardarFotoUsuario($data, $usuario->foto_usuario);
-        $usuario->permisos = json_encode($this->normalizarPermisos($usuario->roll, $this->permisosDesdeRequest($data), $usuario->id_rol));
-        if($usuario->save()){
-            return response()->json(['success' => true, 'message' => 'Usuario actualizado con exito']);
+        $this->guardarPermisosEnUsuario($usuario, $data);
+        if ($usuario->save()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuario actualizado con exito',
+                'data' => $this->usuarioConPermisos($usuario),
+            ]);
         }
 
+        return response()->json(['success' => false, 'message' => 'No se pudo actualizar el usuario'], 500);
     }
 
 
@@ -541,10 +565,12 @@ class ControllerUsuario extends Controller
                         $existe->nombre = $dato['nombre'];
                         $existe->apellido = $dato['apellido'];
                         $existe->roll = $dato['roll'];
-                        $existe->permisos = json_encode($this->normalizarPermisos($dato['roll'], $dato['permisos'] ?? null));
+                        $this->guardarPermisosEnUsuario($existe, null, $dato['permisos'] ?? null);
                         if (!empty($dato['clave'])) {
                             $existe->clave = $dato['clave'];
                         }
+                        $existe->save();
+                        $this->guardarPermisosEnUsuario($existe, null, $dato['permisos'] ?? null);
                         $existe->save();
                         $importados++;
                     } else {
@@ -554,8 +580,10 @@ class ControllerUsuario extends Controller
                         $usuario->nombre = $dato['nombre'];
                         $usuario->apellido = $dato['apellido'];
                         $usuario->roll = $dato['roll'];
-                        $usuario->permisos = json_encode($this->normalizarPermisos($dato['roll'], $dato['permisos'] ?? null));
                         $usuario->clave = $dato['clave'] ?? '123456'; // Clave por defecto si no se proporciona
+                        $this->guardarPermisosEnUsuario($usuario, null, $dato['permisos'] ?? null);
+                        $usuario->save();
+                        $this->guardarPermisosEnUsuario($usuario, null, $dato['permisos'] ?? null);
                         $usuario->save();
                         $importados++;
                     }

@@ -71,6 +71,7 @@ class ConfigController extends Controller
             $data['formato_hora_citas'] = in_array($data['formato_hora_citas'] ?? '', ['24h', '12h'], true)
                 ? $data['formato_hora_citas']
                 : '12h';
+            $data['tema_apariencia'] = $this->normalizarTemaApariencia($data['tema_apariencia'] ?? null);
 
             // Manejar campos booleanos
             if (isset($data['usar_google_calendar'])) {
@@ -160,7 +161,12 @@ class ConfigController extends Controller
                 unset($data['ruta_favicon']);
             }
 
-            $data['mensaje_cumpleanos'] = $data['mensaje_cumpleanos'] ?? '';
+            $data['mensaje_cumpleanos'] = array_key_exists('mensaje_cumpleanos', $data)
+                ? ($data['mensaje_cumpleanos'] ?? '')
+                : null;
+            if ($data['mensaje_cumpleanos'] === null) {
+                unset($data['mensaje_cumpleanos']);
+            }
             if (array_key_exists('recordatorio_minutos', $data)) {
                 $data['recordatorio_minutos'] = (int) $data['recordatorio_minutos'];
             }
@@ -168,6 +174,9 @@ class ConfigController extends Controller
                 $data['formato_hora_citas'] = in_array($data['formato_hora_citas'], ['24h', '12h'], true)
                     ? $data['formato_hora_citas']
                     : '12h';
+            }
+            if (array_key_exists('tema_apariencia', $data)) {
+                $data['tema_apariencia'] = $this->normalizarTemaApariencia($data['tema_apariencia']);
             }
 
             // Solo enviar al modelo los campos que existen en fillable (evitar columnas inexistentes)
@@ -219,6 +228,21 @@ class ConfigController extends Controller
             $config->ruta_favicon = asset('storage/' . $config->ruta_favicon);
         }
 
+        if (empty($config->tema_apariencia)) {
+            $config->tema_apariencia = 'classic';
+        }
+
         return $config;
+    }
+
+    /**
+     * classic = púrpura anterior, eda = azul EDA, violet = captura, dark = oscuro
+     */
+    private function normalizarTemaApariencia($tema)
+    {
+        $tema = strtolower(trim((string) $tema));
+        $validos = ['classic', 'eda', 'violet', 'dark'];
+
+        return in_array($tema, $validos, true) ? $tema : 'classic';
     }
 }

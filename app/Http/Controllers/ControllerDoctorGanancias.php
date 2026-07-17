@@ -13,6 +13,83 @@ use Carbon\Carbon;
 class ControllerDoctorGanancias extends Controller
 {
     /**
+     * Resumen por doctor para asignar ganancias (lista principal)
+     */
+    public function listarDoctoresResumen(Request $request)
+    {
+        try {
+            $fecha_i = $request->input('fecha_i');
+            $fecha_f = $request->input('fecha_f');
+
+            if (!$fecha_i || !$fecha_f) {
+                return response()->json([
+                    'error' => 'Debe indicar fecha inicial y final'
+                ], 400);
+            }
+
+            $fecha_inicio = Carbon::parse($fecha_i)->startOfDay();
+            $fecha_fin = Carbon::parse($fecha_f)->endOfDay();
+
+            $doctores = Doctor::orderBy('nombre')->orderBy('apellido')->get();
+            $resultado = [];
+
+            foreach ($doctores as $doctor) {
+                $recibos = Recibo::with('doctorGanancias')
+                    ->whereHas('factura', function ($q) use ($doctor) {
+                        $q->where('id_doctor', $doctor->id);
+                    })
+                    ->whereBetween('fecha_pago', [$fecha_inicio, $fecha_fin])
+                    ->get();
+
+                $totalIngresos = 0;
+                $totalGananciaDoctor = 0;
+                $totalGananciaClinica = 0;
+                $recibosAsignados = 0;
+                $recibosPendientes = 0;
+
+                foreach ($recibos as $recibo) {
+                    $totalIngresos += floatval($recibo->monto);
+                    $ganancia = $recibo->doctorGanancias->first();
+                    if ($ganancia) {
+                        $recibosAsignados++;
+                        $totalGananciaDoctor += floatval($ganancia->ganancia_doctor);
+                        $totalGananciaClinica += floatval($ganancia->ganancia_clinica);
+                    } else {
+                        $recibosPendientes++;
+                    }
+                }
+
+                $resultado[] = [
+                    'doctor_id' => $doctor->id,
+                    'nombre' => $doctor->nombre,
+                    'apellido' => $doctor->apellido ?? '',
+                    'porcentaje_ingresos' => floatval($doctor->porcentaje_ingresos ?? 0),
+                    'total_recibos' => $recibos->count(),
+                    'recibos_asignados' => $recibosAsignados,
+                    'recibos_pendientes' => $recibosPendientes,
+                    'total_ingresos' => round($totalIngresos, 2),
+                    'total_ganancia_doctor' => round($totalGananciaDoctor, 2),
+                    'total_ganancia_clinica' => round($totalGananciaClinica, 2),
+                ];
+            }
+
+            usort($resultado, function ($a, $b) {
+                if ($b['recibos_pendientes'] !== $a['recibos_pendientes']) {
+                    return $b['recibos_pendientes'] - $a['recibos_pendientes'];
+                }
+                return $b['total_recibos'] - $a['total_recibos'];
+            });
+
+            return response()->json($resultado);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al listar doctores',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Listar recibos con opción de asignar ganancias
      */
     public function listarRecibos(Request $request)

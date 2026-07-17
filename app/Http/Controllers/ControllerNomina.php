@@ -12,11 +12,68 @@ use App\Recibo;
 use App\Historial_p;
 use App\DoctorGananciaRecibo;
 use App\SalarioDoctor;
+use App\Services\NominaEmpleadoService;
 use DB;
 use Carbon\Carbon;
 
 class ControllerNomina extends Controller
 {
+    protected $nominaEmpleadoService;
+
+    public function __construct(NominaEmpleadoService $nominaEmpleadoService)
+    {
+        $this->nominaEmpleadoService = $nominaEmpleadoService;
+    }
+
+    /**
+     * Calcular nómina de empleados del sistema (salario base + deducciones opcionales)
+     */
+    public function calcularNominaEmpleados($fecha_i = "", $fecha_f = "")
+    {
+        try {
+            if (empty($fecha_i) || empty($fecha_f)) {
+                $fecha_i = Carbon::now()->startOfMonth()->format('Y-m-d');
+                $fecha_f = Carbon::now()->endOfMonth()->format('Y-m-d');
+            }
+
+            $empleados = Empleado::with('usuario')
+                ->where('activo', true)
+                ->where('salario', '>', 0)
+                ->orderBy('nombre')
+                ->get();
+
+            $resultado = [];
+
+            foreach ($empleados as $empleado) {
+                $salarioBase = floatval($empleado->salario);
+                $deducciones = $this->nominaEmpleadoService->calcularDeducciones($salarioBase, $empleado->toArray());
+
+                $resultado[] = [
+                    'empleado_id' => $empleado->id,
+                    'usuario_id' => $empleado->usuario_id,
+                    'nombre' => $empleado->nombre,
+                    'apellido' => $empleado->apellido ?? '',
+                    'roll' => $empleado->usuario ? $empleado->usuario->roll : '',
+                    'salario_base' => $salarioBase,
+                    'deducciones' => $deducciones,
+                    'total_bruto' => $deducciones['bruto'],
+                    'total_deducciones' => $deducciones['total_deducciones'],
+                    'neto_deposito' => $deducciones['neto_deposito'],
+                    'total_a_pagar' => $deducciones['neto_deposito'],
+                    'periodo_inicio' => $fecha_i,
+                    'periodo_fin' => $fecha_f,
+                ];
+            }
+
+            return response()->json($resultado);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al calcular la nómina de empleados',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Calcular nómina de doctores con comisiones por procedimientos
      * 
@@ -70,6 +127,8 @@ class ControllerNomina extends Controller
                 $totalGananciasManuales = 0; // Ganancias asignadas manualmente por recibo
                 $totalGananciasClinicaManuales = 0;
                 $totalComisionesPorcentaje = 0;
+                $recibosSinGananciaManual = 0;
+                $detalleGananciasManuales = [];
 
                 // Obtener ganancias asignadas manualmente por recibo en el período
                 $gananciasManuales = DoctorGananciaRecibo::where('id_doctor', $doctor->id)
@@ -81,6 +140,18 @@ class ControllerNomina extends Controller
 
                 // Obtener IDs de recibos con ganancias manuales para excluirlos del cálculo por procedimientos
                 $recibosIdsConGanancia = $gananciasManuales->pluck('id_recibo')->toArray();
+
+                foreach ($gananciasManuales as $gm) {
+                    $detalleGananciasManuales[] = [
+                        'id_recibo' => $gm->id_recibo,
+                        'codigo_recibo' => $gm->recibo ? $gm->recibo->codigo_recibo : '',
+                        'fecha' => $gm->recibo ? $gm->recibo->fecha_pago : null,
+                        'monto_recibo' => $gm->recibo ? floatval($gm->recibo->monto) : 0,
+                        'ganancia_doctor' => floatval($gm->ganancia_doctor),
+                        'ganancia_clinica' => floatval($gm->ganancia_clinica),
+                        'observaciones' => $gm->observaciones,
+                    ];
+                }
                 
                 foreach ($facturas as $factura) {
                     foreach ($factura->recibos as $recibo) {
@@ -97,7 +168,13 @@ class ControllerNomina extends Controller
                                 }
                             } elseif ($porcentajeIngresos > 0) {
                                 $totalComisionesPorcentaje += round($recibo->monto * $porcentajeIngresos / 100, 2);
+                                if (!in_array($recibo->id, $recibosIdsConGanancia)) {
+                                    $recibosSinGananciaManual++;
+                                }
                             } else {
+                                if (!in_array($recibo->id, $recibosIdsConGanancia)) {
+                                    $recibosSinGananciaManual++;
+                                }
                                 // Si no tiene ganancia manual ni %, calcular por procedimientos
                                 // Obtener procedimientos del recibo
                                 $procedimientosRecibo = json_decode($recibo->procedimientos, true);
@@ -157,6 +234,7 @@ class ControllerNomina extends Controller
                 }
 
                 // Sumar ganancias manuales y por porcentaje a las comisiones totales
+                $gananciasProcedimientos = $totalComisiones;
                 $totalComisiones += $totalGananciasManuales + $totalComisionesPorcentaje;
                 // Calcular ganancias de la clínica: ingresos totales - ganancias del doctor (manuales + por procedimientos)
                 $totalClinica = $totalIngresos - $totalComisiones;
@@ -168,6 +246,11 @@ class ControllerNomina extends Controller
                         'apellido' => $doctor->apellido ?? '',
                         'monto' => $totalIngresos,
                         'ganancias_doctor' => $totalComisiones,
+                        'ganancias_manuales' => round($totalGananciasManuales, 2),
+                        'ganancias_porcentaje' => round($totalComisionesPorcentaje, 2),
+                        'ganancias_procedimientos' => round($gananciasProcedimientos, 2),
+                        'recibos_sin_ganancia_manual' => $recibosSinGananciaManual,
+                        'detalle_ganancias_manuales' => $detalleGananciasManuales,
                         'ganancias_clinica' => $totalClinica,
                         'salario_base' => $salarioBase,
                         'porcentaje_ingresos' => $porcentajeIngresos,
@@ -201,8 +284,19 @@ class ControllerNomina extends Controller
                 'periodo_fin' => 'required|date',
                 'monto_comisiones' => 'required|numeric|min:0',
                 'salario_base' => 'nullable|numeric|min:0',
+                'total_bruto' => 'nullable|numeric|min:0',
+                'total_deducciones' => 'nullable|numeric|min:0',
+                'neto_deposito' => 'nullable|numeric|min:0',
+                'deducciones_detalle' => 'nullable|array',
+                'aplica_afp' => 'nullable|boolean',
+                'aplica_sfs' => 'nullable|boolean',
+                'aplica_isr' => 'nullable|boolean',
+                'porcentaje_afp' => 'nullable|numeric|min:0|max:100',
+                'porcentaje_sfs' => 'nullable|numeric|min:0|max:100',
+                'porcentaje_isr' => 'nullable|numeric|min:0|max:100',
+                'otros_descuentos' => 'nullable|numeric|min:0',
                 'comentarios' => 'nullable|string',
-                'tipo' => 'nullable|in:comision,salario,mixto'
+                'tipo' => 'nullable|in:comision,salario,mixto,empleado'
             ]);
 
             if (!$request->doctor_id && !$request->empleado_id) {
@@ -211,7 +305,35 @@ class ControllerNomina extends Controller
                 ], 400);
             }
 
-            $totalPago = ($request->salario_base ?? 0) + $request->monto_comisiones;
+            $salarioBase = floatval($request->salario_base ?? 0);
+            $comisiones = floatval($request->monto_comisiones ?? 0);
+            $totalBruto = $request->has('total_bruto') ? floatval($request->total_bruto) : ($salarioBase + $comisiones);
+            $totalDeducciones = floatval($request->total_deducciones ?? 0);
+            $netoDeposito = $request->has('neto_deposito')
+                ? floatval($request->neto_deposito)
+                : max(0, $totalBruto - $totalDeducciones);
+            $totalPago = $netoDeposito;
+
+            $deduccionesDetalle = $request->deducciones_detalle;
+            if ($request->empleado_id && !$deduccionesDetalle) {
+                $empleado = Empleado::find($request->empleado_id);
+                if ($empleado) {
+                    $override = $request->only([
+                        'aplica_afp', 'aplica_sfs', 'aplica_isr',
+                        'porcentaje_afp', 'porcentaje_sfs', 'porcentaje_isr', 'otros_descuentos'
+                    ]);
+                    $calc = $this->nominaEmpleadoService->calcularDeducciones(
+                        $salarioBase > 0 ? $salarioBase : $totalBruto,
+                        $empleado->toArray(),
+                        $override
+                    );
+                    $totalBruto = $calc['bruto'];
+                    $totalDeducciones = $calc['total_deducciones'];
+                    $netoDeposito = $calc['neto_deposito'];
+                    $totalPago = $netoDeposito;
+                    $deduccionesDetalle = $calc;
+                }
+            }
 
             $pagoNomina = PagoNomina::create([
                 'doctor_id' => $request->doctor_id,
@@ -219,12 +341,16 @@ class ControllerNomina extends Controller
                 'fecha_pago' => $request->fecha_pago,
                 'periodo_inicio' => $request->periodo_inicio,
                 'periodo_fin' => $request->periodo_fin,
-                'monto_comisiones' => $request->monto_comisiones,
-                'salario_base' => $request->salario_base ?? 0,
+                'monto_comisiones' => $comisiones,
+                'salario_base' => $salarioBase,
+                'total_bruto' => $totalBruto,
+                'total_deducciones' => $totalDeducciones,
+                'neto_deposito' => $netoDeposito,
+                'deducciones_detalle' => $deduccionesDetalle ? json_encode($deduccionesDetalle) : null,
                 'total_pago' => $totalPago,
                 'estado' => $request->estado ?? 'pendiente',
                 'comentarios' => $request->comentarios,
-                'tipo' => $request->tipo ?? 'comision'
+                'tipo' => $request->tipo ?? ($request->empleado_id ? 'empleado' : 'comision')
             ]);
 
             return response()->json([
