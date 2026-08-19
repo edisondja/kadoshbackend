@@ -233,6 +233,9 @@
                 $doctor = $receta->doctor;
                 $titulo = ($doctor->sexo === 'F' || $doctor->sexo === 'Femenino' || $doctor->sexo === 'femenino') ? 'Dra.' : 'Dr.';
             @endphp
+            @if(!empty($mostrarFirma) && !empty($firmaBase64))
+                <img src="{{ $firmaBase64 }}" alt="Firma" style="max-width: 220px; max-height: 80px; display: block; margin: 0 auto 8px auto;" />
+            @endif
             <strong>{{ $titulo }} {{ $doctor->nombre }} {{ $doctor->apellido ?? '' }}</strong><br>
             {{ $doctor->especialidad ?? 'Odontólogo' }}
         </div>

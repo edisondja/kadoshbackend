@@ -88,6 +88,8 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/buscando_doctor/{nombre}','ControllerDoctor@buscando_doctor');
 	Route::post('/api/desactivar_doctor','ControllerDoctor@desactivar_doctor');
 	Route::post('/api/activar_doctor','ControllerDoctor@activar_doctor');
+	Route::post('/api/subir_firma_doctor/{id}','ControllerDoctor@subirFirma');
+	Route::delete('/api/eliminar_firma_doctor/{id}','ControllerDoctor@eliminarFirma');
 
 	// Especialidades
 	Route::get('/api/listar_especialidades','ControllerEspecialidad@listarEspecialidades');

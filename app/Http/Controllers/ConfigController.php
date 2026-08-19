@@ -77,6 +77,9 @@ class ConfigController extends Controller
             if (isset($data['usar_google_calendar'])) {
                 $data['usar_google_calendar'] = filter_var($data['usar_google_calendar'], FILTER_VALIDATE_BOOLEAN);
             }
+            if (isset($data['mostrar_firma_documentos'])) {
+                $data['mostrar_firma_documentos'] = filter_var($data['mostrar_firma_documentos'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+            }
 
             // Solo enviar al modelo los campos que existen en fillable (evitar columnas inexistentes)
             $data = array_intersect_key($data, array_flip((new Config)->getFillable()));
@@ -128,6 +131,9 @@ class ConfigController extends Controller
             // Manejar campos booleanos
             if (isset($data['usar_google_calendar'])) {
                 $data['usar_google_calendar'] = filter_var($data['usar_google_calendar'], FILTER_VALIDATE_BOOLEAN);
+            }
+            if (isset($data['mostrar_firma_documentos'])) {
+                $data['mostrar_firma_documentos'] = filter_var($data['mostrar_firma_documentos'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             }
 
             // Manejar archivos
@@ -230,6 +236,12 @@ class ConfigController extends Controller
 
         if (empty($config->tema_apariencia)) {
             $config->tema_apariencia = 'classic';
+        }
+
+        if (!isset($config->mostrar_firma_documentos)) {
+            $config->mostrar_firma_documentos = 0;
+        } else {
+            $config->mostrar_firma_documentos = (int) ((bool) $config->mostrar_firma_documentos);
         }
 
         return $config;

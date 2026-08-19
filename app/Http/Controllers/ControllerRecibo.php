@@ -372,7 +372,7 @@ class ControllerRecibo extends Controller
         return $this->procedimientosDeFactura($recibo->id_factura);
     }
 
-   public function reporte_recibos($fecha_inicial, $fecha_final)
+   public function reporte_recibos(Request $request, $fecha_inicial, $fecha_final)
     {
         $tiempo_inicial = '00:00:00';
         $tiempo_final = '23:59:59';
@@ -380,15 +380,21 @@ class ControllerRecibo extends Controller
         $desde = $fecha_inicial . ' ' . $tiempo_inicial;
         $hasta = $fecha_final . ' ' . $tiempo_final;
 
+        $doctorId = (int) $request->query('doctor_id', 0);
+
+        $baseRecibos = App\Recibo::with(['factura.paciente', 'factura.doctor'])
+            ->whereBetween('fecha_pago', [$desde, $hasta])
+            ->when($doctorId > 0, function ($query) use ($doctorId) {
+                $query->whereHas('factura', function ($q) use ($doctorId) {
+                    $q->where('id_doctor', $doctorId);
+                });
+            });
+
         // Total de monto (incluye servicios y ventas)
-        $total = App\Recibo::whereBetween('fecha_pago', [$desde, $hasta])->sum('monto');
+        $total = (clone $baseRecibos)->sum('monto');
 
         // Recibos con factura y paciente (a través de factura) - incluye servicios y ventas
-        $recibos = App\Recibo::with(['factura.paciente', 'factura.doctor'])
-            ->whereHas('factura', function($query) {
-                // Incluir tanto servicios como ventas
-            })
-            ->whereBetween('fecha_pago', [$desde, $hasta])
+        $recibos = (clone $baseRecibos)
             ->get()
             ->map(function ($recibo) {
                 $recibo->procedimientos_factura = $this->procedimientosDelRecibo($recibo);
@@ -407,13 +413,38 @@ class ControllerRecibo extends Controller
         $totalServicios = $recibosServicios->sum('monto');
         $totalVentas = $recibosVentas->sum('monto');
 
+        $resumenDoctores = $recibos
+            ->groupBy(function ($recibo) {
+                return optional(optional($recibo->factura)->doctor)->id ?: 0;
+            })
+            ->map(function ($grupo, $doctorIdGrupo) {
+                $primero = $grupo->first();
+                $doctor = optional(optional($primero)->factura)->doctor;
+                $facturasUnicas = $grupo
+                    ->pluck('id_factura')
+                    ->filter()
+                    ->unique()
+                    ->count();
+
+                return [
+                    'doctor_id' => (int) $doctorIdGrupo,
+                    'doctor_nombre' => $doctor ? trim(($doctor->nombre ?? '') . ' ' . ($doctor->apellido ?? '')) : 'Sin doctor',
+                    'total_facturado' => (float) $grupo->sum('monto'),
+                    'total_recibos' => (int) $grupo->count(),
+                    'total_facturas' => (int) $facturasUnicas,
+                ];
+            })
+            ->sortByDesc('total_facturado')
+            ->values();
+
         return [
             'monto_total' => (int) $total,
             'total_servicios' => (int) $totalServicios,
             'total_ventas' => (int) $totalVentas,
             'recibos' => $recibos,
             'recibos_servicios' => $recibosServicios->values(),
-            'recibos_ventas' => $recibosVentas->values()
+            'recibos_ventas' => $recibosVentas->values(),
+            'resumen_doctores' => $resumenDoctores,
         ];
     }
 

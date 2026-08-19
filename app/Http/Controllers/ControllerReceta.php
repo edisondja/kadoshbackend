@@ -314,12 +314,7 @@ class ControllerReceta extends Controller
                 }
             }
             
-            $data = [
-                'receta' => $receta,
-                'config' => $config,
-                'logoBase64' => $logoBase64,
-                'fecha_impresion' => Carbon::now()->format('d/m/Y H:i')
-            ];
+            $data = $this->armarDatosRecetaPdf($receta, $config, $logoBase64);
 
             // Renderizar la vista
             $html = view('receta_pdf', $data)->render();
@@ -400,12 +395,7 @@ class ControllerReceta extends Controller
                 }
             }
             
-            $data = [
-                'receta' => $receta,
-                'config' => $config,
-                'logoBase64' => $logoBase64,
-                'fecha_impresion' => Carbon::now()->format('d/m/Y H:i')
-            ];
+            $data = $this->armarDatosRecetaPdf($receta, $config, $logoBase64);
 
             // Renderizar la vista
             $html = view('receta_pdf', $data)->render();
@@ -482,12 +472,7 @@ class ControllerReceta extends Controller
                 }
             }
             
-            $data = [
-                'receta' => $receta,
-                'config' => $config,
-                'logoBase64' => $logoBase64,
-                'fecha_impresion' => Carbon::now()->format('d/m/Y H:i')
-            ];
+            $data = $this->armarDatosRecetaPdf($receta, $config, $logoBase64);
 
             // Renderizar la vista
             $html = view('receta_pdf', $data)->render();
@@ -526,5 +511,64 @@ class ControllerReceta extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    private function armarDatosRecetaPdf($receta, $config, $logoBase64)
+    {
+        $mostrarFirma = $config && (
+            !Schema::hasColumn('configs', 'mostrar_firma_documentos')
+            || (int) ($config->mostrar_firma_documentos ?? 0) === 1
+        );
+
+        $firmaBase64 = null;
+        if ($mostrarFirma && $receta->doctor && !empty($receta->doctor->ruta_firma)) {
+            $firmaBase64 = $this->imagenStorageABase64($receta->doctor->ruta_firma);
+        }
+
+        return [
+            'receta' => $receta,
+            'config' => $config,
+            'logoBase64' => $logoBase64,
+            'firmaBase64' => $firmaBase64,
+            'mostrarFirma' => $mostrarFirma && !empty($firmaBase64),
+            'fecha_impresion' => Carbon::now()->format('d/m/Y H:i'),
+        ];
+    }
+
+    private function imagenStorageABase64($ruta)
+    {
+        if (!$ruta) {
+            return null;
+        }
+
+        $rutaRelativa = $ruta;
+        if (strpos($ruta, 'http') === 0) {
+            $parsed = parse_url($ruta, PHP_URL_PATH);
+            if ($parsed && strpos($parsed, '/storage/') !== false) {
+                $rutaRelativa = ltrim(substr($parsed, strpos($parsed, '/storage/') + strlen('/storage/')), '/');
+            }
+        }
+
+        $possiblePaths = [
+            storage_path('app/public/' . $rutaRelativa),
+            public_path('storage/' . $rutaRelativa),
+            public_path($rutaRelativa),
+            storage_path('app/' . $rutaRelativa),
+        ];
+
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path)) {
+                try {
+                    $data = file_get_contents($path);
+                    $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION) ?: 'png');
+                    $mime = 'image/' . ($ext === 'jpg' ? 'jpeg' : $ext);
+                    return 'data:' . $mime . ';base64,' . base64_encode($data);
+                } catch (\Exception $e) {
+                    \Log::warning('Error al leer imagen: ' . $e->getMessage());
+                }
+            }
+        }
+
+        return null;
     }
 }

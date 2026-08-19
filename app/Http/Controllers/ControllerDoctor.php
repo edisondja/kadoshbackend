@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Mail;
 use DB;
 use App;
@@ -82,7 +84,7 @@ class ControllerDoctor extends Controller
 
             $correoDoctor = trim((string) $request->input('correo_electronico', ''));
 
-            $doctor = App\Doctor::create([
+            $datosDoctor = [
                 'nombre' => $request->nombre,
                 'apellido' => $request->apellido,
                 'dni' => $request->cedula,
@@ -91,8 +93,13 @@ class ControllerDoctor extends Controller
                 'sexo' => $request->sexo ?? null,
                 'correo_electronico' => $correoDoctor !== '' ? $correoDoctor : null,
                 'estado' => true, // Activo por defecto
-                'porcentaje_ingresos' => min(100, max(0, floatval($request->input('porcentaje_ingresos', 0)))),
-            ]);
+            ];
+
+            if (\Schema::hasColumn('doctors', 'porcentaje_ingresos')) {
+                $datosDoctor['porcentaje_ingresos'] = min(100, max(0, floatval($request->input('porcentaje_ingresos', 0))));
+            }
+
+            $doctor = App\Doctor::create($datosDoctor);
 
             $invitacion = $this->intentarInvitacionCorreoDoctor($request, $doctor, $correoDoctor);
 
@@ -167,10 +174,105 @@ class ControllerDoctor extends Controller
     }
 
     public function cargar_doctor($id){
-    
-        
         $data = App\Doctor::find($id);
-        return $data;
+        if (!$data) {
+            return response()->json(['message' => 'Doctor no encontrado'], 404);
+        }
+        return response()->json($this->appendFirmaUrl($data));
+    }
+
+    /**
+     * Subir o reemplazar imagen de firma del doctor.
+     */
+    public function subirFirma(Request $request, $id)
+    {
+        try {
+            if (!Schema::hasColumn('doctors', 'ruta_firma')) {
+                return response()->json([
+                    'error' => 'Columna no disponible',
+                    'message' => 'Ejecute el SQL 2026_07_25_firma_doctor_documentos.sql'
+                ], 500);
+            }
+
+            $request->validate([
+                'ruta_firma' => 'required|file|image|max:2048',
+            ]);
+
+            $doctor = App\Doctor::findOrFail($id);
+
+            if ($doctor->ruta_firma && strpos($doctor->ruta_firma, 'http') === false) {
+                try {
+                    Storage::disk('public')->delete($doctor->ruta_firma);
+                } catch (\Exception $e) {
+                    \Log::warning('No se pudo eliminar firma anterior: ' . $e->getMessage());
+                }
+            }
+
+            $doctor->ruta_firma = $request->file('ruta_firma')->store('doctors/firmas', 'public');
+            $doctor->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Firma guardada correctamente',
+                'doctor' => $this->appendFirmaUrl($doctor),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error' => 'Error de validación',
+                'message' => 'Debe enviar una imagen válida (máx. 2MB)',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error al subir firma doctor: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al subir firma',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Eliminar firma del doctor.
+     */
+    public function eliminarFirma($id)
+    {
+        try {
+            $doctor = App\Doctor::findOrFail($id);
+
+            if ($doctor->ruta_firma && strpos($doctor->ruta_firma, 'http') === false) {
+                try {
+                    Storage::disk('public')->delete($doctor->ruta_firma);
+                } catch (\Exception $e) {
+                    \Log::warning('No se pudo eliminar archivo de firma: ' . $e->getMessage());
+                }
+            }
+
+            $doctor->ruta_firma = null;
+            $doctor->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Firma eliminada',
+                'doctor' => $this->appendFirmaUrl($doctor),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al eliminar firma',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function appendFirmaUrl($doctor)
+    {
+        if ($doctor && $doctor->ruta_firma && strpos($doctor->ruta_firma, 'http') === false) {
+            $doctor->ruta_firma_url = asset('storage/' . $doctor->ruta_firma);
+        } elseif ($doctor && $doctor->ruta_firma) {
+            $doctor->ruta_firma_url = $doctor->ruta_firma;
+        } else {
+            $doctor->ruta_firma_url = null;
+        }
+        return $doctor;
     }
 
     /**

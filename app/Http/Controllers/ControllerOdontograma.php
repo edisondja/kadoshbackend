@@ -131,8 +131,11 @@ class ControllerOdontograma extends Controller
 
             // Si hay detalles (procedimientos), guardarlos
             if ($request->has('detalles') && is_array($request->detalles) && count($request->detalles) > 0) {
+                $tieneCardPos = Schema::hasColumn('odontograma_detalles', 'card_pos_x_pct')
+                    && Schema::hasColumn('odontograma_detalles', 'card_pos_y_pct');
+
                 foreach ($request->detalles as $detalle) {
-                    Odontograma_detalles::create([
+                    $detalleData = [
                         'odontograma_id' => $odontograma->id,
                         'diente' => $detalle['diente'] ?? '',
                         'cara' => $detalle['cara'] ?? null,
@@ -140,9 +143,14 @@ class ControllerOdontograma extends Controller
                         'descripcion' => $detalle['descripcion'] ?? $detalle['nombre'] ?? '',
                         'precio' => $detalle['precio'] ?? 0,
                         'color' => $detalle['color'] ?? null,
-                        'card_pos_x_pct' => $detalle['card_pos_x_pct'] ?? null,
-                        'card_pos_y_pct' => $detalle['card_pos_y_pct'] ?? null,
-                    ]);
+                    ];
+
+                    if ($tieneCardPos) {
+                        $detalleData['card_pos_x_pct'] = $detalle['card_pos_x_pct'] ?? null;
+                        $detalleData['card_pos_y_pct'] = $detalle['card_pos_y_pct'] ?? null;
+                    }
+
+                    Odontograma_detalles::create($detalleData);
                 }
             }
 
@@ -245,8 +253,12 @@ class ControllerOdontograma extends Controller
 
             if ($request->has('detalles') && is_array($request->detalles)) {
                 Odontograma_detalles::where('odontograma_id', $id)->delete();
+
+                $tieneCardPos = Schema::hasColumn('odontograma_detalles', 'card_pos_x_pct')
+                    && Schema::hasColumn('odontograma_detalles', 'card_pos_y_pct');
+
                 foreach ($request->detalles as $detalle) {
-                    Odontograma_detalles::create([
+                    $detalleData = [
                         'odontograma_id' => $odontograma->id,
                         'diente' => $detalle['diente'] ?? '',
                         'cara' => $detalle['cara'] ?? null,
@@ -254,9 +266,14 @@ class ControllerOdontograma extends Controller
                         'descripcion' => $detalle['descripcion'] ?? $detalle['nombre'] ?? '',
                         'precio' => $detalle['precio'] ?? 0,
                         'color' => $detalle['color'] ?? null,
-                        'card_pos_x_pct' => $detalle['card_pos_x_pct'] ?? null,
-                        'card_pos_y_pct' => $detalle['card_pos_y_pct'] ?? null,
-                    ]);
+                    ];
+
+                    if ($tieneCardPos) {
+                        $detalleData['card_pos_x_pct'] = $detalle['card_pos_x_pct'] ?? null;
+                        $detalleData['card_pos_y_pct'] = $detalle['card_pos_y_pct'] ?? null;
+                    }
+
+                    Odontograma_detalles::create($detalleData);
                 }
             }
 
