@@ -260,6 +260,14 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/exportar_usuarios','ControllerUsuario@exportar_usuarios');
 	Route::post('/api/importar_usuarios','ControllerUsuario@importar_usuarios');
 
+	// Sesiones activas
+	Route::get('/api/sesiones/verificar','ControllerSesiones@verificar');
+	Route::get('/api/sesiones','ControllerSesiones@listar');
+	Route::post('/api/sesiones/logout','ControllerSesiones@logout');
+	Route::delete('/api/sesiones/{jti}','ControllerSesiones@revocar');
+	Route::post('/api/sesiones/revocar-usuario/{usuarioId}','ControllerSesiones@revocarUsuario');
+	Route::post('/api/sesiones/revocar-todas','ControllerSesiones@revocarTodas');
+
 
     //Agregar Notas a pacientes
 

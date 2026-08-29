@@ -438,9 +438,9 @@ class ControllerRecibo extends Controller
             ->values();
 
         return [
-            'monto_total' => (int) $total,
-            'total_servicios' => (int) $totalServicios,
-            'total_ventas' => (int) $totalVentas,
+            'monto_total' => (float) $total,
+            'total_servicios' => (float) $totalServicios,
+            'total_ventas' => (float) $totalVentas,
             'recibos' => $recibos,
             'recibos_servicios' => $recibosServicios->values(),
             'recibos_ventas' => $recibosVentas->values(),
