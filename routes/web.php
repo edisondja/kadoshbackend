@@ -47,7 +47,7 @@
 
 	//API PACIENTES READY
 	
-Route::middleware(['tenant'])->group(function () {
+Route::middleware(['tenant', 'usuario.no_bloqueado'])->group(function () {
 
 	// Fotos y archivos en storage/app/public (funciona aunque no exista el symlink public/storage)
 	Route::get('/storage/{archivo}', 'Paciente@servirArchivoPublico')->where('archivo', '[^/]+');
@@ -189,6 +189,10 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/fecha_gastos/{fecha_i}/{fecha_f}','ControllerFinanciero@buscar_por_fecha');
 	Route::get('/api/cargar_gastos_fecha/{fecha_i}/{fecha_f}','ControllerFinanciero@cargar_gastos_fecha');
 
+	// Asientos contables (movimientos: cobros, gastos, CxC)
+	Route::get('/api/asientos_contables','ControllerAsientosContables@listar');
+	Route::post('/api/asientos_contables/sincronizar','ControllerAsientosContables@sincronizar');
+
 
 	//Suplidores
 	Route::get('/api/buscar_suplidor/{nombre}','ControllerFinanciero@buscar_suplidor');
@@ -265,8 +269,11 @@ Route::middleware(['tenant'])->group(function () {
 	Route::get('/api/sesiones','ControllerSesiones@listar');
 	Route::post('/api/sesiones/logout','ControllerSesiones@logout');
 	Route::delete('/api/sesiones/{jti}','ControllerSesiones@revocar');
+	Route::post('/api/sesiones/{jti}/cerrar','ControllerSesiones@revocar');
 	Route::post('/api/sesiones/revocar-usuario/{usuarioId}','ControllerSesiones@revocarUsuario');
 	Route::post('/api/sesiones/revocar-todas','ControllerSesiones@revocarTodas');
+	Route::post('/api/sesiones/bloquear-usuario/{usuarioId}','ControllerSesiones@bloquearUsuario');
+	Route::post('/api/sesiones/desbloquear-usuario/{usuarioId}','ControllerSesiones@desbloquearUsuario');
 
 
     //Agregar Notas a pacientes

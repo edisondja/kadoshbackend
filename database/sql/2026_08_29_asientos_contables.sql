@@ -1,0 +1,26 @@
+-- Libro de asientos contables (generados automáticamente desde operaciones existentes)
+CREATE TABLE IF NOT EXISTS asientos_contables (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  origen_tipo VARCHAR(40) NOT NULL,
+  origen_id INT UNSIGNED NOT NULL,
+  fecha DATETIME NOT NULL,
+  tipo VARCHAR(30) NOT NULL,
+  tipo_label VARCHAR(80) NOT NULL,
+  referencia VARCHAR(120) NULL,
+  descripcion TEXT NULL,
+  tercero VARCHAR(255) NULL,
+  forma_pago VARCHAR(120) NULL,
+  cuenta_debe VARCHAR(120) NULL,
+  cuenta_haber VARCHAR(120) NULL,
+  monto DECIMAL(14,2) NOT NULL DEFAULT 0,
+  naturaleza VARCHAR(20) NOT NULL,
+  id_factura INT UNSIGNED NULL,
+  saldo_pendiente DECIMAL(14,2) NULL,
+  automatico TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY asientos_origen_unique (origen_tipo, origen_id),
+  INDEX asientos_fecha_idx (fecha),
+  INDEX asientos_tipo_idx (tipo),
+  INDEX asientos_naturaleza_idx (naturaleza)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

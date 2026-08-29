@@ -145,6 +145,33 @@ CREATE TABLE IF NOT EXISTS `user_sessions` (
   CONSTRAINT `user_sessions_usuario_fk` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `asientos_contables` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `origen_tipo` varchar(40) NOT NULL,
+  `origen_id` int unsigned NOT NULL,
+  `fecha` datetime NOT NULL,
+  `tipo` varchar(30) NOT NULL,
+  `tipo_label` varchar(80) NOT NULL,
+  `referencia` varchar(120) DEFAULT NULL,
+  `descripcion` text,
+  `tercero` varchar(255) DEFAULT NULL,
+  `forma_pago` varchar(120) DEFAULT NULL,
+  `cuenta_debe` varchar(120) DEFAULT NULL,
+  `cuenta_haber` varchar(120) DEFAULT NULL,
+  `monto` decimal(14,2) NOT NULL DEFAULT 0.00,
+  `naturaleza` varchar(20) NOT NULL,
+  `id_factura` int unsigned DEFAULT NULL,
+  `saldo_pendiente` decimal(14,2) DEFAULT NULL,
+  `automatico` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `asientos_origen_unique` (`origen_tipo`,`origen_id`),
+  KEY `asientos_fecha_idx` (`fecha`),
+  KEY `asientos_tipo_idx` (`tipo`),
+  KEY `asientos_naturaleza_idx` (`naturaleza`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- =============================================================================
 -- Macro: agregar columna si no existe (tabla, columna, definición ALTER)
 -- =============================================================================
@@ -159,6 +186,18 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @exist := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='usuarios' AND COLUMN_NAME='foto_usuario');
 SET @sql := IF(@exist=0,'ALTER TABLE `usuarios` ADD COLUMN `foto_usuario` VARCHAR(255) NULL DEFAULT NULL','SELECT ''usuarios.foto_usuario OK'' AS info');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='usuarios' AND COLUMN_NAME='bloqueado');
+SET @sql := IF(@exist=0,'ALTER TABLE `usuarios` ADD COLUMN `bloqueado` tinyint(1) NOT NULL DEFAULT 0','SELECT ''usuarios.bloqueado OK'' AS info');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='usuarios' AND COLUMN_NAME='bloqueado_at');
+SET @sql := IF(@exist=0,'ALTER TABLE `usuarios` ADD COLUMN `bloqueado_at` timestamp NULL DEFAULT NULL','SELECT ''usuarios.bloqueado_at OK'' AS info');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='usuarios' AND COLUMN_NAME='bloqueado_por');
+SET @sql := IF(@exist=0,'ALTER TABLE `usuarios` ADD COLUMN `bloqueado_por` int unsigned NULL DEFAULT NULL','SELECT ''usuarios.bloqueado_por OK'' AS info');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- doctors

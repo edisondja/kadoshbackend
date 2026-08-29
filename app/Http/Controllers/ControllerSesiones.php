@@ -132,6 +132,16 @@ class ControllerSesiones extends Controller
             ], 403);
         }
 
+        $controllerUsuario = app(ControllerUsuario::class);
+        if ($controllerUsuario->usuarioEstaBloqueado($usuario)) {
+            return response()->json([
+                'success' => false,
+                'blocked' => true,
+                'valid' => false,
+                'message' => 'Su cuenta fue bloqueada por un administrador.',
+            ], 403);
+        }
+
         return [
             'usuario' => $usuario,
             'decoded' => $decoded,
@@ -159,10 +169,10 @@ class ControllerSesiones extends Controller
         return true;
     }
 
-    public function registrarSesionLogin($usuario, Request $request, $jti, $expiresAt)
+    private function upsertSesion($usuarioId, Request $request, $jti, $expiresAt, $reabrir = false)
     {
-        if (!$this->tablaExiste()) {
-            return;
+        if (!$this->tablaExiste() || !$jti) {
+            return false;
         }
 
         $ip = $this->resolverIpCliente($request);
@@ -170,19 +180,77 @@ class ControllerSesiones extends Controller
         $ua = (string) $request->header('User-Agent', 'No disponible');
         $parsed = $this->parseUserAgent($ua);
         $now = Carbon::now();
+        $expires = $expiresAt instanceof Carbon ? $expiresAt : Carbon::parse($expiresAt);
 
-        DB::table('user_sessions')->insert([
-            'usuario_id' => (int) $usuario->id,
-            'jti' => $jti,
+        $payload = [
+            'usuario_id' => (int) $usuarioId,
             'ip_address' => $ip,
             'ubicacion' => $ubicacion,
             'user_agent' => substr($ua, 0, 1000),
             'dispositivo' => $parsed['dispositivo'],
             'navegador' => $parsed['navegador'],
             'last_active_at' => $now,
-            'expires_at' => $expiresAt,
-            'created_at' => $now,
-        ]);
+            'expires_at' => $expires->format('Y-m-d H:i:s'),
+            'updated_at' => $now,
+        ];
+
+        $existe = DB::table('user_sessions')->where('jti', $jti)->first();
+        if ($existe) {
+            if (!empty($existe->revoked_at) && !$reabrir) {
+                return false;
+            }
+            if ($reabrir) {
+                $payload['revoked_at'] = null;
+            }
+            DB::table('user_sessions')->where('jti', $jti)->update($payload);
+            return true;
+        }
+
+        $payload['jti'] = $jti;
+        $payload['revoked_at'] = null;
+        $payload['created_at'] = $now;
+        DB::table('user_sessions')->insert($payload);
+        return true;
+    }
+
+    private function sincronizarSesionActual(array $auth, Request $request)
+    {
+        if (!$this->tablaExiste()) {
+            return;
+        }
+
+        $jti = $auth['jti'] ?? null;
+        if (!$jti) {
+            return;
+        }
+
+        $session = DB::table('user_sessions')->where('jti', $jti)->first();
+        if ($session && !empty($session->revoked_at)) {
+            return;
+        }
+
+        $decoded = $auth['decoded'] ?? null;
+        $exp = isset($decoded->exp) ? (int) $decoded->exp : (time() + 3600);
+        $expiresAt = Carbon::createFromTimestamp($exp);
+
+        try {
+            $this->upsertSesion((int) $auth['usuario']->id, $request, $jti, $expiresAt, false);
+        } catch (\Exception $e) {
+            \Log::warning('No se pudo sincronizar sesión activa: ' . $e->getMessage());
+        }
+    }
+
+    public function registrarSesionLogin($usuario, Request $request, $jti, $expiresAt)
+    {
+        if (!$this->tablaExiste()) {
+            return;
+        }
+
+        try {
+            $this->upsertSesion((int) $usuario->id, $request, $jti, $expiresAt, true);
+        } catch (\Exception $e) {
+            \Log::warning('No se pudo registrar sesión de login: ' . $e->getMessage());
+        }
     }
 
     public function verificar(Request $request)
@@ -195,6 +263,10 @@ class ControllerSesiones extends Controller
         $jti = $auth['jti'];
         if (!$jti) {
             return response()->json(['valid' => true, 'legacy' => true]);
+        }
+
+        if (!$this->sesionSigueActiva($jti)) {
+            $this->sincronizarSesionActual($auth, $request);
         }
 
         if (!$this->sesionSigueActiva($jti)) {
@@ -228,20 +300,36 @@ class ControllerSesiones extends Controller
             ], 403);
         }
 
-        if (!$this->tablaExiste()) {
+        $tablaConfigurada = $this->tablaExiste();
+        if (!$tablaConfigurada) {
             return response()->json([
                 'success' => true,
                 'sesiones' => [],
-                'mensaje' => 'La tabla de sesiones aún no está configurada en este tenant.',
+                'usuarios_bloqueados' => [],
+                'tabla_configurada' => false,
+                'mensaje' => 'La tabla user_sessions no existe. Ejecute database/sql/2026_08_28_user_sessions.sql en la base del tenant.',
             ]);
         }
 
+        $this->sincronizarSesionActual($auth, $request);
+
         $ahora = Carbon::now();
+        $selectUsuario = [
+            'u.nombre',
+            'u.apellido',
+            'u.usuario as login',
+            'u.roll',
+        ];
+        if ($controllerUsuario->columnaBloqueadoExiste()) {
+            $selectUsuario[] = 'u.bloqueado';
+            $selectUsuario[] = 'u.bloqueado_at';
+        }
+
         $sesiones = DB::table('user_sessions as s')
             ->join('usuarios as u', 'u.id', '=', 's.usuario_id')
             ->whereNull('s.revoked_at')
             ->where('s.expires_at', '>', $ahora)
-            ->select(
+            ->select(array_merge([
                 's.id',
                 's.jti',
                 's.usuario_id',
@@ -253,16 +341,13 @@ class ControllerSesiones extends Controller
                 's.last_active_at',
                 's.expires_at',
                 's.created_at',
-                'u.nombre',
-                'u.apellido',
-                'u.usuario as login',
-                'u.roll'
-            )
+            ], $selectUsuario))
             ->orderBy('s.last_active_at', 'desc')
             ->get();
 
         $jtiActual = $auth['jti'];
-        $data = $sesiones->map(function ($s) use ($jtiActual) {
+        $idUsuarioActual = (int) $auth['usuario']->id;
+        $data = $sesiones->map(function ($s) use ($jtiActual, $idUsuarioActual) {
             return [
                 'id' => $s->id,
                 'jti' => $s->jti,
@@ -270,6 +355,8 @@ class ControllerSesiones extends Controller
                 'nombre' => trim(($s->nombre ?? '') . ' ' . ($s->apellido ?? '')),
                 'login' => $s->login,
                 'roll' => $s->roll,
+                'bloqueado' => !empty($s->bloqueado),
+                'bloqueado_at' => $s->bloqueado_at ?? null,
                 'ip_address' => $s->ip_address,
                 'ubicacion' => $s->ubicacion,
                 'dispositivo' => $s->dispositivo,
@@ -279,13 +366,35 @@ class ControllerSesiones extends Controller
                 'expires_at' => $s->expires_at,
                 'created_at' => $s->created_at,
                 'es_actual' => $jtiActual && $s->jti === $jtiActual,
+                'es_propio_usuario' => (int) $s->usuario_id === $idUsuarioActual,
             ];
         });
+
+        $usuariosBloqueados = [];
+        if ($controllerUsuario->columnaBloqueadoExiste()) {
+            $usuariosBloqueados = DB::table('usuarios')
+                ->where('bloqueado', 1)
+                ->select('id', 'nombre', 'apellido', 'usuario as login', 'roll', 'bloqueado_at')
+                ->orderBy('bloqueado_at', 'desc')
+                ->get()
+                ->map(function ($u) {
+                    return [
+                        'usuario_id' => $u->id,
+                        'nombre' => trim(($u->nombre ?? '') . ' ' . ($u->apellido ?? '')),
+                        'login' => $u->login,
+                        'roll' => $u->roll,
+                        'bloqueado_at' => $u->bloqueado_at,
+                    ];
+                });
+        }
 
         return response()->json([
             'success' => true,
             'sesiones' => $data,
+            'usuarios_bloqueados' => $usuariosBloqueados,
             'total' => $data->count(),
+            'tabla_configurada' => true,
+            'bloqueo_habilitado' => $controllerUsuario->columnaBloqueadoExiste(),
         ]);
     }
 
@@ -399,6 +508,122 @@ class ControllerSesiones extends Controller
             'success' => true,
             'message' => 'Todas las demás sesiones fueron cerradas.',
             'cerradas' => $cerradas,
+        ]);
+    }
+
+    private function revocarTodasSesionesUsuario($usuarioId)
+    {
+        if (!$this->tablaExiste()) {
+            return 0;
+        }
+
+        return DB::table('user_sessions')
+            ->where('usuario_id', (int) $usuarioId)
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => Carbon::now()]);
+    }
+
+    public function bloquearUsuario(Request $request, $usuarioId)
+    {
+        $auth = $this->autenticarDesdeRequest($request);
+        if ($auth instanceof \Illuminate\Http\JsonResponse) {
+            return $auth;
+        }
+
+        $controllerUsuario = app(ControllerUsuario::class);
+        if (!$controllerUsuario->usuarioTienePermiso($auth['usuario'], 'sesiones_activas')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tiene permiso para bloquear usuarios.',
+            ], 403);
+        }
+
+        if (!$controllerUsuario->columnaBloqueadoExiste()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ejecute database/sql/2026_08_29_usuarios_bloqueado.sql en la base del tenant.',
+            ], 400);
+        }
+
+        $usuarioId = (int) $usuarioId;
+        if ($usuarioId === (int) $auth['usuario']->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No puede bloquearse a sí mismo.',
+            ], 422);
+        }
+
+        $usuario = App\Usuario::find($usuarioId);
+        if (!$usuario) {
+            return response()->json(['success' => false, 'message' => 'Usuario no encontrado.'], 404);
+        }
+
+        if ($controllerUsuario->usuarioEstaBloqueado($usuario)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'El usuario ya estaba bloqueado.',
+                'bloqueado' => true,
+            ]);
+        }
+
+        DB::table('usuarios')
+            ->where('id', $usuarioId)
+            ->update([
+                'bloqueado' => 1,
+                'bloqueado_at' => Carbon::now(),
+                'bloqueado_por' => (int) $auth['usuario']->id,
+            ]);
+
+        $sesionesCerradas = $this->revocarTodasSesionesUsuario($usuarioId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario bloqueado. Ya no podrá usar el sistema.',
+            'bloqueado' => true,
+            'sesiones_cerradas' => $sesionesCerradas,
+        ]);
+    }
+
+    public function desbloquearUsuario(Request $request, $usuarioId)
+    {
+        $auth = $this->autenticarDesdeRequest($request);
+        if ($auth instanceof \Illuminate\Http\JsonResponse) {
+            return $auth;
+        }
+
+        $controllerUsuario = app(ControllerUsuario::class);
+        if (!$controllerUsuario->usuarioTienePermiso($auth['usuario'], 'sesiones_activas')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tiene permiso para desbloquear usuarios.',
+            ], 403);
+        }
+
+        if (!$controllerUsuario->columnaBloqueadoExiste()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ejecute database/sql/2026_08_29_usuarios_bloqueado.sql en la base del tenant.',
+            ], 400);
+        }
+
+        $usuarioId = (int) $usuarioId;
+        $usuario = App\Usuario::find($usuarioId);
+        if (!$usuario) {
+            return response()->json(['success' => false, 'message' => 'Usuario no encontrado.'], 404);
+        }
+
+        DB::table('usuarios')
+            ->where('id', $usuarioId)
+            ->update([
+                'bloqueado' => 0,
+                'bloqueado_at' => null,
+                'bloqueado_por' => null,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario desbloqueado. Ya puede iniciar sesión nuevamente.',
+            'bloqueado' => false,
         ]);
     }
 

@@ -63,5 +63,6 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'cors' => \App\Http\Middleware\Cors::class, // <-- add this line
         'admin' => \App\Http\Middleware\AdminAuth::class,
+        'usuario.no_bloqueado' => \App\Http\Middleware\UsuarioNoBloqueado::class,
     ];
 }

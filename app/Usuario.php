@@ -17,6 +17,9 @@ class Usuario extends Model
         'apellido',
         'foto_usuario',
         'permisos',
+        'bloqueado',
+        'bloqueado_at',
+        'bloqueado_por',
     ];
 
     public function pagosMensuales()

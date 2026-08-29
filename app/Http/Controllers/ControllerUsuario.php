@@ -19,6 +19,7 @@ class ControllerUsuario extends Controller
             'salarios_doctores', 'historial_pagos', 'consulta_deudas', 'reportes', 'auditoria',
             'configuracion', 'exportar_importar', 'administrar_tenants', 'manual_usuario',
             'sesiones_activas',
+            'asientos_contables',
         ];
     }
 
@@ -32,20 +33,20 @@ class ControllerUsuario extends Controller
             'contabilidad' => true, 'nomina' => true, 'punto_venta' => true, 'salarios_doctores' => true,
             'historial_pagos' => true, 'consulta_deudas' => true, 'reportes' => true, 'auditoria' => true,
             'configuracion' => true, 'exportar_importar' => true, 'administrar_tenants' => true,
-            'manual_usuario' => true, 'sesiones_activas' => true,
+            'manual_usuario' => true, 'sesiones_activas' => true, 'asientos_contables' => true,
         ];
 
         if ($rol === 'Administrador') return $all;
         if ($rol === 'Contable') {
-            foreach (['paciente','invitar_paciente','doctor','asignar_ganancias_recibos','procedimiento','agregar_usuario','especialidades','notificaciones','agregar_cita','reportes','auditoria','configuracion','exportar_importar','administrar_tenants','sesiones_activas'] as $k) $all[$k] = false;
+            foreach (['paciente','invitar_paciente','doctor','asignar_ganancias_recibos','procedimiento','agregar_usuario','especialidades','notificaciones','agregar_cita','reportes','auditoria','configuracion','exportar_importar','administrar_tenants','sesiones_activas','asientos_contables'] as $k) $all[$k] = false;
             return $all;
         }
         if ($rol === 'Secretaria') {
-            foreach (['doctor','asignar_ganancias_recibos','procedimiento','agregar_usuario','especialidades','contabilidad','nomina','punto_venta','salarios_doctores','historial_pagos','consulta_deudas','reportes','auditoria','configuracion','exportar_importar','administrar_tenants','sesiones_activas'] as $k) $all[$k] = false;
+            foreach (['doctor','asignar_ganancias_recibos','procedimiento','agregar_usuario','especialidades','contabilidad','nomina','punto_venta','salarios_doctores','historial_pagos','consulta_deudas','reportes','auditoria','configuracion','exportar_importar','administrar_tenants','sesiones_activas','asientos_contables'] as $k) $all[$k] = false;
             return $all;
         }
         if ($rol === 'Odontologo') {
-            foreach (['doctor','asignar_ganancias_recibos','procedimiento','agregar_usuario','especialidades','contabilidad','nomina','punto_venta','salarios_doctores','historial_pagos','consulta_deudas','reportes','auditoria','configuracion','exportar_importar','administrar_tenants','sesiones_activas'] as $k) $all[$k] = false;
+            foreach (['doctor','asignar_ganancias_recibos','procedimiento','agregar_usuario','especialidades','contabilidad','nomina','punto_venta','salarios_doctores','historial_pagos','consulta_deudas','reportes','auditoria','configuracion','exportar_importar','administrar_tenants','sesiones_activas','asientos_contables'] as $k) $all[$k] = false;
             return $all;
         }
         return $all;
@@ -99,6 +100,23 @@ class ControllerUsuario extends Controller
         }
         $permisos = $this->normalizarPermisos($usuario->roll, $usuario->permisos, $usuario->id_rol ?? null);
         return !empty($permisos[$modulo]);
+    }
+
+    public function columnaBloqueadoExiste()
+    {
+        try {
+            return \DB::getSchemaBuilder()->hasColumn('usuarios', 'bloqueado');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    public function usuarioEstaBloqueado($usuario)
+    {
+        if (!$usuario || !$this->columnaBloqueadoExiste()) {
+            return false;
+        }
+        return !empty($usuario->bloqueado);
     }
 
     private function guardarFotoUsuario(Request $data, $fotoActual = null)
@@ -234,6 +252,13 @@ class ControllerUsuario extends Controller
         $usuario = App\Usuario::where("usuario",$usuario)->where("clave",$clave)->first();
         if (!$usuario) {
             return response()->json(['error' => 'Credenciales inválidas'], 401);
+        }
+
+        if ($this->usuarioEstaBloqueado($usuario)) {
+            return response()->json([
+                'error' => 'Su cuenta está bloqueada. Contacte al administrador del sistema.',
+                'blocked' => true,
+            ], 403);
         }
 
            
