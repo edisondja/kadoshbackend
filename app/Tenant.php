@@ -15,7 +15,12 @@ class Tenant extends Model
     protected $fillable = [
         'nombre',
         'subdominio',
+        'dominio',
         'database_name',
+        'document_root',
+        'api_url',
+        'vhost_enabled',
+        'ultimo_deploy_at',
         'fecha_vencimiento',
         'activo',
         'bloqueado',
@@ -29,7 +34,41 @@ class Tenant extends Model
         'fecha_vencimiento' => 'date',
         'activo' => 'boolean',
         'bloqueado' => 'boolean',
+        'vhost_enabled' => 'boolean',
+        'ultimo_deploy_at' => 'datetime',
     ];
+
+    /**
+     * Document root por defecto bajo /var/www/<dominio>/public_html
+     */
+    public function documentRootResuelto()
+    {
+        if (!empty($this->document_root)) {
+            return rtrim($this->document_root, '/');
+        }
+        $dominio = $this->dominioResuelto();
+        return $dominio ? '/var/www/' . $dominio . '/public_html' : null;
+    }
+
+    public function dominioResuelto()
+    {
+        if (!empty($this->dominio)) {
+            return strtolower(trim($this->dominio));
+        }
+        if (!empty($this->subdominio)) {
+            return strtolower(trim($this->subdominio)) . '.odontoed.com';
+        }
+        return null;
+    }
+
+    public function apiUrlResuelta()
+    {
+        if (!empty($this->api_url)) {
+            return rtrim($this->api_url, '/');
+        }
+        $dominio = $this->dominioResuelto();
+        return $dominio ? 'https://' . $dominio : null;
+    }
 
     /**
      * Verificar si el tenant está vencido

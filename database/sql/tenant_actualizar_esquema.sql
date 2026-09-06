@@ -286,6 +286,14 @@ WHERE `tema_apariencia` IS NULL
    OR TRIM(`tema_apariencia`) = ''
    OR `tema_apariencia` NOT IN ('classic', 'eda', 'violet', 'dark');
 
+SET @exist := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='configs' AND COLUMN_NAME='mostrar_firma_documentos');
+SET @sql := IF(@exist=0,'ALTER TABLE `configs` ADD COLUMN `mostrar_firma_documentos` tinyint(1) NOT NULL DEFAULT 0','SELECT ''configs.mostrar_firma_documentos OK'' AS info');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @exist := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='doctors' AND COLUMN_NAME='ruta_firma');
+SET @sql := IF(@exist=0,'ALTER TABLE `doctors` ADD COLUMN `ruta_firma` varchar(255) NULL DEFAULT NULL','SELECT ''doctors.ruta_firma OK'' AS info');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- pacientes.cedula opcional
 SET @exist := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='pacientes' AND COLUMN_NAME='cedula');
 SET @sql := IF(@exist>0,'ALTER TABLE `pacientes` MODIFY COLUMN `cedula` varchar(255) NULL DEFAULT NULL','SELECT ''pacientes.cedula N/A'' AS info');

@@ -1,0 +1,23 @@
+# =============================================================================
+# Bases de datos en producción — Kadosh / OdontoED
+# Una base por línea. Líneas con # se ignoran.
+# =============================================================================
+
+# BD maestra (administra tenants)
+clinica
+
+# Clínicas / tenants (captura servidor — 17 filas en SHOW DATABASES;
+# las de sistema mysql/information_schema NO van aquí)
+tenant_charlin
+tenant_clinicacharlin
+tenant_demoserver
+tenant_dentaladvance
+tenant_felix
+tenant_isalex
+tenant_leonardobatista
+tenant_service
+tenant_sos
+tenant_alexander
+
+# Si aparecen más en el servidor, agrégalas abajo:
+# tenant_otra_clinica

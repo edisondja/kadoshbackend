@@ -1,0 +1,9 @@
+# Sudoers sugerido para que el panel de tenants pueda crear vhosts Apache
+# En el servidor (como root):
+#   visudo -f /etc/sudoers.d/kadosh-tenants
+#
+# Reemplace www-data por el usuario de PHP-FPM si es distinto.
+#
+# www-data ALL=(root) NOPASSWD: /var/www/kadoshbackend/scripts/provision-apache-vhost.sh
+
+www-data ALL=(root) NOPASSWD: /ruta/al/kadoshbackend/scripts/provision-apache-vhost.sh

@@ -27,6 +27,7 @@
 	Route::post('/api/admin/login', 'ControllerAdminAuth@login');
 
 	// API administración de tenants (requiere login administrador)
+	// Opera siempre sobre la BD maestra (DB_DATABASE=clinica)
 	Route::middleware(['admin'])->group(function () {
 		Route::get('/api/admin/me', 'ControllerAdminAuth@me');
 		Route::get('/api/tenants', 'ControllerTenant@index');
@@ -36,6 +37,16 @@
 		Route::post('/api/tenants/{id}', 'ControllerTenant@update');
 		Route::put('/api/tenants/{id}', 'ControllerTenant@update');
 		Route::delete('/api/tenants/{id}', 'ControllerTenant@destroy');
+		// Activar / desactivar / bloquear (BD maestra clinica)
+		Route::post('/api/tenants/{id}/activar', 'ControllerTenant@activar');
+		Route::post('/api/tenants/{id}/desactivar', 'ControllerTenant@desactivar');
+		Route::post('/api/tenants/{id}/bloquear', 'ControllerTenant@bloquear');
+		Route::post('/api/tenants/{id}/desbloquear', 'ControllerTenant@desbloquear');
+		Route::post('/api/tenants/{id}/toggle', 'ControllerTenant@toggleEstado');
+		// Deploy frontend, Apache vhost y sync de esquemas
+		Route::post('/api/tenants/{id}/deploy-frontend', 'ControllerTenantOps@subirFrontend');
+		Route::post('/api/tenants/{id}/provision-vhost', 'ControllerTenantOps@provisionarVhost');
+		Route::post('/api/tenants/schema-sync', 'ControllerTenantOps@sincronizarEsquema');
 	});
 
 	// Vista pública para recibos temporales (WhatsApp)

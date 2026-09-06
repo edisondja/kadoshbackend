@@ -44,6 +44,9 @@ class ControllerTenant extends Controller
             'nombre' => 'required|string|max:255',
             'subdominio' => 'required|string|max:100|unique:tenants,subdominio',
             'database_name' => 'required|string|max:255',
+            'dominio' => 'nullable|string|max:255',
+            'document_root' => 'nullable|string|max:500',
+            'api_url' => 'nullable|string|max:500',
             'fecha_vencimiento' => 'nullable|date',
             'contacto_nombre' => 'nullable|string|max:255',
             'contacto_email' => 'nullable|email|max:255',
@@ -59,10 +62,24 @@ class ControllerTenant extends Controller
         }
 
         try {
+            $subdominio = strtolower(trim($request->subdominio));
+            $dominio = $request->dominio
+                ? strtolower(trim($request->dominio))
+                : $subdominio . '.odontoed.com';
+            $docroot = $request->document_root
+                ? rtrim(trim($request->document_root), '/')
+                : '/var/www/' . $dominio . '/public_html';
+            $apiUrl = $request->api_url
+                ? rtrim(trim($request->api_url), '/')
+                : 'https://' . $dominio;
+
             $tenant = Tenant::create([
                 'nombre' => $request->nombre,
-                'subdominio' => $request->subdominio,
+                'subdominio' => $subdominio,
+                'dominio' => $dominio,
                 'database_name' => $request->database_name,
+                'document_root' => $docroot,
+                'api_url' => $apiUrl,
                 'fecha_vencimiento' => $request->fecha_vencimiento,
                 'activo' => $request->activo ?? true,
                 'bloqueado' => $request->bloqueado ?? false,
@@ -106,6 +123,9 @@ class ControllerTenant extends Controller
             'nombre' => 'sometimes|required|string|max:255',
             'subdominio' => 'sometimes|required|string|max:100|unique:tenants,subdominio,' . $id,
             'database_name' => 'sometimes|required|string|max:255',
+            'dominio' => 'nullable|string|max:255',
+            'document_root' => 'nullable|string|max:500',
+            'api_url' => 'nullable|string|max:500',
             'fecha_vencimiento' => 'nullable|date',
             'activo' => 'sometimes|boolean',
             'bloqueado' => 'sometimes|boolean',
@@ -126,7 +146,10 @@ class ControllerTenant extends Controller
             $tenant->update($request->only([
                 'nombre',
                 'subdominio',
+                'dominio',
                 'database_name',
+                'document_root',
+                'api_url',
                 'fecha_vencimiento',
                 'activo',
                 'bloqueado',
@@ -235,6 +258,101 @@ class ControllerTenant extends Controller
             return response()->json([
                 'error' => 'Error al verificar estado',
                 'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Activar tenant (activo=1) en BD maestra clinica
+     */
+    public function activar($id)
+    {
+        return $this->cambiarEstado($id, true, null, 'Tenant activado. Ya puede acceder al sistema.');
+    }
+
+    /**
+     * Desactivar tenant (activo=0) en BD maestra clinica
+     */
+    public function desactivar($id)
+    {
+        return $this->cambiarEstado($id, false, null, 'Tenant desactivado. No podrá acceder al sistema.');
+    }
+
+    /**
+     * Bloquear tenant (bloqueado=1)
+     */
+    public function bloquear($id)
+    {
+        return $this->cambiarEstado($id, null, true, 'Tenant bloqueado. Acceso denegado.');
+    }
+
+    /**
+     * Desbloquear tenant (bloqueado=0)
+     */
+    public function desbloquear($id)
+    {
+        return $this->cambiarEstado($id, null, false, 'Tenant desbloqueado.');
+    }
+
+    /**
+     * Toggle rápido: cambia activo o bloqueado
+     * Body: { "campo": "activo"|"bloqueado", "valor": true|false }
+     */
+    public function toggleEstado(Request $request, $id)
+    {
+        $campo = $request->input('campo');
+        $valor = filter_var($request->input('valor'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+        if (!in_array($campo, ['activo', 'bloqueado'], true) || $valor === null) {
+            return response()->json([
+                'error' => 'Debe enviar campo (activo|bloqueado) y valor (true|false).',
+            ], 422);
+        }
+
+        $activo = $campo === 'activo' ? $valor : null;
+        $bloqueado = $campo === 'bloqueado' ? $valor : null;
+        $msg = $campo === 'activo'
+            ? ($valor ? 'Tenant activado.' : 'Tenant desactivado.')
+            : ($valor ? 'Tenant bloqueado.' : 'Tenant desbloqueado.');
+
+        return $this->cambiarEstado($id, $activo, $bloqueado, $msg);
+    }
+
+    private function cambiarEstado($id, $activo, $bloqueado, $mensaje)
+    {
+        try {
+            $tenant = Tenant::find($id);
+            if (!$tenant) {
+                return response()->json(['error' => 'Tenant no encontrado'], 404);
+            }
+
+            $data = [];
+            if ($activo !== null) {
+                $data['activo'] = (bool) $activo;
+            }
+            if ($bloqueado !== null) {
+                $data['bloqueado'] = (bool) $bloqueado;
+            }
+
+            if (empty($data)) {
+                return response()->json(['error' => 'Sin cambios'], 422);
+            }
+
+            $tenant->update($data);
+            $tenant->refresh();
+            $tenant->dias_restantes = $tenant->diasRestantes();
+            $tenant->estado = $tenant->estado;
+            $tenant->esta_vencido = $tenant->estaVencido();
+            $tenant->puede_acceder = $tenant->puedeAcceder();
+
+            return response()->json([
+                'message' => $mensaje,
+                'tenant' => $tenant,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al cambiar estado del tenant',
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
