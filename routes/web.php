@@ -32,21 +32,21 @@
 		Route::get('/api/admin/me', 'ControllerAdminAuth@me');
 		Route::get('/api/tenants', 'ControllerTenant@index');
 		Route::get('/api/tenants/verificar/{subdominio}', 'ControllerTenant@verificarEstado');
-		Route::get('/api/tenants/{id}', 'ControllerTenant@show');
-		Route::post('/api/tenants', 'ControllerTenant@store');
-		Route::post('/api/tenants/{id}', 'ControllerTenant@update');
-		Route::put('/api/tenants/{id}', 'ControllerTenant@update');
-		Route::delete('/api/tenants/{id}', 'ControllerTenant@destroy');
-		// Activar / desactivar / bloquear (BD maestra clinica)
-		Route::post('/api/tenants/{id}/activar', 'ControllerTenant@activar');
-		Route::post('/api/tenants/{id}/desactivar', 'ControllerTenant@desactivar');
-		Route::post('/api/tenants/{id}/bloquear', 'ControllerTenant@bloquear');
-		Route::post('/api/tenants/{id}/desbloquear', 'ControllerTenant@desbloquear');
-		Route::post('/api/tenants/{id}/toggle', 'ControllerTenant@toggleEstado');
-		// Deploy frontend, Apache vhost y sync de esquemas
-		Route::post('/api/tenants/{id}/deploy-frontend', 'ControllerTenantOps@subirFrontend');
-		Route::post('/api/tenants/{id}/provision-vhost', 'ControllerTenantOps@provisionarVhost');
+		// Rutas fijas ANTES de {id} para evitar conflictos
 		Route::post('/api/tenants/schema-sync', 'ControllerTenantOps@sincronizarEsquema');
+		Route::post('/api/tenants', 'ControllerTenant@store');
+		Route::get('/api/tenants/{id}', 'ControllerTenant@show')->where('id', '[0-9]+');
+		Route::post('/api/tenants/{id}', 'ControllerTenant@update')->where('id', '[0-9]+');
+		Route::put('/api/tenants/{id}', 'ControllerTenant@update')->where('id', '[0-9]+');
+		Route::patch('/api/tenants/{id}', 'ControllerTenant@update')->where('id', '[0-9]+');
+		Route::delete('/api/tenants/{id}', 'ControllerTenant@destroy')->where('id', '[0-9]+');
+		Route::post('/api/tenants/{id}/activar', 'ControllerTenant@activar')->where('id', '[0-9]+');
+		Route::post('/api/tenants/{id}/desactivar', 'ControllerTenant@desactivar')->where('id', '[0-9]+');
+		Route::post('/api/tenants/{id}/bloquear', 'ControllerTenant@bloquear')->where('id', '[0-9]+');
+		Route::post('/api/tenants/{id}/desbloquear', 'ControllerTenant@desbloquear')->where('id', '[0-9]+');
+		Route::post('/api/tenants/{id}/toggle', 'ControllerTenant@toggleEstado')->where('id', '[0-9]+');
+		Route::post('/api/tenants/{id}/deploy-frontend', 'ControllerTenantOps@subirFrontend')->where('id', '[0-9]+');
+		Route::post('/api/tenants/{id}/provision-vhost', 'ControllerTenantOps@provisionarVhost')->where('id', '[0-9]+');
 	});
 
 	// Vista pública para recibos temporales (WhatsApp)

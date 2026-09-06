@@ -12,9 +12,12 @@ class TenantMiddleware
 {
     public function handle($request, Closure $next)
     {
-        // Panel de administración de tenants: siempre usar BD maestra (no aplicar lógica tenant)
+        // Panel / API de administración de tenants: siempre BD maestra (no aplicar lógica tenant)
         $path = $request->path();
-        if ($path === 'admin-tenants' || strpos($path, 'api/admin') === 0) {
+        if ($path === 'admin-tenants'
+            || strpos($path, 'api/admin') === 0
+            || strpos($path, 'api/tenants') === 0
+        ) {
             return $next($request);
         }
 

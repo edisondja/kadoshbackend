@@ -699,25 +699,31 @@
 				document_root: document.getElementById('tenantDocRoot').value.trim() || null,
 				api_url: document.getElementById('tenantApiUrl').value.trim() || null,
 				fecha_vencimiento: document.getElementById('tenantVencimiento').value || null,
-				activo: document.getElementById('tenantActivo').checked,
-				bloqueado: document.getElementById('tenantBloqueado').checked,
+				activo: !!document.getElementById('tenantActivo').checked,
+				bloqueado: !!document.getElementById('tenantBloqueado').checked,
 				contacto_nombre: document.getElementById('tenantContactoNombre').value.trim() || null,
 				contacto_email: document.getElementById('tenantContactoEmail').value.trim() || null,
 				contacto_telefono: document.getElementById('tenantContactoTelefono').value.trim() || null,
 				notas: document.getElementById('tenantNotas').value.trim() || null
 			};
+			if (!payload.nombre || !payload.subdominio || !payload.database_name) {
+				toast('Nombre, subdominio y base de datos son obligatorios', 'danger');
+				return;
+			}
+			// Siempre POST: evita 422 por PUT vacío en algunos Apache
 			const url = id ? (API + '/api/tenants/' + id) : (API + '/api/tenants');
-			const method = id ? 'PUT' : 'POST';
 			try {
 				const r = await fetch(url, {
-					method,
+					method: 'POST',
 					headers: getAuthHeaders(),
 					body: JSON.stringify(payload)
 				});
-				const data = await r.json();
+				const data = await r.json().catch(() => ({}));
 				if (r.status === 401) { showLogin(); return; }
 				if (!r.ok) {
-					toast(data.error || 'Error al guardar', 'danger');
+					const detalle = data.message || (data.errors ? JSON.stringify(data.errors) : '');
+					toast((data.error || 'Error al guardar') + (detalle && detalle !== data.error ? ' — ' + detalle : ''), 'danger');
+					console.error('tenant save', r.status, data);
 					return;
 				}
 				modalTenant.hide();

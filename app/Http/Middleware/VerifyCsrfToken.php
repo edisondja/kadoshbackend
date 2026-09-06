@@ -20,5 +20,9 @@ class VerifyCsrfToken extends Middleware
         '/api/invitacion_paciente/registrar',
         '/api/invitacion_paciente/crear',
         '/api/invitacion_doctor/registrar',
+        // Admin tenants (JWT Bearer, sin cookie CSRF)
+        '/api/admin/*',
+        '/api/tenants',
+        '/api/tenants/*',
     ];
 }
