@@ -109,7 +109,7 @@ class ControllerSesiones extends Controller
         }
 
         try {
-            $decoded = JWT::decode($token, env('FIRMA_TOKEN'), ['HS256']);
+            $decoded = JWT::decode($token, new \Firebase\JWT\Key(env('FIRMA_TOKEN'), 'HS256'));
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

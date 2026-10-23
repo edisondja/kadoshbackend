@@ -23,7 +23,7 @@ class ControllerLandingAcceso extends Controller
         $b = random_int(2, 12);
         $token = Str::random(40);
 
-        Cache::put('landing_captcha_' . $token, (string) ($a + $b), 10);
+        Cache::put('landing_captcha_' . $token, (string) ($a + $b), 600);
 
         return response()->json([
             'token' => $token,

@@ -36,7 +36,7 @@ class TokenRead{
 
     /*if($request->bearerToken()){
             
-        JWT::decode($request->bearerToken(),env("FIRMA_TOKEN"),array('HS256'));
+        JWT::decode($request->bearerToken(), new \Firebase\JWT\Key(env('FIRMA_TOKEN'), 'HS256'));
                 
                return  $next($request);
 
@@ -51,7 +51,7 @@ class TokenRead{
     
         dd($response->headers->set('Authorization', 'Bearer '.$response->bearerToken()));
 
-        if (JWT::decode($request->bearerToken(),env("FIRMA_TOKEN"),array('HS256'))) {
+        if (JWT::decode($request->bearerToken(), new \Firebase\JWT\Key(env('FIRMA_TOKEN'), 'HS256'))) {
             return redirect('home');
         }
 

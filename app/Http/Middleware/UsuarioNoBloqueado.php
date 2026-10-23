@@ -23,7 +23,7 @@ class UsuarioNoBloqueado
         }
 
         try {
-            $decoded = JWT::decode($token, env('FIRMA_TOKEN'), ['HS256']);
+            $decoded = JWT::decode($token, new \Firebase\JWT\Key(env('FIRMA_TOKEN'), 'HS256'));
             $userId = (int) ($decoded->id ?? 0);
             if ($userId <= 0) {
                 return $next($request);

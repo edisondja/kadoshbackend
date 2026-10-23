@@ -3,7 +3,6 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use Alexmg86\LaravelSubQuery\Traits\LaravelSubQueryTrait;
 
 class Cita extends Model
 {

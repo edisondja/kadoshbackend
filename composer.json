@@ -5,22 +5,19 @@
     "license": "MIT",
     "type": "project",
     "require": {
-        "php": ">=7.1.8",
-        "alexmg86/laravel-sub-query": "^1.9",
-        "doctrine/dbal": "^2.13",
-        "dompdf/dompdf": "dev-master as 0.7.0",
-        "fideloper/proxy": "~3.3",
-        "firebase/php-jwt": "^5.2",
-        "google/apiclient": "^2.14",
-        "laravel/framework": "5.5.*",
-        "laravel/tinker": "~1.0"
+        "php": "^8.2",
+        "doctrine/dbal": "^3.9",
+        "dompdf/dompdf": "^3.1",
+        "firebase/php-jwt": "^7.0",
+        "google/apiclient": "^2.18",
+        "laravel/framework": "^12.0",
+        "laravel/tinker": "^2.10"
     },
     "require-dev": {
-        "filp/whoops": "~2.0",
-        "fzaninotto/faker": "~1.4",
-        "mockery/mockery": "~1.0",
-        "phpunit/phpunit": "~6.0",
-        "symfony/thanks": "^1.0"
+        "fakerphp/faker": "^1.23",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "phpunit/phpunit": "^11.5"
     },
     "autoload": {
         "classmap": [

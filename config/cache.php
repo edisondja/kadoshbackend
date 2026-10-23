@@ -88,7 +88,7 @@ return [
 
     'prefix' => env(
         'CACHE_PREFIX',
-        str_slug(env('APP_NAME', 'laravel'), '_').'_cache'
+        \Illuminate\Support\Str::slug((string) env('APP_NAME', 'laravel'), '_').'_cache'
     ),
 
 ];

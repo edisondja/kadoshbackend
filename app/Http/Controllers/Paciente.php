@@ -521,7 +521,7 @@ class Paciente extends Controller
         }
 
         try {
-            $decoded = JWT::decode($token, env('FIRMA_TOKEN'), ['HS256']);
+            $decoded = JWT::decode($token, new \Firebase\JWT\Key(env('FIRMA_TOKEN'), 'HS256'));
             if ((int) ($decoded->id ?? 0) !== (int) $usuarioId) {
                 return response()->json([
                     'success' => false,

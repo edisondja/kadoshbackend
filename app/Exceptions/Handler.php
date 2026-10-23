@@ -2,8 +2,8 @@
 
 namespace App\Exceptions;
 
-use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Throwable;
 
 class Handler extends ExceptionHandler
 {
@@ -34,7 +34,7 @@ class Handler extends ExceptionHandler
      * @param  \Exception  $exception
      * @return void
      */
-    public function report(Exception $exception)
+    public function report(Throwable $exception)
     {
         parent::report($exception);
     }
@@ -43,11 +43,24 @@ class Handler extends ExceptionHandler
      * Render an exception into an HTTP response.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
+     * @param  \Throwable  $exception
      * @return \Illuminate\Http\Response
      */
-    public function render($request, Exception $exception)
+    public function render($request, Throwable $exception)
     {
+        // Rate limit: respuesta JSON clara para el SPA
+        if ($exception instanceof \Symfony\Component\HttpKernel\Exception\HttpException
+            && $exception->getStatusCode() === 429
+            && (strpos(ltrim($request->path(), '/'), 'api/') === 0 || $request->expectsJson() || $request->ajax())
+        ) {
+            $headers = method_exists($exception, 'getHeaders') ? $exception->getHeaders() : [];
+            return response()->json([
+                'error' => 'Demasiadas peticiones. Intente de nuevo en un momento.',
+                'message' => 'Too Many Attempts.',
+                'rate_limited' => true,
+            ], 429, $headers);
+        }
+
         return parent::render($request, $exception);
     }
 }

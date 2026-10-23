@@ -274,6 +274,8 @@ class ControllerTenant extends Controller
             $tenant->update($payload);
             $tenant->refresh();
 
+            \App\Http\Middleware\TenantMiddleware::forgetDeniedCache($tenant->subdominio);
+
             return response()->json([
                 'message' => 'Tenant actualizado exitosamente',
                 'tenant' => $this->enriquecer($tenant)
@@ -417,6 +419,8 @@ class ControllerTenant extends Controller
 
             $tenant->update($data);
             $tenant->refresh();
+
+            \App\Http\Middleware\TenantMiddleware::forgetDeniedCache($tenant->subdominio);
 
             return response()->json([
                 'message' => $mensaje,
