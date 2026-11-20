@@ -32,13 +32,16 @@ class ControllerMobile extends Controller
 
         $ingresosHoy = 0;
         try {
-            $ingresosHoy = (float) App\Recibo::where(function ($q) {
-                $q->whereDate('fecha_pago', Carbon::today())
-                    ->orWhereDate('created_at', Carbon::today());
+            // Laravel 5.5: whereDate/orWhereDate requieren operador (3 args)
+            $hoy = Carbon::today()->toDateString();
+            $ingresosHoy = (float) App\Recibo::where(function ($q) use ($hoy) {
+                $q->whereDate('fecha_pago', '=', $hoy)
+                    ->orWhereDate('created_at', '=', $hoy);
             })->sum('monto');
         } catch (\Exception $e) {
             try {
-                $ingresosHoy = (float) App\Recibo::whereDate('created_at', Carbon::today())->sum('monto');
+                $hoy = Carbon::today()->toDateString();
+                $ingresosHoy = (float) App\Recibo::whereDate('created_at', '=', $hoy)->sum('monto');
             } catch (\Exception $e2) {
                 $ingresosHoy = 0;
             }
