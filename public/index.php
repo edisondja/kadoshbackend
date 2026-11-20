@@ -24,6 +24,12 @@ define('LARAVEL_START', microtime(true));
 
 require __DIR__.'/../vendor/autoload.php';
 
+// PHP 7.4: polyfills de str_* (PHP 8+) usados por StorageQuotaService y otros.
+$polyfills = __DIR__.'/../app/Support/php74_polyfills.php';
+if (is_file($polyfills)) {
+    require_once $polyfills;
+}
+
 /*
 |--------------------------------------------------------------------------
 | Turn On The Lights

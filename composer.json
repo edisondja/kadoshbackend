@@ -11,7 +11,9 @@
         "firebase/php-jwt": "^7.0",
         "google/apiclient": "^2.18",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10"
+        "laravel/tinker": "^2.10",
+        "league/flysystem-aws-s3-v3": "^3.0",
+        "platinum-place/php-dgii-xml-signer": "^1.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -49,6 +51,12 @@
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover"
+        ],
+        "test:smoke": [
+            "@php scripts/smoke_modules.php"
+        ],
+        "test": [
+            "@php vendor/bin/phpunit --testsuite Feature"
         ]
     },
     "config": {

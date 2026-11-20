@@ -219,6 +219,17 @@
 							<small class="text-muted">Debe estar bajo /var/www/</small>
 						</div>
 						<div class="row">
+							<div class="col-md-6 mb-3">
+								<label class="form-label">Cuota almacenamiento (GB)</label>
+								<input type="number" class="form-control" id="tenantStorageQuota" min="0" max="10240" step="0.5" value="10">
+								<small class="text-muted">Espacio Spaces/local asignado a la clínica</small>
+							</div>
+							<div class="col-md-6 mb-3">
+								<label class="form-label">Uso actual</label>
+								<input type="text" class="form-control" id="tenantStorageUsed" readonly placeholder="—">
+							</div>
+						</div>
+						<div class="row">
 							<div class="col-6 mb-3">
 								<div class="form-check form-switch">
 									<input class="form-check-input" type="checkbox" id="tenantActivo" checked>
@@ -390,6 +401,7 @@
 					<td>
 						<strong>${escapeHtml(t.nombre)}</strong>
 						${t.puede_acceder ? '<div class="small text-success">Puede acceder</div>' : '<div class="small text-danger">Sin acceso</div>'}
+						<div class="small text-muted">Cuota: ${escapeHtml(String(t.storage_quota_gb != null ? t.storage_quota_gb : 10))} GB · uso ${escapeHtml(String(t.storage_used_percent != null ? Number(t.storage_used_percent).toFixed(0) : 0))}%</div>
 						${t.ultimo_deploy_at ? '<div class="small text-muted">Deploy: ' + new Date(t.ultimo_deploy_at).toLocaleString('es') + '</div>' : ''}
 					</td>
 					<td>
@@ -575,6 +587,8 @@
 			document.getElementById('tenantDominio').value = '';
 			document.getElementById('tenantDocRoot').value = '';
 			document.getElementById('tenantApiUrl').value = '';
+			document.getElementById('tenantStorageQuota').value = 10;
+			document.getElementById('tenantStorageUsed').value = '';
 			if (id) {
 				fetch(API + '/api/tenants/' + id, { headers: getAuthHeaders() })
 					.then(r => r.json())
@@ -592,6 +606,8 @@
 						document.getElementById('tenantContactoEmail').value = t.contacto_email || '';
 						document.getElementById('tenantContactoTelefono').value = t.contacto_telefono || '';
 						document.getElementById('tenantNotas').value = t.notas || '';
+						document.getElementById('tenantStorageQuota').value = (t.storage_quota_gb != null ? t.storage_quota_gb : 10);
+						document.getElementById('tenantStorageUsed').value = (t.storage_used_percent != null ? (Number(t.storage_used_percent).toFixed(1) + '% · ') : '') + (t.storage_used_bytes != null ? (Math.round(t.storage_used_bytes/1024/1024*10)/10 + ' MB') : '—');
 					});
 			}
 			modalTenant.show();
@@ -704,7 +720,8 @@
 				contacto_nombre: document.getElementById('tenantContactoNombre').value.trim() || null,
 				contacto_email: document.getElementById('tenantContactoEmail').value.trim() || null,
 				contacto_telefono: document.getElementById('tenantContactoTelefono').value.trim() || null,
-				notas: document.getElementById('tenantNotas').value.trim() || null
+				notas: document.getElementById('tenantNotas').value.trim() || null,
+				storage_quota_gb: parseFloat(document.getElementById('tenantStorageQuota').value || '10')
 			};
 			if (!payload.nombre || !payload.subdominio || !payload.database_name) {
 				toast('Nombre, subdominio y base de datos son obligatorios', 'danger');

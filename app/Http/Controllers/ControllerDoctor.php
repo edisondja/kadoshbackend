@@ -199,16 +199,13 @@ class ControllerDoctor extends Controller
             ]);
 
             $doctor = App\Doctor::findOrFail($id);
+            $quota = app(\App\Services\StorageQuotaService::class);
 
             if ($doctor->ruta_firma && strpos($doctor->ruta_firma, 'http') === false) {
-                try {
-                    Storage::disk('public')->delete($doctor->ruta_firma);
-                } catch (\Exception $e) {
-                    \Log::warning('No se pudo eliminar firma anterior: ' . $e->getMessage());
-                }
+                $quota->forget($doctor->ruta_firma);
             }
 
-            $doctor->ruta_firma = $request->file('ruta_firma')->store('doctors/firmas', 'public');
+            $doctor->ruta_firma = $quota->store($request->file('ruta_firma'), 'doctors/firmas');
             $doctor->save();
 
             return response()->json([
@@ -222,6 +219,12 @@ class ControllerDoctor extends Controller
                 'message' => 'Debe enviar una imagen válida (máx. 2MB)',
                 'errors' => $e->errors(),
             ], 422);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
+                'storage_full' => true,
+            ], $e->getStatusCode());
         } catch (\Exception $e) {
             \Log::error('Error al subir firma doctor: ' . $e->getMessage());
             return response()->json([
@@ -240,11 +243,7 @@ class ControllerDoctor extends Controller
             $doctor = App\Doctor::findOrFail($id);
 
             if ($doctor->ruta_firma && strpos($doctor->ruta_firma, 'http') === false) {
-                try {
-                    Storage::disk('public')->delete($doctor->ruta_firma);
-                } catch (\Exception $e) {
-                    \Log::warning('No se pudo eliminar archivo de firma: ' . $e->getMessage());
-                }
+                app(\App\Services\StorageQuotaService::class)->forget($doctor->ruta_firma);
             }
 
             $doctor->ruta_firma = null;
@@ -266,7 +265,7 @@ class ControllerDoctor extends Controller
     private function appendFirmaUrl($doctor)
     {
         if ($doctor && $doctor->ruta_firma && strpos($doctor->ruta_firma, 'http') === false) {
-            $doctor->ruta_firma_url = asset('storage/' . $doctor->ruta_firma);
+            $doctor->ruta_firma_url = app(\App\Services\StorageQuotaService::class)->publicUrl($doctor->ruta_firma);
         } elseif ($doctor && $doctor->ruta_firma) {
             $doctor->ruta_firma_url = $doctor->ruta_firma;
         } else {

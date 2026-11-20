@@ -27,7 +27,9 @@ class Tenant extends Model
         'notas',
         'contacto_nombre',
         'contacto_email',
-        'contacto_telefono'
+        'contacto_telefono',
+        'storage_quota_gb',
+        'storage_used_bytes',
     ];
 
     protected $casts = [
@@ -36,7 +38,28 @@ class Tenant extends Model
         'bloqueado' => 'boolean',
         'vhost_enabled' => 'boolean',
         'ultimo_deploy_at' => 'datetime',
+        'storage_quota_gb' => 'float',
+        'storage_used_bytes' => 'integer',
     ];
+
+    public function quotaBytes()
+    {
+        $gb = $this->storage_quota_gb;
+        if ($gb === null || $gb === '') {
+            $gb = \App\Services\StorageQuotaService::DEFAULT_QUOTA_GB;
+        }
+        return (int) round(((float) $gb) * 1024 * 1024 * 1024);
+    }
+
+    public function availableBytes()
+    {
+        return max(0, $this->quotaBytes() - (int) ($this->storage_used_bytes ?? 0));
+    }
+
+    public function puedeAlmacenar($bytes)
+    {
+        return ((int) $bytes) <= $this->availableBytes();
+    }
 
     /**
      * Document root por defecto bajo /var/www/<dominio>/public_html

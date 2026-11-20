@@ -35,7 +35,8 @@ class ControllerTenant extends Controller
 
         foreach ([
             'nombre', 'subdominio', 'database_name', 'dominio', 'document_root', 'api_url',
-            'contacto_nombre', 'contacto_email', 'contacto_telefono', 'notas', 'fecha_vencimiento'
+            'contacto_nombre', 'contacto_email', 'contacto_telefono', 'notas', 'fecha_vencimiento',
+            'storage_quota_gb'
         ] as $k) {
             if (!array_key_exists($k, $data)) {
                 continue;
@@ -45,6 +46,13 @@ class ControllerTenant extends Controller
             }
             if ($data[$k] === '' || $data[$k] === 'null') {
                 $data[$k] = null;
+            }
+        }
+
+        if (array_key_exists('storage_quota_gb', $data) && $data['storage_quota_gb'] !== null) {
+            $data['storage_quota_gb'] = (float) $data['storage_quota_gb'];
+            if ($data['storage_quota_gb'] < 0) {
+                $data['storage_quota_gb'] = 0;
             }
         }
 
@@ -88,6 +96,12 @@ class ControllerTenant extends Controller
         $tenant->estado = $tenant->estado;
         $tenant->esta_vencido = $tenant->estaVencido();
         $tenant->puede_acceder = $tenant->puedeAcceder();
+        $quotaGb = (float) ($tenant->storage_quota_gb ?? \App\Services\StorageQuotaService::DEFAULT_QUOTA_GB);
+        $used = (int) ($tenant->storage_used_bytes ?? 0);
+        $quotaBytes = (int) round($quotaGb * 1024 * 1024 * 1024);
+        $tenant->storage_quota_bytes = $quotaBytes;
+        $tenant->storage_available_bytes = max(0, $quotaBytes - $used);
+        $tenant->storage_used_percent = $quotaBytes > 0 ? round(($used / $quotaBytes) * 100, 2) : 0;
         return $tenant;
     }
 
@@ -139,7 +153,8 @@ class ControllerTenant extends Controller
             'contacto_nombre' => 'nullable|string|max:255',
             'contacto_email' => 'nullable|email|max:255',
             'contacto_telefono' => 'nullable|string|max:50',
-            'notas' => 'nullable|string'
+            'notas' => 'nullable|string',
+            'storage_quota_gb' => 'nullable|numeric|min:0|max:10240',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
             'subdominio.required' => 'El subdominio es obligatorio.',
@@ -184,6 +199,10 @@ class ControllerTenant extends Controller
                 'contacto_email' => isset($data['contacto_email']) ? $data['contacto_email'] : null,
                 'contacto_telefono' => isset($data['contacto_telefono']) ? $data['contacto_telefono'] : null,
                 'notas' => isset($data['notas']) ? $data['notas'] : null,
+                'storage_quota_gb' => array_key_exists('storage_quota_gb', $data) && $data['storage_quota_gb'] !== null
+                    ? (float) $data['storage_quota_gb']
+                    : \App\Services\StorageQuotaService::DEFAULT_QUOTA_GB,
+                'storage_used_bytes' => 0,
             ];
 
             $payload = $this->filtrarPayload($payload);
@@ -228,7 +247,8 @@ class ControllerTenant extends Controller
             'contacto_nombre' => 'nullable|string|max:255',
             'contacto_email' => 'nullable|email|max:255',
             'contacto_telefono' => 'nullable|string|max:50',
-            'notas' => 'nullable|string'
+            'notas' => 'nullable|string',
+            'storage_quota_gb' => 'nullable|numeric|min:0|max:10240',
         ], [
             'contacto_email.email' => 'El email de contacto no es válido.',
             'fecha_vencimiento.date' => 'La fecha de vencimiento no es válida.',
@@ -255,7 +275,8 @@ class ControllerTenant extends Controller
             $allowed = [
                 'nombre', 'subdominio', 'dominio', 'database_name', 'document_root', 'api_url',
                 'fecha_vencimiento', 'activo', 'bloqueado',
-                'contacto_nombre', 'contacto_email', 'contacto_telefono', 'notas'
+                'contacto_nombre', 'contacto_email', 'contacto_telefono', 'notas',
+                'storage_quota_gb',
             ];
             $payload = [];
             foreach ($allowed as $key) {

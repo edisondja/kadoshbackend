@@ -60,6 +60,31 @@
 	
 Route::middleware(['tenant', 'usuario.no_bloqueado'])->group(function () {
 
+	// Ping para app móvil: valida dominio/tenant antes del login
+	Route::get('/api/mobile/ping', function (\Illuminate\Http\Request $request) {
+		$host = $request->getHost();
+		$mode = filter_var($host, FILTER_VALIDATE_IP) || in_array($host, ['localhost', '127.0.0.1'], true)
+			? 'local'
+			: 'tenant';
+		return response()->json([
+			'ok' => true,
+			'host' => $host,
+			'mode' => $mode,
+			'message' => 'Servidor Kadosh listo',
+			'app' => 'kadosh',
+		]);
+	});
+
+	// Dashboard agregado para iOS
+	Route::get('/api/mobile/dashboard', 'ControllerMobile@dashboard');
+	Route::get('/api/mobile/clinica', 'ControllerMobile@clinica');
+
+	// Almacenamiento (Spaces / cuota por clínica) — visible en web para todos
+	Route::get('/api/almacenamiento', 'ControllerAlmacenamiento@estado');
+
+	// Login POST (móvil) — misma lógica que GET legacy
+	Route::post('/api/login', 'ControllerUsuario@loginPost');
+
 	// Fotos y archivos en storage/app/public (funciona aunque no exista el symlink public/storage)
 	Route::get('/storage/{archivo}', 'Paciente@servirArchivoPublico')->where('archivo', '[^/]+');
 
@@ -88,6 +113,7 @@ Route::middleware(['tenant', 'usuario.no_bloqueado'])->group(function () {
 	Route::post('/api/invitacion_doctor/registrar', 'DoctorInvitacionController@registrar');
 
 	///API DOCTORES
+	Route::get('/api/doctores','ControllerDoctor@index');
 	Route::get('/api/doctores/','ControllerDoctor@index');
 	Route::get('/api/doctores_todos/','ControllerDoctor@indexAll'); // Para administración (incluye inactivos)
 	Route::get('/api/eliminar_doctor/{id}','ControllerDoctor@destroy');
@@ -113,6 +139,8 @@ Route::middleware(['tenant', 'usuario.no_bloqueado'])->group(function () {
 
 	/// API  
 	Route::get('/api/citas', 'ControllerCita@index');
+	Route::get('/api/cargar_citas', 'ControllerCita@index');
+	Route::get('/api/cargar_citas/', 'ControllerCita@index');
 	Route::get('api/citas_doctor/{doctor_id}', 'ControllerCita@citas_doctor');
 	Route::get('/api/cargar_citas_de_paciente/{paciente_id}', 'ControllerCita@citas_paciente');
 	Route::get('/api/citas/{id}', 'ControllerCita@show');
@@ -155,6 +183,15 @@ Route::middleware(['tenant', 'usuario.no_bloqueado'])->group(function () {
 	Route::post('/api/enviar_recibo','ControllerRecibo@enviarRecibo');
 	Route::post('/api/subir_recibo_temp','ControllerRecibo@subir_factura_temp');
 
+	// DGII e-CF (facturación electrónica)
+	Route::get('/api/dgii/estado', 'ControllerDgiiEcf@estado');
+	Route::post('/api/dgii/probar-auth', 'ControllerDgiiEcf@probarAuth');
+	Route::post('/api/dgii/certificado', 'ControllerDgiiEcf@subirCertificado');
+	Route::post('/api/dgii/certificado-password', 'ControllerDgiiEcf@guardarPassword');
+	Route::post('/api/dgii/emitir/{id_factura}', 'ControllerDgiiEcf@emitir');
+	Route::get('/api/dgii/consultar/{trackId}', 'ControllerDgiiEcf@consultarTrack');
+	Route::get('/api/dgii/factura/{id_factura}', 'ControllerDgiiEcf@deFactura');
+
 
 
 	//CARGAR HISTORIAL_PS
@@ -167,7 +204,7 @@ Route::middleware(['tenant', 'usuario.no_bloqueado'])->group(function () {
 	//Route::get('/api/editar_historial_ps/{id_factura}','Controller');
 
 	//USUARIOS
-	Route::get('/api/login/{usuario}/{clave}','ControllerUsuario@login');
+	Route::get('/api/login/{usuario}/{clave}','ControllerUsuario@login'); // legacy web
 
 	///REPORTES
 	Route::get('/api/facturas_reportes/{fecha_inicial}/{fecha_final}','ControllerRecibo@reporte_recibos');

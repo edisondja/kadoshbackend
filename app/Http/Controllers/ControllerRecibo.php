@@ -227,7 +227,28 @@ class ControllerRecibo extends Controller
             );
         }
 
-        return response()->json(['status' => 'ok', 'mensaje' => 'Pago registrado con éxito.']);
+        $ecfResult = null;
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('facturas', 'encf')) {
+                $ecfService = app(\App\Services\Dgii\DgiiEcfService::class);
+                if ($ecfService->shouldAutoEmit($config)) {
+                    $facturaFresh = App\Factura::find($id_factura);
+                    if ($facturaFresh && empty($facturaFresh->encf)) {
+                        $ecfResult = $ecfService->emitirFactura((int) $id_factura);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('DGII auto-emisión en pago: ' . $e->getMessage());
+            $ecfResult = ['success' => false, 'error' => $e->getMessage()];
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'mensaje' => 'Pago registrado con éxito.',
+            'id_recibo' => $recibo->id,
+            'ecf' => $ecfResult,
+        ]);
     }
 
 
@@ -464,12 +485,13 @@ class ControllerRecibo extends Controller
         if ($request->hasFile('pdf')) {
             $pdf = $request->file('pdf');
 
-            // Guardar el archivo en storage/app/public/temp_recibos
-            $filename = 'recibo_temp_' . time() . '.pdf';
-            $path = $pdf->storeAs('public/temp_recibos', $filename);
+            $quota = app(\App\Services\StorageQuotaService::class);
+            $quota->assertCanStore((int) $pdf->getSize());
+            $stored = $quota->store($pdf, 'temp_recibos');
+            $filename = basename($stored);
 
             // Generar URL pública (requiere tener el enlace simbólico "storage" creado)
-            $publicUrl = asset('storage/temp_recibos/' . $filename);
+            $publicUrl = app(\App\Services\StorageQuotaService::class)->publicUrl(ltrim($stored, '/'));
             // URL de vista HTML (más amigable para WhatsApp, con botón descargar)
             $viewUrl = url('/r/' . $filename);
 
@@ -486,17 +508,25 @@ class ControllerRecibo extends Controller
     public function ver_recibo_temp($filename)
     {
         // Validación básica de nombre para evitar traversal
-        if (!is_string($filename) || !preg_match('/^[a-zA-Z0-9._-]+\\.pdf$/', $filename)) {
+        if (!is_string($filename) || !preg_match('/^[a-zA-Z0-9._-]+\.pdf$/', $filename)) {
             abort(404);
         }
 
-        $relative = 'public/temp_recibos/' . $filename;
-        $full = storage_path('app/' . $relative);
-        if (!file_exists($full)) {
+        $quota = app(\App\Services\StorageQuotaService::class);
+        $rel = $quota->resolveRelativePath($filename)
+            ?: $quota->resolveRelativePath('temp_recibos/' . $filename);
+
+        // Legacy local path (antes de Spaces)
+        $legacyFull = storage_path('app/public/temp_recibos/' . $filename);
+        if ($rel === null && is_file($legacyFull)) {
+            $rel = 'temp_recibos/' . $filename;
+        }
+
+        if ($rel === null && !is_file($legacyFull)) {
             abort(404);
         }
 
-        $pdfUrl = asset('storage/temp_recibos/' . $filename);
+        $pdfUrl = $quota->publicUrl($rel ?: ('temp_recibos/' . $filename));
         return view('recibo_temp_publico', ['pdfUrl' => $pdfUrl, 'filename' => $filename]);
     }
 
@@ -527,12 +557,23 @@ class ControllerRecibo extends Controller
             // Obtener el contenido del PDF enviado desde el front
             $pdf = $request->file('pdf');
 
-            // Guardar el PDF temporalmente
-            $pdfPath = $pdf->storeAs('public/temp_recibos', 'recibo_' . time() . '.pdf');
-            $pdfFullPath = storage_path('app/' . $pdfPath);
+            // Guardar en disco media (Spaces) y copiar a temp local para el attach del mail
+            $quota = app(\App\Services\StorageQuotaService::class);
+            $quota->assertCanStore((int) $pdf->getSize());
+            $storedRel = $quota->store($pdf, 'temp_recibos');
+
+            $pdfFullPath = storage_path('app/temp_mail_' . basename($storedRel));
+            try {
+                file_put_contents($pdfFullPath, $quota->mediaDisk()->get($storedRel));
+            } catch (\Throwable $e) {
+                // Fallback: el UploadedFile aún está disponible
+                $pdf->move(dirname($pdfFullPath), basename($pdfFullPath));
+            }
 
             // Config SMTP mínima (si faltan credenciales, enviar mensaje claro)
             if (empty(config('mail.host')) || empty(config('mail.port'))) {
+                @unlink($pdfFullPath);
+                $quota->forget($storedRel);
                 return response()->json([
                     'success' => false,
                     'message' => 'SMTP no configurado (MAIL_HOST/MAIL_PORT).',
@@ -549,10 +590,11 @@ class ControllerRecibo extends Controller
                 $request->telefono_compania
             ));
 
-            // Eliminar el archivo temporal
-            if (file_exists($pdfFullPath)) {
-                unlink($pdfFullPath);
+            // Eliminar temporales (local + Spaces)
+            if (is_file($pdfFullPath)) {
+                @unlink($pdfFullPath);
             }
+            $quota->forget($storedRel);
 
             return response()->json(['success' => true, 'message' => 'Recibo enviado correctamente'], 200);
 

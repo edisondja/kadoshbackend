@@ -24,20 +24,24 @@ class ControllerRadiografia extends Controller
             'usuario_id' => 'required|exists:pacientes,id',
         ]);
 
-        // Guardar archivo en storage/app/public
-        $path = $request->file('image')->store('public');
+        try {
+            $archivoNombre = app(\App\Services\StorageQuotaService::class)
+                ->storeBasename($request->file('image'), 'radiografias');
 
-        // Obtener el nombre del archivo
-        $archivoNombre = basename($path);
+            $radiografia = new App\Radiografia();
+            $radiografia->ruta_radiografia = $archivoNombre;
+            $radiografia->id_usuario = $request->input('usuario_id');
+            $radiografia->comentarios = $request->input('comentarios');
+            $radiografia->save();
 
-        // Guardar en base de datos
-        $radiografia = new App\Radiografia();
-        $radiografia->ruta_radiografia = $archivoNombre;
-        $radiografia->id_usuario = $request->input('usuario_id');
-        $radiografia->comentarios = $request->input('comentarios');
-        $radiografia->save();
-
-        return response()->json(['mensaje' => 'Archivo guardado con éxito.'], 200);
+            return response()->json(['mensaje' => 'Archivo guardado con éxito.'], 200);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
+                'storage_full' => true,
+            ], $e->getStatusCode());
+        }
     }
 
 
@@ -62,11 +66,19 @@ class ControllerRadiografia extends Controller
     public function eliminar_radiografia(Request $data){
 
         $radiografia =  App\Radiografia::find($data->input('id_radiografia'));
+        if (!$radiografia) {
+            return response()->json(['error' => 'Archivo no encontrado'], 404);
+        }
+
+        try {
+            app(\App\Services\StorageQuotaService::class)->forget($radiografia->ruta_radiografia);
+        } catch (\Throwable $e) {
+            \Log::warning('No se pudo borrar archivo de storage: ' . $e->getMessage());
+        }
+
         $radiografia->delete();
-  
+
         return "Archivo eliminado con exito";
-
-
     }
     
 

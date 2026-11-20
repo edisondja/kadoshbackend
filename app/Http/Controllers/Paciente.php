@@ -37,11 +37,28 @@ class Paciente extends Controller
         $perPage = (int) $request->query('per_page', 8);
         $perPage = max(1, min($perPage, 100));
         $page = max(1, (int) $request->query('page', 1));
+        $q = trim((string) $request->query('q', ''));
 
-        $paginator = App\Paciente::withSum('estatus:precio_estatus as estatus_precio_estatus_sum')
+        $builder = App\Paciente::withSum('estatus:precio_estatus as estatus_precio_estatus_sum')
             ->with('doctor')
-            ->orderBy('id', 'desc')
-            ->paginate($perPage, ['*'], 'page', $page);
+            ->orderBy('id', 'desc');
+
+        if ($q !== '') {
+            $searchTerms = preg_split('/\s+/', $q) ?: [];
+            foreach ($searchTerms as $searchTerm) {
+                if ($searchTerm === '') {
+                    continue;
+                }
+                $builder->where(function ($query) use ($searchTerm) {
+                    $query->where('nombre', 'like', '%'.$searchTerm.'%')
+                        ->orWhere('apellido', 'like', '%'.$searchTerm.'%')
+                        ->orWhere('telefono', 'like', '%'.$searchTerm.'%')
+                        ->orWhere('cedula', 'like', '%'.$searchTerm.'%');
+                });
+            }
+        }
+
+        $paginator = $builder->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'data' => $paginator->items(),
@@ -103,8 +120,17 @@ class Paciente extends Controller
         try {
             $nombreFoto = '';
             if ($data->hasFile('foto_paciente')) {
-                $storedPath = $data->file('foto_paciente')->store('public');
-                $nombreFoto = basename(str_replace('\\', '/', $storedPath));
+                try {
+                    $nombreFoto = app(\App\Services\StorageQuotaService::class)
+                        ->storeBasename($data->file('foto_paciente'));
+                } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => $e->getMessage(),
+                        'message' => $e->getMessage(),
+                        'storage_full' => true,
+                    ], $e->getStatusCode());
+                }
             }
 
             $sexo = trim((string) ($data->sexo ?? ''));
@@ -466,23 +492,31 @@ class Paciente extends Controller
     }
 
     public function actualizar_foto_paciente(Request $data){
-        
-
-        $storedPath = $data->file('foto_paciente')->store('public');
-        $nombreArchivo = basename(str_replace('\\', '/', $storedPath));
-
-        $paciente = App\Paciente::find($data->id);
-        $paciente->foto_paciente = $nombreArchivo;
-        $paciente->save();
-
-        return $nombreArchivo;
-
-
+        try {
+            $quota = app(\App\Services\StorageQuotaService::class);
+            $paciente = App\Paciente::find($data->id);
+            if ($paciente && !empty($paciente->foto_paciente)) {
+                $quota->forget($paciente->foto_paciente);
+            }
+            $nombreArchivo = $quota->storeBasename($data->file('foto_paciente'));
+            if ($paciente) {
+                $paciente->foto_paciente = $nombreArchivo;
+                $paciente->save();
+            }
+            return $nombreArchivo;
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
+                'storage_full' => true,
+            ], $e->getStatusCode());
+        }
     }
 
     /**
      * Sirve archivos de storage/app/public como /storage/{archivo}
      * (respaldo si no existe el enlace simbólico public/storage → storage/app/public).
+     * Busca también en la carpeta del tenant actual.
      */
     public function servirArchivoPublico($archivo)
     {
@@ -491,15 +525,7 @@ class Paciente extends Controller
             abort(404);
         }
 
-        $full = storage_path('app/public/'.$archivo);
-        $root = realpath(storage_path('app/public'));
-        $real = realpath($full);
-
-        if ($root === false || $real === false || strpos($real, $root) !== 0 || !is_file($real)) {
-            abort(404);
-        }
-
-        return response()->file($real);
+        return app(\App\Services\StorageQuotaService::class)->respondPublicFile($archivo);
     }
 
     private function denegarSiNoPuedeExportar(Request $request)
@@ -521,7 +547,7 @@ class Paciente extends Controller
         }
 
         try {
-            $decoded = JWT::decode($token, new \Firebase\JWT\Key(env('FIRMA_TOKEN'), 'HS256'));
+            $decoded = JWT::decode($token, env('FIRMA_TOKEN'), array('HS256'));
             if ((int) ($decoded->id ?? 0) !== (int) $usuarioId) {
                 return response()->json([
                     'success' => false,

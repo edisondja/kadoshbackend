@@ -32,19 +32,18 @@ class ConfigController extends Controller
             ]);
 
             $data = $request->all();
+            $quota = app(\App\Services\StorageQuotaService::class);
 
             // Manejar archivos
             if ($request->hasFile('ruta_logo')) {
-                $data['ruta_logo'] = $request->file('ruta_logo')->store('configs', 'public');
+                $data['ruta_logo'] = $quota->store($request->file('ruta_logo'), 'configs');
             } else {
-                // Si no se envía logo, usar valor por defecto o null
                 $data['ruta_logo'] = $data['ruta_logo'] ?? '';
             }
 
             if ($request->hasFile('ruta_favicon')) {
-                $data['ruta_favicon'] = $request->file('ruta_favicon')->store('configs', 'public');
+                $data['ruta_favicon'] = $quota->store($request->file('ruta_favicon'), 'configs');
             } else {
-                // Si no se envía favicon, usar valor por defecto o null
                 $data['ruta_favicon'] = $data['ruta_favicon'] ?? '';
             }
 
@@ -136,34 +135,22 @@ class ConfigController extends Controller
                 $data['mostrar_firma_documentos'] = filter_var($data['mostrar_firma_documentos'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
             }
 
-            // Manejar archivos
+            $quota = app(\App\Services\StorageQuotaService::class);
             if ($request->hasFile('ruta_logo')) {
-                // Eliminar logo anterior si existe
-                if ($config->ruta_logo && !str_contains($config->ruta_logo, 'http')) {
-                    try {
-                        Storage::disk('public')->delete($config->ruta_logo);
-                    } catch (\Exception $e) {
-                        \Log::warning('No se pudo eliminar logo anterior: ' . $e->getMessage());
-                    }
+                if ($config->ruta_logo && strpos($config->ruta_logo, 'http') === false) {
+                    $quota->forget($config->ruta_logo);
                 }
-                $data['ruta_logo'] = $request->file('ruta_logo')->store('configs', 'public');
+                $data['ruta_logo'] = $quota->store($request->file('ruta_logo'), 'configs');
             } else {
-                // Si no se envía un nuevo archivo, mantener el existente
                 unset($data['ruta_logo']);
             }
 
             if ($request->hasFile('ruta_favicon')) {
-                // Eliminar favicon anterior si existe
-                if ($config->ruta_favicon && !str_contains($config->ruta_favicon, 'http')) {
-                    try {
-                        Storage::disk('public')->delete($config->ruta_favicon);
-                    } catch (\Exception $e) {
-                        \Log::warning('No se pudo eliminar favicon anterior: ' . $e->getMessage());
-                    }
+                if ($config->ruta_favicon && strpos($config->ruta_favicon, 'http') === false) {
+                    $quota->forget($config->ruta_favicon);
                 }
-                $data['ruta_favicon'] = $request->file('ruta_favicon')->store('configs', 'public');
+                $data['ruta_favicon'] = $quota->store($request->file('ruta_favicon'), 'configs');
             } else {
-                // Si no se envía un nuevo archivo, mantener el existente
                 unset($data['ruta_favicon']);
             }
 
@@ -211,12 +198,13 @@ class ConfigController extends Controller
     {
         $config = Config::findOrFail($id);
 
-        if ($config->ruta_logo && !str_contains($config->ruta_logo, 'http')) {
-            Storage::disk('public')->delete($config->ruta_logo);
+        $quota = app(\App\Services\StorageQuotaService::class);
+        if ($config->ruta_logo && strpos($config->ruta_logo, 'http') === false) {
+            $quota->forget($config->ruta_logo);
         }
 
-        if ($config->ruta_favicon && !str_contains($config->ruta_favicon, 'http')) {
-            Storage::disk('public')->delete($config->ruta_favicon);
+        if ($config->ruta_favicon && strpos($config->ruta_favicon, 'http') === false) {
+            $quota->forget($config->ruta_favicon);
         }
 
         $config->delete();
@@ -226,12 +214,13 @@ class ConfigController extends Controller
 
     private function appendStorageUrls(Config $config)
     {
-        if ($config->ruta_logo && !str_contains($config->ruta_logo, 'http')) {
-            $config->ruta_logo = asset('storage/' . $config->ruta_logo);
+        $quota = app(\App\Services\StorageQuotaService::class);
+        if ($config->ruta_logo && strpos($config->ruta_logo, 'http') === false) {
+            $config->ruta_logo = $quota->publicUrl($config->ruta_logo);
         }
 
-        if ($config->ruta_favicon && !str_contains($config->ruta_favicon, 'http')) {
-            $config->ruta_favicon = asset('storage/' . $config->ruta_favicon);
+        if ($config->ruta_favicon && strpos($config->ruta_favicon, 'http') === false) {
+            $config->ruta_favicon = $quota->publicUrl($config->ruta_favicon);
         }
 
         if (empty($config->tema_apariencia)) {
@@ -243,6 +232,11 @@ class ConfigController extends Controller
         } else {
             $config->mostrar_firma_documentos = (int) ((bool) $config->mostrar_firma_documentos);
         }
+
+        $config->storage_disk = $quota->mediaDiskName();
+        $config->storage_public_base = $quota->usesSpaces()
+            ? rtrim((string) config('filesystems.disks.spaces.url'), '/')
+            : rtrim(asset('storage'), '/');
 
         return $config;
     }

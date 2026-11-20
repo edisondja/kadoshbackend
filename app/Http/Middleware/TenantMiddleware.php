@@ -24,7 +24,24 @@ class TenantMiddleware
             return $next($request);
         }
 
-        $host = $request->getHost(); // ej: clinica1.odontoed.com o odontoed.com
+        $host = strtolower($request->getHost()); // ej: clinica1.odontoed.com o odontoed.com
+
+        // Local / IP: app móvil y pruebas en Mac (sin tenant por Host)
+        if (
+            $host === 'localhost'
+            || $host === '127.0.0.1'
+            || $host === '::1'
+            || filter_var($host, FILTER_VALIDATE_IP)
+            || preg_match('/\.local$/', $host)
+            || preg_match('/\.test$/', $host)
+        ) {
+            // Permitir tenant local tipo mil.localhost
+            if (!preg_match('/^[a-z0-9\-]+\.localhost$/', $host)) {
+                $this->bindLocalTenantFallback();
+                return $next($request);
+            }
+        }
+
         $parts = explode('.', $host);
 
         // Hosts de API / panel que NO son clínicas (usar BD por defecto del .env)
@@ -36,7 +53,9 @@ class TenantMiddleware
         }
 
         // Si no hay subdominio, continuar con la conexión por defecto
-        if (count($parts) < 3) {
+        // (2 partes: clinica.com | mil.localhost; 3+: mil.odontoed.com)
+        $esLocalhostTenant = count($parts) === 2 && $parts[1] === 'localhost';
+        if (count($parts) < 3 && !$esLocalhostTenant) {
             return $next($request);
         }
 
@@ -87,6 +106,7 @@ class TenantMiddleware
             Cache::forget($cacheKey);
 
             $databaseName = $tenant->database_name;
+            app()->instance('currentTenant', $tenant);
         } catch (\Exception $e) {
             \Log::error('Error al verificar tenant: ' . $e->getMessage());
             return $next($request);
@@ -100,6 +120,25 @@ class TenantMiddleware
         Config::set('database.default', 'tenant');
 
         return $next($request);
+    }
+
+    /**
+     * En local (127.0.0.1) asociar tenant por DB_DATABASE para cuotas de almacenamiento.
+     */
+    private function bindLocalTenantFallback()
+    {
+        try {
+            $dbName = Config::get('database.connections.mysql.database') ?: env('DB_DATABASE');
+            if (!$dbName) {
+                return;
+            }
+            $tenant = Tenant::where('database_name', $dbName)->first();
+            if ($tenant) {
+                app()->instance('currentTenant', $tenant);
+            }
+        } catch (\Exception $e) {
+            // ignore
+        }
     }
 
     /**

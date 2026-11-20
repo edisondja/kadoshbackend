@@ -124,8 +124,11 @@ class ControllerUsuario extends Controller
         if (!$data->hasFile('foto_usuario')) {
             return $fotoActual;
         }
-        $storedPath = $data->file('foto_usuario')->store('public');
-        return basename(str_replace('\\', '/', $storedPath));
+        $quota = app(\App\Services\StorageQuotaService::class);
+        if (!empty($fotoActual)) {
+            $quota->forget($fotoActual);
+        }
+        return $quota->storeBasename($data->file('foto_usuario'));
     }
 
     private function permisosDesdeRequest(Request $data)
@@ -244,6 +247,19 @@ class ControllerUsuario extends Controller
         } catch (\Exception $e) {
             \Log::warning('No se pudo enviar alerta de inicio de sesion: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Login móvil (POST JSON). Misma lógica que GET legacy.
+     * Body: { "usuario": "...", "clave": "..." }
+     */
+    public function loginPost(Request $request)
+    {
+        $request->validate([
+            'usuario' => 'required|string',
+            'clave' => 'required|string',
+        ]);
+        return $this->login($request, $request->input('usuario'), $request->input('clave'));
     }
 
     public function login(Request $request, $usuario,$clave)

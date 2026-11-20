@@ -183,8 +183,8 @@ class PacienteInvitacionController extends Controller
                 : '1900-01-01';
 
             if ($request->hasFile('foto_paciente')) {
-                $storedPath = $request->file('foto_paciente')->store('public');
-                $paciente->foto_paciente = basename(str_replace('\\', '/', $storedPath));
+                $paciente->foto_paciente = app(\App\Services\StorageQuotaService::class)
+                    ->storeBasename($request->file('foto_paciente'));
             } else {
                 $paciente->foto_paciente = '';
             }

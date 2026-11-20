@@ -7,10 +7,21 @@ use App;
 use App\Services\GoogleCalendarService;
 class ControllerCita extends Controller
 {
-    // Lista todas las citas
-    public function index()
+    // Lista citas (opcional: ?desde=&hasta= ISO datetime/date)
+    public function index(Request $request)
     {
-        return App\Cita::with('paciente', 'doctor')->orderBy('inicio', 'desc')->get();
+        $query = App\Cita::with('paciente', 'doctor')->orderBy('inicio', 'desc');
+
+        $desde = $request->query('desde');
+        $hasta = $request->query('hasta');
+        if (!empty($desde)) {
+            $query->where('inicio', '>=', $desde);
+        }
+        if (!empty($hasta)) {
+            $query->where('inicio', '<=', $hasta);
+        }
+
+        return $query->get();
     }
 
 

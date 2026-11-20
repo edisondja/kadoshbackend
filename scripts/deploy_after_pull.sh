@@ -40,4 +40,22 @@ fi
 php artisan config:clear 2>/dev/null | tee -a "$LOG_FILE" || true
 php artisan cache:clear 2>/dev/null | tee -a "$LOG_FILE" || true
 
-exit "$EXIT_CODE"
+# Smoke tests de todos los módulos (lectura segura)
+SMOKE_EXIT=0
+if [ -f "$ROOT/scripts/run_smoke_tests.sh" ]; then
+  echo "smoke modules..." | tee -a "$LOG_FILE"
+  set +e
+  SMOKE_BASE="${SMOKE_BASE:-http://127.0.0.1}" bash "$ROOT/scripts/run_smoke_tests.sh" 2>&1 | tee -a "$LOG_FILE"
+  SMOKE_EXIT=${PIPESTATUS[0]}
+  set -e
+  if [ "$SMOKE_EXIT" -eq 0 ]; then
+    echo "Smoke modules: OK" | tee -a "$LOG_FILE"
+  else
+    echo "Smoke modules: FALLÓ (código $SMOKE_EXIT). Revise $LOG_FILE y storage/logs/smoke_modules_*.json" | tee -a "$LOG_FILE"
+  fi
+fi
+
+if [ "$EXIT_CODE" -ne 0 ]; then
+  exit "$EXIT_CODE"
+fi
+exit "$SMOKE_EXIT"

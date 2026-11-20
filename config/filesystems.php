@@ -26,7 +26,15 @@ return [
     |
     */
 
-    'cloud' => env('FILESYSTEM_CLOUD', 's3'),
+    'cloud' => env('FILESYSTEM_CLOUD', 'spaces'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Disco de medios (fotos, radiografías, logos)
+    |--------------------------------------------------------------------------
+    | Usa DigitalOcean Spaces cuando hay DO_SPACES_KEY; si no, disco public local.
+    */
+    'media' => env('FILESYSTEM_MEDIA_DISK', env('DO_SPACES_KEY') ? 'spaces' : 'public'),
 
     /*
     |--------------------------------------------------------------------------
@@ -61,6 +69,34 @@ return [
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
+        ],
+
+        /*
+        | DigitalOcean Spaces — bucket graned (sfo3)
+        | Endpoint API: https://sfo3.digitaloceanspaces.com
+        | URL pública:  https://graned.sfo3.digitaloceanspaces.com
+        */
+        'spaces' => [
+            'driver' => 's3',
+            'key' => env('DO_SPACES_KEY'),
+            'secret' => env('DO_SPACES_SECRET'),
+            'region' => env('DO_SPACES_REGION', 'sfo3'),
+            'bucket' => env('DO_SPACES_BUCKET', 'graned'),
+            'endpoint' => env('DO_SPACES_ENDPOINT', 'https://sfo3.digitaloceanspaces.com'),
+            'url' => (static function () {
+                $cdn = trim((string) env('DO_SPACES_CDN_URL', ''));
+                if ($cdn !== '') {
+                    return $cdn;
+                }
+                $url = trim((string) env('DO_SPACES_URL', ''));
+                return $url !== '' ? $url : 'https://graned.sfo3.digitaloceanspaces.com';
+            })(),
+            'use_path_style_endpoint' => env('DO_SPACES_PATH_STYLE', false),
+            'throw' => false,
+            'visibility' => 'public',
+            'options' => [
+                'ACL' => 'public-read',
+            ],
         ],
 
     ],
