@@ -64,6 +64,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Alertas de fallas del sistema
+    |--------------------------------------------------------------------------
+    | Se envían desde el SMTP corporativo (MAIL_FROM_*) hacia este destino.
+    */
+    'system_error_to' => env('SYSTEM_ERROR_EMAIL', 'edisondja@gmail.com'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Logo en plantillas de correo (URL absoluta pública, ej. CDN)
     | Si está vacío se usa asset(images/edasystems-logo-email.png) con APP_URL.
     |--------------------------------------------------------------------------
